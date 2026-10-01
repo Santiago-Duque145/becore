@@ -80,7 +80,7 @@ relativa y el proxy de Vite la reenvía al backend.
 Cada tarea del backlog tiene un ID (ej. `S1-04`). Para cada tarea:
 
 1. **Lee** la tarea en `docs/specs/backlog.md` y las secciones de spec que cita. No leas specs completas que no necesitas.
-2. **Planea antes de codificar**: lista los archivos que vas a crear o modificar y espera aprobación si la tarea toca más de 5 archivos o cambia el esquema.
+2. **Planea antes de codificar**: lista los archivos que vas a crear o modificar y continúa sin esperar aprobación. Solo te detienes si necesitas cambiar el esquema de la base o instalar una librería fuera de la lista de §2; en esos casos pregunta.
 3. **Implementa solo lo que pide la tarea.** No refactorices código ajeno, no agregues funcionalidades "de paso", no cambies nombres existentes.
 4. **Verifica**: `npm run lint` y `npm test` sin errores. Si la tarea tiene pantalla, di exactamente cómo probarla a mano.
 5. **Resume** al final: archivos cambiados, cómo probar, pendientes. Propón el mensaje de commit.
@@ -121,5 +121,5 @@ parece requerir algo de esta lista, detente y pregunta.
 
 ## 10. Estado actual
 
-- Sprint actual: **S0 — Cimientos** (1 – 4 oct 2026). Ver `docs/specs/backlog.md`.
+- Sprint actual: **S1 — Usuarios y eventos** (5 – 11 oct 2026). Ver `docs/specs/backlog.md`.
 - Al terminar cada sprint, actualiza esta línea en un commit `docs: avanzar a sprint N`.

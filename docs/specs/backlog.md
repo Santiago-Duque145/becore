@@ -74,8 +74,10 @@ Nota: si `auth.getClaims(token)` no existe en la versión instalada de supabase-
 - `router.jsx` con todas las rutas de `ui.md` §2 apuntando a páginas *placeholder* (título y nada más).
 - `AppShell` con navbar (móvil abajo, escritorio arriba) usando la marca.
 - Página `/salud` temporal que muestre el resultado de `GET /health` (se borra en S1).
+- App instalable en iPhone (PWA) según `frontend/CLAUDE.md` §6.
 
 **Acepta si:** `npm run dev` en la raíz abre `http://localhost:5173`, se ve la navbar con la marca y `/salud` dice "ok".
+Desde un iPhone en la misma Wi-Fi, "Agregar a pantalla de inicio" muestra el ícono y el nombre Be Core, y la navbar inferior no queda tapada por la barra de gestos.
 
 ### S0-06 · Datos de demo (F)
 - `backend/scripts/seed.js`: crea con `supabaseAdmin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name, role } })`

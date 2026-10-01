@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="14" fill="#0D1B2A"/>
+  <line x1="44" y1="12" x2="20" y2="52" stroke="#14B8A6" stroke-width="5" stroke-linecap="round"/>
+  <text
+    x="32" y="46"
+    font-family="Poppins, sans-serif"
+    font-weight="600"
+    font-size="36"
+    fill="white"
+    text-anchor="middle"
+  >B</text>
+</svg>
