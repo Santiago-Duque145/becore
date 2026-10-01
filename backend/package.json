@@ -18,5 +18,15 @@
     "globals": "^17.13.0",
     "supertest": "^7.3.0",
     "vitest": "^5.0.3"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "helmet": "^8.3.0",
+    "morgan": "^1.12.1",
+    "node-cron": "^4.6.0",
+    "nodemailer": "^10.0.13",
+    "zod": "^4.6.5"
   }
 }
