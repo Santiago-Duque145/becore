@@ -121,5 +121,5 @@ parece requerir algo de esta lista, detente y pregunta.
 
 ## 10. Estado actual
 
-- Sprint actual: **S0 — Cimientos** (1 – 4 oct 2026). Ver `docs/specs/backlog.md`.
+- Sprint actual: **S1 — Usuarios y eventos** (5 – 11 oct 2026). Ver `docs/specs/backlog.md`.
 - Al terminar cada sprint, actualiza esta línea en un commit `docs: avanzar a sprint N`.
