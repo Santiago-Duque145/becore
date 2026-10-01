@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+@theme {
+  --color-navy-900: #0D1B2A;
+  --color-navy-800: #1E293B;
+  --color-graphite: #2D3640;
+  --color-gray-500: #6B7280;
+  --color-gray-200: #E5E7EB;
+  --color-teal-500: #14B8A6;
+  --color-teal-600: #0E9F92;
+  --color-emerald-500: #10B981;
+  --color-orange-500: #F97316;
+  --color-yellow-400: #FACC15;
+
+  --font-display: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+html,
+body,
+#root {
+  min-height: 100dvh;
+}
+
+body {
+  background-color: #0D1B2A;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+input,
+select,
+textarea {
+  font-size: 16px;
+}
