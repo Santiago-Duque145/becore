@@ -1,6 +1,6 @@
 # Especificación de base de datos — Be Core
 
-La fuente de verdad ejecutable es `supabase/migrations/20261001000000_initial_schema.sql`.
+La fuente de verdad ejecutable es `supabase/migrations/20261001024930_initial_schema.sql`.
 Este documento explica qué hace y cómo usarlo. Si este texto y el SQL no coinciden, manda el SQL y se avisa.
 
 ## 1. Diagrama entidad–relación

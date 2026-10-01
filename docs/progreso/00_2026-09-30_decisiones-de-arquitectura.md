@@ -41,7 +41,7 @@ cambios en tiempo real. Las reglas de negocio quedan en un solo lugar (el backen
 bloquean cualquier escritura directa desde el navegador.
 
 ## 4. Cómo reproducir
-Ver `docs/specs/database.md` y `supabase/migrations/20261001000000_initial_schema.sql`.
+Ver `docs/specs/database.md` y `supabase/migrations/20261001024930_initial_schema.sql`.
 
 ## 5. Pendientes y riesgos
 - Actualizar en la presentación las láminas de stack (MySQL → Supabase).

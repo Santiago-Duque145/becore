@@ -20,7 +20,7 @@ compañero aprobó el PR.
 
 ### S0-00 · Configuración manual (ambos, fuera de Claude Code)
 No es código; lo hacen ustedes en los paneles web:
-1. Supabase → New project `becore`, región **East US (North Virginia)**, guarden la contraseña de la base.
+1. ✅ Hecho: proyecto `becore` creado en Supabase (ref `netomeswlgsahvgqowdq`, región São Paulo `sa-east-1`). Guarden la contraseña de la base.
 2. Authentication → Sign In / Providers → Email: **desactivar "Confirm email"**; longitud mínima de contraseña **8**.
 3. Project Settings → API Keys: copiar la **publishable key** y la **secret key** (no la compartan por WhatsApp; usen un gestor o mensaje que se borre).
 4. Gmail: crear `becore.app@gmail.com` (o similar), activar verificación en dos pasos y generar una **contraseña de aplicación**.
@@ -50,8 +50,10 @@ No es código; lo hacen ustedes en los paneles web:
 ### S0-03 · Migración inicial en Supabase (F)
 - Instalar Supabase CLI como dependencia de desarrollo de la raíz (`npm i -D supabase`), `npx supabase login`,
   `npx supabase init`, `npx supabase link --project-ref <ref>`.
-- Copiar `supabase/migrations/20261001000000_initial_schema.sql` (ya viene escrito) y ejecutar `npx supabase db push`.
-- Verificar en el panel: 8 tablas con RLS activo, funciones `confirm_attendance` y `cancel_attendance`.
+- La migración `supabase/migrations/20261001024930_initial_schema.sql` **ya está aplicada** en el proyecto
+  (se aplicó el 2026-09-30 desde Claude con el conector de Supabase). **No** ejecutar `db push` para ella.
+- Verificar que el CLI la reconoce: `npx supabase migration list` debe mostrarla en las columnas *Local* y *Remote*.
+  Si aparece solo en *Remote*, el archivo no está en `supabase/migrations/` con ese nombre exacto.
 
 **Acepta si:** registrar un usuario de prueba desde el panel de Auth con metadata `{"full_name":"Prueba","role":"participant"}` crea su fila en `profiles`.
 
