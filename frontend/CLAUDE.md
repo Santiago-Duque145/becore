@@ -167,3 +167,91 @@ Siempre dentro de un `useEffect` con limpieza. El payload llega en snake_case (`
 - Botones y enlaces con estado de foco visible. Imágenes con `alt`. Formularios con `<label>`.
 - Iconos de `lucide-react`. Nada de emojis en la interfaz.
 - Confirmar asistencia debe tomar **3 toques o menos** desde el listado (RNF-01).
+
+## 6. App instalable en iPhone (PWA)
+
+Se instala desde Safari → Compartir → "Agregar a pantalla de inicio". No se usa service worker, modo
+offline, push ni ninguna librería adicional (`vite-plugin-pwa` u otra).
+
+### Manifiesto — `frontend/public/manifest.webmanifest`
+
+```json
+{
+  "name": "Be Core",
+  "short_name": "Be Core",
+  "description": "Tu comunidad en movimiento",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0D1B2A",
+  "theme_color": "#0D1B2A",
+  "lang": "es-CO",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
+```
+
+### `<head>` de `index.html`
+
+```html
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0D1B2A" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Be Core" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
+  <title>Be Core</title>
+</head>
+```
+
+### Íconos — `frontend/public/icons/`
+
+- `favicon.svg`: letra "B" blanca en Poppins sobre cuadrado `#0D1B2A` con esquinas redondeadas y una
+  barra diagonal `#14B8A6` (crea el SVG directamente).
+- `icon-192.png`, `icon-512.png`, `icon-512-maskable.png`, `apple-touch-icon.png`: los exporta el
+  equipo desde el logo oficial; mientras no existan, los `<link>` ya apuntan a ellos y Safari los
+  pedirá cuando el usuario intente instalar la app.
+
+### CSS obligatorio — agregar en `src/index.css`
+
+```css
+html,
+body,
+#root {
+  min-height: 100dvh; /* nunca 100vh */
+}
+
+body {
+  background-color: theme(--color-navy-900);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+input,
+select,
+textarea {
+  font-size: 16px; /* evita zoom automático en iOS */
+}
+```
+
+- Header fijo: `padding-top: env(safe-area-inset-top)`.
+- Barra de navegación inferior: `padding-bottom: env(safe-area-inset-bottom)`; el contenido principal
+  deja margen inferior igual a la altura de la navbar más `env(safe-area-inset-bottom)`.
+- Elementos táctiles: mínimo `44 × 44 px`.
+
+### Cómo probar
+
+1. `npm run dev` en la raíz.
+2. En el iPhone, abrir la URL **Network** que imprime Vite (p. ej. `http://192.168.1.X:5173`).
+3. Safari → Compartir → "Agregar a pantalla de inicio" → verificar que muestra el ícono y "Be Core".
+4. Abrir la app desde el ícono e iniciar sesión de nuevo (la sesión no se comparte con Safari).

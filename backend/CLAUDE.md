@@ -76,6 +76,10 @@ CRON_ENABLED=true
 `src/config/env.js` valida estas variables con Zod al arrancar y termina el proceso con un mensaje claro
 si falta alguna. El resto del código importa `env` desde ahí; **nadie más lee `process.env`**.
 
+`SMTP_USER`, `SMTP_PASS` y `MAIL_FROM` pueden estar vacíos hasta el Sprint 2: `env.js` los define como
+`z.string().optional()` (sin `.min(1)`), y `mailer.js` no inicializa el transporte Nodemailer si alguno
+de esos tres falta — simplemente registra una advertencia en consola y omite el envío.
+
 Scripts de `package.json`:
 
 ```json

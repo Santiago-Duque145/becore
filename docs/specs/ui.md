@@ -5,6 +5,7 @@ Tagline: "Tu comunidad en movimiento". Tono cercano, activo y comunitario; tutea
 
 ## 1. Principios
 
+- Se usa en iPhone como app instalada (PWA, ver frontend/CLAUDE.md §6): nada puede quedar bajo la muesca ni bajo la barra de gestos.
 - Mobile-first (390 px), escritorio hasta 1440 px.
 - Una acción principal por pantalla, en turquesa. Acciones destructivas en texto rojo/naranja, nunca como botón principal.
 - Todo listado tiene estado de carga (skeleton), vacío (con acción sugerida) y error.
