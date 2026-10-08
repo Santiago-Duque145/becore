@@ -32,6 +32,16 @@ export async function listAttendees(eventId) {
   return data.map(toAttendee);
 }
 
+export async function listConfirmedUserIds(eventId) {
+  const { data, error } = await supabaseAdmin
+    .from('attendances')
+    .select('user_id')
+    .eq('event_id', eventId)
+    .eq('status', 'confirmed');
+  if (error) throw translateDbError(error) ?? error;
+  return data.map((row) => row.user_id);
+}
+
 export async function findAttendee(eventId, userId) {
   const { data, error } = await supabaseAdmin
     .from('attendances')

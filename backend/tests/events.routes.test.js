@@ -17,6 +17,10 @@ vi.mock('../src/repositories/events.repository.js', () => ({
 }));
 vi.mock('../src/repositories/attendance.repository.js', () => ({
   findUserAttendances: vi.fn(),
+  listConfirmedUserIds: vi.fn().mockResolvedValue([]),
+}));
+vi.mock('../src/services/notifications.service.js', () => ({
+  notify: vi.fn(),
 }));
 
 import { supabaseAdmin } from '../src/config/supabase.js';

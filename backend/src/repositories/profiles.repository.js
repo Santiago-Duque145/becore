@@ -21,6 +21,16 @@ export async function findProfileById(id) {
   return toCamel(data);
 }
 
+export async function findProfilesByIds(ids) {
+  if (!ids.length) return [];
+  const { data, error } = await supabaseAdmin
+    .from('profiles')
+    .select('id, email, full_name, role, created_at')
+    .in('id', ids);
+  if (error) throw error;
+  return data.map(toCamel);
+}
+
 export async function updateProfile(id, { fullName }) {
   const { data, error } = await supabaseAdmin
     .from('profiles')

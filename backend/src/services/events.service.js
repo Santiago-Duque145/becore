@@ -1,5 +1,7 @@
 import * as eventsRepo from '../repositories/events.repository.js';
-import { findUserAttendances } from '../repositories/attendance.repository.js';
+import { findUserAttendances, listConfirmedUserIds } from '../repositories/attendance.repository.js';
+import { notify } from './notifications.service.js';
+import { buildContent } from '../mail/templates.js';
 import { AppError } from '../utils/app-error.js';
 
 const PUBLIC_STATUSES = ['published', 'in_progress'];
@@ -56,6 +58,22 @@ async function findOwnedActiveEvent(user, id) {
   return event;
 }
 
+// RF-17: avisar a los confirmados solo si cambió fecha, hora o lugar
+const sameTime = (a, b) => (a ? new Date(a).getTime() : null) === (b ? new Date(b).getTime() : null);
+
+function changedSchedule(event, patch) {
+  return (
+    (patch.startsAt !== undefined && !sameTime(patch.startsAt, event.startsAt)) ||
+    (patch.endsAt !== undefined && !sameTime(patch.endsAt, event.endsAt)) ||
+    (patch.location !== undefined && patch.location !== event.location)
+  );
+}
+
+async function notifyConfirmed(event, type) {
+  const userIds = await listConfirmedUserIds(event.id);
+  await notify({ userIds, type, eventId: event.id, buildContent: () => buildContent(type, event) });
+}
+
 export async function createEvent(user, input) {
   const event = await eventsRepo.insertEvent(user.id, { ...input, status: input.status ?? 'draft' });
   return toEvent(event, null);
@@ -100,14 +118,14 @@ export async function updateEvent(user, id, patch) {
   }
 
   const updated = await eventsRepo.updateEvent(id, patch);
-  // TODO S2-05: si cambió startsAt, endsAt o location, enviar correo event_updated a los confirmados
+  if (changedSchedule(event, patch)) await notifyConfirmed(updated, 'event_updated');
   return toEvent(updated, null);
 }
 
 export async function cancelEvent(user, id) {
   await findOwnedActiveEvent(user, id);
   const cancelled = await eventsRepo.updateEvent(id, { status: 'cancelled' });
-  // TODO S2-05: enviar correo event_cancelled a los confirmados
+  await notifyConfirmed(cancelled, 'event_cancelled');
   return toEvent(cancelled, null);
 }
 
