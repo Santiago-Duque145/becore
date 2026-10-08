@@ -9,18 +9,16 @@ export function useEvent(id) {
   });
 }
 
-export function useCreateEvent() {
+// Todas las mutaciones de evento invalidan listas y detalle (clave raíz 'events')
+function useEventMutation(mutationFn) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body) => (await eventsApi.createEvent(body)).data,
+    mutationFn,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.eventsRoot }),
   });
 }
 
-export function useUpdateEvent(id) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (body) => (await eventsApi.updateEvent(id, body)).data,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.eventsRoot }),
-  });
-}
+export const useCreateEvent = () => useEventMutation(async (body) => (await eventsApi.createEvent(body)).data);
+export const useUpdateEvent = (id) => useEventMutation(async (body) => (await eventsApi.updateEvent(id, body)).data);
+export const useCancelEvent = (id) => useEventMutation(async () => (await eventsApi.cancelEvent(id)).data);
+export const usePublishEvent = (id) => useEventMutation(async () => (await eventsApi.publishEvent(id)).data);
