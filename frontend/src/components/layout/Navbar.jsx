@@ -53,6 +53,14 @@ export function Navbar() {
         </nav>
       </header>
 
+      {/* Barra superior en móvil: deja el contenido fuera de la muesca */}
+      <header
+        className="md:hidden flex items-center justify-center h-12 bg-navy-900 border-b border-navy-800"
+        style={{ boxSizing: 'content-box', paddingTop: 'env(safe-area-inset-top)' }}
+      >
+        <span className="font-display font-bold text-lg text-white tracking-wide">Be Core</span>
+      </header>
+
       {/* Barra inferior en móvil; el "+" del organizador va al centro */}
       <nav
         aria-label="Principal"
