@@ -23,7 +23,7 @@ cancelan su asistencia; el sistema impide el sobrecupo, envía recordatorios por
 | Runtime | Node.js 22 LTS, ES Modules (`"type": "module"`), **JavaScript** (no TypeScript) |
 | Backend | Express 5, Zod 4 (validación), `@supabase/supabase-js` v2 con **secret key** |
 | Base de datos | Supabase (PostgreSQL) en la nube, un solo proyecto compartido por ambos desarrolladores |
-| Autenticación | Supabase Auth (correo + contraseña). El backend verifica el JWT con `auth.getClaims(token)` |
+| Autenticación | Supabase Auth (correo + contraseña). El backend verifica el JWT con `auth.getUser(token)` |
 | Correo | Nodemailer por SMTP de Gmail (contraseña de aplicación) |
 | Tareas programadas | `node-cron` dentro del proceso del backend |
 | Frontend | React **18.3.1** + Vite, React Router 7, TanStack Query 5, Axios, Tailwind CSS 4 |

@@ -8,6 +8,7 @@
     "start": "node --env-file=.env src/server.js",
     "seed": "node --env-file=.env scripts/seed.js",
     "reminders": "node --env-file=.env scripts/run-reminders.js",
+    "mail:test": "node --env-file=.env scripts/test-mail.js",
     "lint": "eslint .",
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.js"

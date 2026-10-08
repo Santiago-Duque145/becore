@@ -69,6 +69,9 @@ Color por categoría (chip y borde de tarjeta):
 | `recreation` | Recreativo | `emerald-500` |
 | `other` | Otro | `gray-500` |
 
+Etiquetas de estado del evento: `draft` Borrador, `published` Publicado, `in_progress` En curso,
+`finished` Finalizado, `cancelled` Cancelado.
+
 Estados: Confirmado = `emerald-500`; Cancelado = `orange-500`; Lleno = `navy-800` con texto blanco;
 Pasado = `gray-500`.
 
