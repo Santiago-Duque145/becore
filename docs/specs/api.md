@@ -28,7 +28,7 @@ Registro, inicio y cierre de sesión **no** pasan por esta API: el frontend los 
   "availableSpots": 3,
   "isFull": false,
   "isPast": false,
-  "status": "scheduled",
+  "status": "published",
   "cancelledAt": null,
   "organizer": { "id": "uuid", "fullName": "Santiago Duque" },
   "myAttendance": { "status": "confirmed", "checkedIn": false },
@@ -36,6 +36,7 @@ Registro, inicio y cierre de sesión **no** pasan por esta API: el frontend los 
   "updatedAt": "ISO"
 }
 ```
+`status` es uno de `draft`, `published`, `in_progress`, `finished`, `cancelled` (ver `database.md` §2b).
 `availableSpots`, `isFull` e `isPast` se calculan en el service. `myAttendance` es `null` si el usuario
 nunca confirmó.
 
@@ -63,6 +64,8 @@ Formato: `{ "error": { "code": "EVENT_FULL", "message": "El evento ya no tiene c
 | `ALREADY_CONFIRMED` | 409 | Ya confirmaste tu asistencia a este evento |
 | `NOT_CONFIRMED` | 409 | No tienes una asistencia confirmada en este evento |
 | `EVENT_NOT_ACTIVE` | 409 | El evento fue cancelado |
+| `INVALID_EVENT_TRANSITION` | 409 | Ese cambio de estado no está permitido para el evento |
+| `INVALID_INITIAL_STATUS` | 409 | Un evento nuevo no puede crearse en ese estado |
 | `EVENT_STARTED` | 409 | El evento ya empezó, no se puede modificar |
 | `CAPACITY_BELOW_CONFIRMED` | 409 | El cupo no puede ser menor que los confirmados actuales |
 | `CHECKIN_NOT_OPEN` | 409 | El check-in se habilita 2 horas antes del evento |
@@ -91,6 +94,7 @@ Leyenda de acceso: **todos** = cualquier usuario autenticado; **org** = rol `org
 | POST | `/events` | org | ver "Crear" | 201 `Event` |
 | GET | `/events/:id` | todos | — | `Event` |
 | PATCH | `/events/:id` | dueño | mismos campos de crear, todos opcionales (mínimo uno) | `Event` |
+| POST | `/events/:id/publish` | dueño | — | `Event` (solo desde `draft`; si no → 409 `INVALID_EVENT_TRANSITION`) |
 | POST | `/events/:id/cancel` | dueño | — | `Event` |
 
 **Filtros de `GET /events`** (query, todos opcionales):
@@ -110,6 +114,7 @@ Leyenda de acceso: **todos** = cualquier usuario autenticado; **org** = rol `org
 | `location` | texto 3–200 |
 | `startsAt` | ISO 8601 con zona, en el futuro |
 | `endsAt` | opcional, ISO 8601, mayor que `startsAt` |
+| `status` | opcional, `draft` (defecto) \| `published` |
 | `capacity` | entero 1–1000 |
 
 **Editar (`PATCH`) — reglas del service, en este orden:**
@@ -132,8 +137,8 @@ Leyenda de acceso: **todos** = cualquier usuario autenticado; **org** = rol `org
 
 - Confirmar y cancelar llaman a las funciones SQL `confirm_attendance` / `cancel_attendance`
   (ver `database.md` §4). El backend **no** recalcula cupos por su cuenta.
-- Check-in: asistencia debe estar `confirmed` (si no → `NOT_CONFIRMED`), evento no cancelado
-  (`EVENT_NOT_ACTIVE`) y `now() >= startsAt - 2 horas` (si no → `CHECKIN_NOT_OPEN`).
+- Check-in: asistencia debe estar `confirmed` (si no → `NOT_CONFIRMED`), evento `published` o `in_progress`
+  (si no → `EVENT_NOT_ACTIVE`) y `now() >= startsAt - 2 horas` (si no → `CHECKIN_NOT_OPEN`).
   Al marcar `true` inserta `activity_log` con `action = 'checked_in'`.
 
 ### Paneles (RF-18, RF-19)
@@ -142,7 +147,7 @@ Leyenda de acceso: **todos** = cualquier usuario autenticado; **org** = rol `org
 ```json
 {
   "totals": { "upcomingEvents": 3, "confirmed": 27, "cancelled": 4, "checkedIn": 9, "occupancyRate": 0.75 },
-  "events": [{ "id": "uuid", "title": "...", "startsAt": "ISO", "status": "scheduled", "isPast": false,
+  "events": [{ "id": "uuid", "title": "...", "startsAt": "ISO", "status": "published", "isPast": false,
                "capacity": 12, "confirmedCount": 9, "cancelledCount": 2, "checkedInCount": 0 }]
 }
 ```
@@ -195,7 +200,7 @@ Para cada destinatario: inserta una fila en `notifications`, envía, y actualiza
 ## 5. Cron de recordatorios (cada 15 min)
 
 1. `H = REMINDER_HOURS_BEFORE` (defecto 24).
-2. Busca eventos `scheduled` con `starts_at` entre `now()` y `now() + H horas`, y sus asistencias `confirmed`.
+2. Busca eventos `published` con `starts_at` entre `now()` y `now() + H horas`, y sus asistencias `confirmed`.
 3. Por cada par (usuario, evento): intenta insertar `notifications` con `type = 'event_reminder'`.
    Si falla por índice único (`23505`), ya se envió → se salta. Si inserta, envía y actualiza `sent_at`/`error`.
 4. Repite lo mismo con citas `scheduled` y sus invitados (`appointment_reminder`).

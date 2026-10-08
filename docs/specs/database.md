@@ -40,7 +40,7 @@ erDiagram
 |---|---|---|
 | `user_role` | `organizer`, `participant` | Organizador, Participante |
 | `event_category` | `sport`, `culture`, `recreation`, `other` | Deportivo, Cultural, Recreativo, Otro |
-| `event_status` | `scheduled`, `cancelled` | Programado, Cancelado |
+| `event_status` | `draft`, `published`, `in_progress`, `finished`, `cancelled` | Borrador, Publicado, En curso, Finalizado, Cancelado |
 | `attendance_status` | `confirmed`, `cancelled` | Confirmado, Cancelado |
 | `appointment_status` | `scheduled`, `cancelled` | Programada, Cancelada |
 | `notification_type` | `event_reminder`, `event_updated`, `event_cancelled`, `appointment_created`, `appointment_reminder`, `appointment_cancelled` | — |
@@ -55,6 +55,18 @@ erDiagram
   `events_confirmed_within_capacity`): bajar el cupo por debajo de los confirmados falla con `CAPACITY_BELOW_CONFIRMED`.
 - `ends_at` es opcional en eventos y obligatorio en citas; si existe debe ser mayor que `starts_at`.
 - Longitudes de texto: ver la columna en el SQL. Los esquemas Zod usan exactamente los mismos límites.
+
+### Ciclo de vida del evento
+
+`draft → published → in_progress → finished`; `cancelled` desde `draft`, `published` o `in_progress`.
+`finished` y `cancelled` son finales. El trigger `events_enforce_transition` rechaza otras transiciones
+(`INVALID_EVENT_TRANSITION`) y llena `published_at`, `finished_at` y `cancelled_at`; al insertar solo se permite
+`draft` o `published` (`INVALID_INITIAL_STATUS`). Los mensajes de los triggers llegan con sufijo
+(`INVALID_EVENT_TRANSITION: draft -> finished`) y errcode `23514`.
+
+`refresh_event_statuses() returns integer` pasa a `finished` los `published`/`in_progress` cuyo
+`coalesce(ends_at, starts_at + 2 h)` ya pasó y a `in_progress` los `published` cuyo `starts_at` ya pasó.
+Devuelve cuántos cambió. Solo `service_role` puede ejecutarla; la invoca el cron del backend cada minuto.
 
 ## 3. Registro → perfil (trigger `handle_new_user`)
 
@@ -73,7 +85,7 @@ exactamente 10 confirmados y 40 `EVENT_FULL`.
 Devuelve el nuevo `confirmed_count`. Orden de validaciones y error que lanza:
 
 1. El evento no existe → `EVENT_NOT_FOUND`
-2. `status` no es `scheduled` → `EVENT_NOT_ACTIVE`
+2. `status` <> `published` → `EVENT_NOT_ACTIVE`
 3. Ya empezó (`starts_at <= now()`) → `EVENT_STARTED`
 4. El usuario es el organizador del evento → `FORBIDDEN`
 5. Ya tiene asistencia `confirmed` → `ALREADY_CONFIRMED`
@@ -83,9 +95,10 @@ Devuelve el nuevo `confirmed_count`. Orden de validaciones y error que lanza:
 ### `cancel_attendance(p_event_id uuid, p_user_id uuid) returns integer`
 
 1. No existe → `EVENT_NOT_FOUND`
-2. Ya empezó → `EVENT_STARTED`
-3. No tenía asistencia `confirmed` → `NOT_CONFIRMED`
-4. Marca `cancelled`, resta 1, escribe en `activity_log`.
+2. `status` <> `published` → `EVENT_NOT_ACTIVE`
+3. Ya empezó → `EVENT_STARTED`
+4. No tenía asistencia `confirmed` → `NOT_CONFIRMED`
+5. Marca `cancelled`, resta 1, escribe en `activity_log`.
 
 Uso desde el repositorio:
 
@@ -103,13 +116,15 @@ Solo el rol `service_role` (la secret key del backend) puede ejecutarlas.
 ## 5. Seguridad (RLS)
 
 RLS está activo en todas las tablas. El backend usa la secret key, que la ignora. Para el frontend solo
-existen tres políticas de lectura: su propio perfil, todos los eventos y todo el `activity_log`
-(lo necesario para Realtime). No hay políticas de escritura: el frontend no puede escribir nada directo.
+existen cuatro políticas de lectura: su propio perfil, los eventos no borrador o propios
+(`status <> 'draft' or organizer_id = auth.uid()`), todo el `activity_log` y sus propias `notifications`
+(lo necesario para Realtime). `attendances`, `appointments`, `appointment_participants` y
+`availability_slots` no tienen políticas a propósito: solo Express las toca. No hay políticas de escritura: el frontend no puede escribir nada directo.
 
 ## 6. Realtime
 
-La publicación `supabase_realtime` incluye `events` (para `confirmed_count` y cambios de estado) y
-`activity_log` (para el ticker). Ninguna otra tabla se publica.
+La publicación `supabase_realtime` incluye `events` (para `confirmed_count` y cambios de estado),
+`activity_log` (para el ticker) y `notifications` (para la campana). Ninguna otra tabla se publica.
 
 ## 7. Cómo aplicar cambios al esquema
 
