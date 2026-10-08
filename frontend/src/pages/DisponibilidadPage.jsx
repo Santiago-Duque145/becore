@@ -1,3 +1,3 @@
 export default function DisponibilidadPage() {
-  return <h1 className="text-gray-200 p-6 font-display">Mi disponibilidad</h1>;
+  return <h1 className="font-display text-xl text-navy-900">Mi disponibilidad</h1>;
 }

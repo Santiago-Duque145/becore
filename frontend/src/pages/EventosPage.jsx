@@ -1,3 +1,3 @@
 export default function EventosPage() {
-  return <h1 className="text-gray-200 p-6 font-display">Descubre eventos</h1>;
+  return <h1 className="font-display text-xl text-navy-900">Descubre eventos</h1>;
 }

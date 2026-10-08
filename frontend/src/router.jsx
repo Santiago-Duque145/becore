@@ -47,8 +47,8 @@ export const router = createBrowserRouter([
         ),
       },
       { path: '/eventos/:id', element: <DetalleEventoPage /> },
-      { path: '/eventos/:id/editar', element: <EditarEventoPage /> },
-      { path: '/eventos/:id/asistentes', element: <AsistentesPage /> },
+      { path: '/eventos/:id/editar', element: <RoleRoute role="organizer"><EditarEventoPage /></RoleRoute> },
+      { path: '/eventos/:id/asistentes', element: <RoleRoute role="organizer"><AsistentesPage /></RoleRoute> },
       { path: '/panel', element: <PanelPage /> },
       { path: '/citas', element: <CitasPage /> },
       {
