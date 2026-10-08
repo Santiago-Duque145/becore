@@ -88,3 +88,21 @@ export async function listEvents(filters) {
   if (error) throw translateDbError(error) ?? error;
   return { rows: data.map(toCamel), total: count ?? 0 };
 }
+
+// Eventos publicados que empiezan en la ventana [fromIso, toIso] (recordatorios)
+export async function listPublishedStartingBetween(fromIso, toIso) {
+  const data = unwrap(
+    await supabaseAdmin
+      .from('events')
+      .select(COLUMNS)
+      .eq('status', 'published')
+      .gte('starts_at', fromIso)
+      .lte('starts_at', toIso),
+  );
+  return data.map(toCamel);
+}
+
+// Pasa a in_progress / finished los eventos que ya empezaron o terminaron. Devuelve cuántos cambió.
+export async function refreshEventStatuses() {
+  return unwrap(await supabaseAdmin.rpc('refresh_event_statuses'));
+}

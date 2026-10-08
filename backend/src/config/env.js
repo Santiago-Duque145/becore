@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 const schema = z.object({
+  NODE_ENV: z.string().default('development'),
   PORT: z.coerce.number().default(3000),
   FRONTEND_URL: z.string().url(),
   SUPABASE_URL: z.string().url(),
