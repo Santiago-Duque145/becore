@@ -5,6 +5,7 @@ import { ArrowLeft, CalendarClock, MapPin, UserRound } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useCancelEvent, useEvent, usePublishEvent } from '../../hooks/useEvent.js';
 import { formatDate } from '../../lib/format.js';
+import { AttendanceButton } from '../../components/events/AttendanceButton.jsx';
 import { CapacityBar } from '../../components/events/CapacityBar.jsx';
 import { CategoryChip, StatusBadges } from '../../components/events/EventBadges.jsx';
 import { Button, LinkButton } from '../../components/ui/Button.jsx';
@@ -31,7 +32,6 @@ export default function DetalleEventoPage() {
   const isOwner = event.organizer.id === profile?.id;
   const isActive = event.status === 'draft' || event.status === 'published' || event.status === 'in_progress';
   const canModify = isOwner && isActive && !event.isPast;
-  const canJoin = profile?.role === 'participant' && event.status === 'published' && !event.isPast;
 
   function handleCancel() {
     cancelEvent.mutate(undefined, {
@@ -102,12 +102,7 @@ export default function DetalleEventoPage() {
         </p>
       )}
 
-      {canJoin && (
-        // Placeholder: el botón real llega con S2-02
-        <Button disabled className="w-full">
-          Confirmar asistencia
-        </Button>
-      )}
+      <AttendanceButton event={event} />
 
       {isOwner && (
         <section aria-label="Acciones del organizador" className="flex flex-col gap-2 md:flex-row md:flex-wrap">
