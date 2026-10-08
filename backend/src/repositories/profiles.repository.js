@@ -31,6 +31,26 @@ export async function findProfilesByIds(ids) {
   return data.map(toCamel);
 }
 
+// Participantes por nombre o correo (ilike). Sin q devuelve los primeros por nombre.
+export async function searchParticipants(q, limit) {
+  let query = supabaseAdmin.from('profiles').select('id, email, full_name').eq('role', 'participant');
+  if (q) {
+    // Se quitan los caracteres con significado en la sintaxis de filtros de PostgREST
+    const term = q.replace(/[,()%*\\]/g, ' ').trim();
+    query = query.or(`full_name.ilike.%${term}%,email.ilike.%${term}%`);
+  }
+  const { data, error } = await query.order('full_name', { ascending: true }).limit(limit);
+  if (error) throw error;
+  return data.map((row) => ({ id: row.id, fullName: row.full_name, email: row.email }));
+}
+
+// De los ids recibidos, devuelve los que son perfiles con rol participant
+export async function findParticipantIds(ids) {
+  const { data, error } = await supabaseAdmin.from('profiles').select('id').eq('role', 'participant').in('id', ids);
+  if (error) throw error;
+  return data.map((row) => row.id);
+}
+
 export async function updateProfile(id, { fullName }) {
   const { data, error } = await supabaseAdmin
     .from('profiles')

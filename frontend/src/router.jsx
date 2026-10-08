@@ -59,7 +59,7 @@ export const router = createBrowserRouter([
           </RoleRoute>
         ),
       },
-      { path: '/disponibilidad', element: <DisponibilidadPage /> },
+      { path: '/disponibilidad', element: <RoleRoute role="organizer"><DisponibilidadPage /></RoleRoute> },
       { path: '/perfil', element: <PerfilPage /> },
     ],
   },
