@@ -1,6 +1,8 @@
 import { AppError } from './app-error.js';
 
 const RPC_CODES = new Map([
+  ['EVENT_NOT_FOUND', [404, 'El evento no existe']],
+  ['FORBIDDEN', [403, 'No tienes permiso para esta acción']],
   ['EVENT_FULL', [409, 'El evento ya no tiene cupos']],
   ['ALREADY_CONFIRMED', [409, 'Ya confirmaste tu asistencia a este evento']],
   ['NOT_CONFIRMED', [409, 'No tienes una asistencia confirmada en este evento']],
@@ -15,8 +17,10 @@ const RPC_CODES = new Map([
 export function translateDbError(error) {
   if (!error) return null;
 
-  const rpc = RPC_CODES.get(error.message);
-  if (rpc) return new AppError(rpc[0], error.message, rpc[1]);
+  // Las funciones lanzan el código exacto; los triggers lo mandan con sufijo ("CODIGO: detalle")
+  const code = (error.message ?? '').split(':')[0].trim();
+  const rpc = RPC_CODES.get(code);
+  if (rpc) return new AppError(rpc[0], code, rpc[1]);
 
   if (error.code === '23514') {
     const constraint = error.constraint_name ?? error.message ?? '';
