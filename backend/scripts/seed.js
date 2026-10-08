@@ -156,15 +156,25 @@ async function main() {
     }
     console.info(`[seed] Evento creado: ${event.title} (${event.id})`);
 
+    // La BD crea los eventos en draft (D-01); Descubre y confirm_attendance exigen published
+    const { error: publishError } = await supabase.from('events').update({ status: 'published' }).eq('id', event.id);
+    if (publishError) {
+      console.error(`[seed] No pudo publicar "${event.title}": ${publishError.message}`);
+      eventIdx++;
+      continue;
+    }
+
     const count = Math.min(def.attendances, participantIds.length);
+    let confirmed = 0;
     for (let i = 0; i < count; i++) {
       const { error: attError } = await supabase.rpc('confirm_attendance', {
         p_event_id: event.id,
         p_user_id: participantIds[i],
       });
       if (attError) console.warn(`[seed] No pudo confirmar jugador${i + 1}: ${attError.message}`);
+      else confirmed++;
     }
-    console.info(`[seed] ${count} asistencias confirmadas en "${event.title}"`);
+    console.info(`[seed] ${confirmed} de ${count} asistencias confirmadas en "${event.title}"`);
     eventIdx++;
   }
 

@@ -15,7 +15,6 @@ import CitasPage from './pages/CitasPage.jsx';
 import NuevaCitaPage from './pages/NuevaCitaPage.jsx';
 import DisponibilidadPage from './pages/DisponibilidadPage.jsx';
 import PerfilPage from './pages/PerfilPage.jsx';
-import SaludPage from './pages/SaludPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 
 export const router = createBrowserRouter([
@@ -48,8 +47,8 @@ export const router = createBrowserRouter([
         ),
       },
       { path: '/eventos/:id', element: <DetalleEventoPage /> },
-      { path: '/eventos/:id/editar', element: <EditarEventoPage /> },
-      { path: '/eventos/:id/asistentes', element: <AsistentesPage /> },
+      { path: '/eventos/:id/editar', element: <RoleRoute role="organizer"><EditarEventoPage /></RoleRoute> },
+      { path: '/eventos/:id/asistentes', element: <RoleRoute role="organizer"><AsistentesPage /></RoleRoute> },
       { path: '/panel', element: <PanelPage /> },
       { path: '/citas', element: <CitasPage /> },
       {
@@ -62,7 +61,6 @@ export const router = createBrowserRouter([
       },
       { path: '/disponibilidad', element: <DisponibilidadPage /> },
       { path: '/perfil', element: <PerfilPage /> },
-      { path: '/salud', element: <SaludPage /> },
     ],
   },
   {

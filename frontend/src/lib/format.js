@@ -27,3 +27,17 @@ export const CATEGORY_LABELS = {
   recreation: 'Recreativo',
   other: 'Otro',
 };
+
+// Colombia no tiene horario de verano: America/Bogota es siempre UTC-5.
+// Convierte el valor de un <input type="datetime-local"> ("2026-10-31T15:00") a ISO 8601 UTC.
+export function bogotaInputToIso(value) {
+  const withSeconds = value.length === 16 ? `${value}:00` : value;
+  return new Date(`${withSeconds}-05:00`).toISOString();
+}
+
+// Operación inversa: ISO → valor para <input type="datetime-local"> en hora de Bogotá.
+export function isoToBogotaInput(iso) {
+  return new Date(new Date(iso).getTime() - 5 * 3600 * 1000).toISOString().slice(0, 16);
+}
+
+export const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABELS).map(([value, label]) => ({ value, label }));

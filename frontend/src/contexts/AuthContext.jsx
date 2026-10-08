@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
 import { api } from '../lib/api.js';
@@ -22,43 +22,46 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  async function fetchProfile() {
+  const loadProfile = useCallback(async () => {
     try {
       const { data } = await api.get('/me');
       setProfile(data);
     } catch {
       setProfile(null);
     }
-  }
+  }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      if (data.session) fetchProfile().finally(() => setLoading(false));
-      else setLoading(false);
-    });
-
+    // INITIAL_SESSION llega al suscribirse, así que no hace falta getSession().
+    // El perfil se pide fuera del callback para no bloquear el cliente de Auth.
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
-      if (newSession) fetchProfile();
-      else setProfile(null);
+      if (!newSession) {
+        setProfile(null);
+        setLoading(false);
+        return;
+      }
+      setTimeout(() => loadProfile().finally(() => setLoading(false)), 0);
     });
 
     return () => listener.subscription.unsubscribe();
-  }, []);
+  }, [loadProfile]);
 
   async function signUp({ fullName, email, password, role }) {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { data: { full_name: fullName, role } },
     });
     if (error) throw new Error(translateAuthError(error));
+    if (!data.session) throw new Error('No pudimos completar la acción, intenta de nuevo');
+    await loadProfile();
   }
 
   async function signIn({ email, password }) {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(translateAuthError(error));
+    await loadProfile();
   }
 
   async function signOut() {
@@ -69,7 +72,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, profile, loading, signUp, signIn, signOut }}>
+    <AuthContext.Provider value={{ session, profile, setProfile, loading, signUp, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
