@@ -8,6 +8,8 @@ const RPC_CODES = new Map([
   ['EVENT_STARTED', [409, 'El evento ya empezó, no se puede modificar']],
   ['CHECKIN_NOT_OPEN', [409, 'El check-in se habilita 2 horas antes del evento']],
   ['APPOINTMENT_NOT_ACTIVE', [409, 'La cita fue cancelada']],
+  ['INVALID_EVENT_TRANSITION', [409, 'Ese cambio de estado no está permitido para el evento']],
+  ['INVALID_INITIAL_STATUS', [409, 'Un evento nuevo no puede crearse en ese estado']],
 ]);
 
 export function translateDbError(error) {
@@ -17,7 +19,8 @@ export function translateDbError(error) {
   if (rpc) return new AppError(rpc[0], error.message, rpc[1]);
 
   if (error.code === '23514') {
-    if (error.constraint_name === 'events_confirmed_within_capacity') {
+    const constraint = error.constraint_name ?? error.message ?? '';
+    if (constraint.includes('events_confirmed_within_capacity')) {
       return new AppError(409, 'CAPACITY_BELOW_CONFIRMED', 'El cupo no puede ser menor que los confirmados actuales');
     }
     return new AppError(409, 'CONSTRAINT_VIOLATION', 'Los datos no cumplen las reglas');
