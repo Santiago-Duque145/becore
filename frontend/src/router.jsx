@@ -15,7 +15,6 @@ import CitasPage from './pages/CitasPage.jsx';
 import NuevaCitaPage from './pages/NuevaCitaPage.jsx';
 import DisponibilidadPage from './pages/DisponibilidadPage.jsx';
 import PerfilPage from './pages/PerfilPage.jsx';
-import SaludPage from './pages/SaludPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
 
 export const router = createBrowserRouter([
@@ -62,7 +61,6 @@ export const router = createBrowserRouter([
       },
       { path: '/disponibilidad', element: <DisponibilidadPage /> },
       { path: '/perfil', element: <PerfilPage /> },
-      { path: '/salud', element: <SaludPage /> },
     ],
   },
   {
