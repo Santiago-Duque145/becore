@@ -68,6 +68,30 @@ describe('POST/DELETE /events/:id/attendance', () => {
     expect(res.body.error.code).toBe('EVENT_FULL');
   });
 
+  it('activity: limit fuera de rango → 400', async () => {
+    loginAs(participant);
+    const base = `/api/v1/events/${EVENT_ID}/activity`;
+    for (const limit of ['0', '21', 'abc']) {
+      const res = await request(app).get(`${base}?limit=${limit}`).set('Authorization', 'Bearer t');
+      expect(res.status).toBe(400);
+    }
+  });
+
+  it('attendees: participante → 403', async () => {
+    loginAs(participant);
+    const res = await request(app).get(`/api/v1/events/${EVENT_ID}/attendees`).set('Authorization', 'Bearer t');
+    expect(res.status).toBe(403);
+  });
+
+  it('check-in: body inválido → 400', async () => {
+    loginAs(organizer);
+    const res = await request(app)
+      .patch(`/api/v1/events/${EVENT_ID}/attendees/${EVENT_ID}`)
+      .set('Authorization', 'Bearer t')
+      .send({ checkedIn: 'si' });
+    expect(res.status).toBe(400);
+  });
+
   it('participante cancela → 200', async () => {
     loginAs(participant);
     repo.cancelAttendance.mockResolvedValue(3);
