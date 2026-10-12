@@ -45,7 +45,7 @@ Viewport de referencia 390 × 844. Fondo `#0B1420`. Fuentes Poppins (títulos) e
 - Subtítulo "Inicia sesión para ver tus eventos y citas": 13 px, `#94A3B8`, margen inferior 24 px.
 - Label "Correo electrónico" (12 px, 600, `#94A3B8`, mb 7) + input placeholder `nombre@correo.com`.
 - Label "Contraseña" + `PasswordInput` placeholder `••••••••`.
-- Inputs: fondo `#172436`, borde `1px rgba(255,255,255,0.08)`, radio 12, padding `14px 16px`, 14 px, mb 16. Placeholder `#64748B` (único ajuste por accesibilidad).
+- Inputs: fondo `#172436`, borde `1px rgba(255,255,255,0.08)`, radio 12, padding `14px 16px`, 14 px, mb 16. Placeholder `#8291A6` (`ink-faint`; único ajuste por accesibilidad, 4.9:1 sobre el campo).
 - Fila a la derecha, margen `-6px 0 20px`: enlace "¿Olvidaste tu contraseña?" 12 px, 600, `#14B8A6` → `/recuperar`.
 - Botón "Iniciar sesión": fondo `#14B8A6`, texto `#04241F`, sin borde, radio 12, padding 16, 14.5 px, 700, ancho completo.
 - Divisor "o continúa con": 11.5 px, líneas `rgba(255,255,255,0.08)`, margen `22px 0`.

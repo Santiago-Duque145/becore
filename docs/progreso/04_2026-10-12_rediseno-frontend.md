@@ -26,7 +26,7 @@ partido del 31 de octubre.
 
 1. **Sin mapa, ruta, distancia ni chat.** Los mockups los traen, pero están fuera de alcance (`CLAUDE.md` §9). Donde estaban, el layout se reacomoda sin huecos; tampoco se muestra "van en camino" ni avatares de asistentes porque la API no trae esos datos.
 2. **El rol se elige en el onboarding**, no en el login ni en el registro (`auth-onboarding.md` §2): Google no envía rol y elegirlo al iniciar sesión confundía. El cambio de rol solo se permite mientras el onboarding está pendiente (409 después).
-3. **Placeholder `#64748B` (`ink-faint`)** en lugar del `#475569` del mockup, que no tenía contraste. Aun así no llega a 4.5:1, por eso no se usa para texto que importe (el divisor de login pasó a `ink-muted`) y todos los campos tienen label.
+3. **Placeholder `#8291A6` (`ink-faint`)** en lugar del `#475569` del mockup, que no tenía contraste. El primer ajuste (`#64748B`) daba 3.3:1 sobre los campos; el valor final cumple 4.5:1 en todas las superficies (4.9:1 sobre `field`). El divisor del login usa `ink-muted`.
 4. **Layouts por rol:** barra inferior de 4 pestañas en móvil; en escritorio, barra superior para el participante y barra lateral para el organizador. El detalle de evento en móvil va a pantalla completa (modo inmersivo del `AppShell`).
 5. **"Para ti" por reglas, sin IA.** Puntaje en el backend (categoría +3; día, franja y zona +1) en hora de Bogotá; el módulo deja un punto de enganche para un re-ranking con IA sin cambiar el contrato.
 6. **Alturas del mockup:** campos de 47 px y botones de 49 px con `leading-[17px]`, aunque el texto de los campos sea de 16 px en móvil (evita el zoom de iOS).
@@ -53,6 +53,7 @@ inicio"; iPhone: Safari → Compartir → "Agregar a pantalla de inicio". Abrir 
 | Lighthouse móvil · Accesibilidad | `/login` 100 · `/descubre` 100 |
 | Lighthouse móvil · Rendimiento | `/login` 86 · `/descubre` 100 |
 | Checklist §7 | 46 combinaciones (ruta × rol × ancho) sin problemas |
+| Contraste de texto | Todos los tokens de texto ≥ 4.5:1 sobre `bg`, `sheet`, `panel` y `field` (el menor: `ink-faint` sobre `field`, 4.9:1) |
 | Bundle | de 1 chunk de 789.9 kB (232.6 kB gzip) a 40 archivos; mayor 265.4 kB; carga inicial 565.9 kB (170.2 kB gzip) |
 | `/login` frente al mockup a 390 px | posiciones y tamaños iguales al píxel (salvo el bloque de Google) |
 | Confirmar asistencia | 1 toque desde el detalle, 2 desde Descubre (RNF-01: ≤ 3) |

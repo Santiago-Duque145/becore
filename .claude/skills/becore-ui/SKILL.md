@@ -48,7 +48,7 @@ Todos los colores, radios y sombras salen de aquí. **Prohibido** escribir hex s
   /* Texto */
   --color-ink:         #F1F5F9; /* texto principal */
   --color-ink-muted:   #94A3B8; /* labels, subtítulos */
-  --color-ink-faint:   #64748B; /* placeholders, metadatos (ver nota a11y) */
+  --color-ink-faint:   #8291A6; /* placeholders, metadatos (ver nota a11y) */
 
   /* Acentos de marca */
   --color-accent:      #14B8A6; /* turquesa — CTA y foco */
@@ -84,7 +84,7 @@ Fuentes en `index.html` (una sola petición):
 
 ### Accesibilidad de color
 - Texto normal ≥ 4.5:1. `ink` y `ink-muted` sobre `bg`/`sheet`/`field` cumplen.
-- El mockup usa `#475569` para placeholders; sobre `#172436` da ~2.3:1 y **no cumple**. Usa `ink-faint` (#64748B). Es el único cambio permitido frente al mockup.
+- El mockup usa `#475569` para placeholders; sobre `#172436` da ~2.3:1 y **no cumple**. Usa `ink-faint` (#8291A6), que cumple 4.5:1 en todas las superficies (4.9:1 sobre `field`, 5.1 sobre `panel`, 5.4 sobre `sheet` y 5.8 sobre `bg`). Es el único cambio permitido frente al mockup.
 - Nunca transmitas estado solo con color: acompaña con ícono o texto ("Lleno", "Confirmado").
 
 ## 2. Tipografía
@@ -114,7 +114,7 @@ Crea/usa estos y solo estos para lo básico. Todos aceptan `className` para ajus
 | `Chip` | Seleccionable (`aria-pressed`). Inactivo `border border-line text-ink-muted`; activo `bg-accent text-on-accent border-accent`. `rounded-full px-4 py-2 text-xs font-semibold`. Con ícono opcional a la izquierda. |
 | `OptionCard` | Tarjeta seleccionable grande (onboarding, rol). `bg-panel border border-line rounded-card p-4`; seleccionada `border-accent bg-accent/10` + check. Es un `<button aria-pressed>`. |
 | `ProgressSteps` | Barra segmentada (n segmentos, 4 px de alto, `gap-1.5`). Completados `bg-accent`, actual `bg-accent/60`, pendientes `bg-line`. Incluye texto "Paso 2 de 5" para lectores de pantalla. |
-| `Divider` | Línea – texto – línea (`text-[11.5px] text-ink-faint`), como "o continúa con" del login. |
+| `Divider` | Línea – texto – línea (`text-[11.5px] text-ink-muted`), como "o continúa con" del login. |
 | `Toast` | Esquina inferior, `bg-panel border border-line`, ícono por tipo, se cierra solo a los 4 s, `role="status"`. |
 | `Skeleton` | Bloques `bg-field animate-pulse rounded-card` con la forma del contenido real. |
 | `EmptyState` | Ícono + título + una frase + 1 acción. Nunca una pantalla en blanco. |
