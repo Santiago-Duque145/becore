@@ -181,7 +181,22 @@ excluyen los de puntaje 0 y se ordena por puntaje desc y luego `startsAt` asc. `
 ```json
 { "upcomingEvents": [Event], "pastEvents": [Event], "upcomingAppointments": [Appointment] }
 ```
-Solo eventos con asistencia `confirmed` del usuario. `pastEvents`: últimos 10.
+Eventos donde el usuario tiene asistencia, **confirmada o cancelada** (R7: "Mis eventos" muestra el estado
+"Cancelado"); cada uno con su `myAttendance`. Sin borradores. Próximos: `startsAt` futuro o `in_progress`, orden
+ascendente. `pastEvents`: los 10 más recientes. `upcomingAppointments`: igual que `GET /appointments?scope=upcoming`.
+
+### Avisos de la app (campana, RF-16/RF-17)
+
+Leen la tabla `notifications` (`message`, `read_at`) del usuario. El envío por correo no cambia (§4).
+
+| Método | Ruta | Acceso | Body / Query | Respuesta |
+|---|---|---|---|---|
+| GET | `/notifications` | todos | query `limit` 1–50 (defecto 30) | `{ data: Notification[], meta: { unread } }` más reciente primero |
+| GET | `/notifications/unread-count` | todos | — | `{ count }` |
+| POST | `/notifications/:id/read` | dueño | — | `Notification`; si es de otro o no existe → 404 `NOT_FOUND`; si ya estaba leída conserva `readAt` |
+| POST | `/notifications/read-all` | todos | — | `{ updated }` |
+
+`Notification`: `{ id, type, subject, message, eventId, appointmentId, readAt, createdAt }` (`type` = `notification_type`).
 
 ### Disponibilidad (RF-15)
 

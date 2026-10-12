@@ -59,6 +59,13 @@ export async function findEventById(id) {
   return data ? toCamel(data) : null;
 }
 
+// Varios eventos por id ("Mis eventos"); el orden lo decide el servicio
+export async function findEventsByIds(ids) {
+  if (!ids.length) return [];
+  const data = unwrap(await supabaseAdmin.from('events').select(COLUMNS).in('id', ids));
+  return data.map(toCamel);
+}
+
 export async function updateEvent(id, patch) {
   const data = unwrap(await supabaseAdmin.from('events').update(toSnake(patch)).eq('id', id).select(COLUMNS).single());
   return toCamel(data);

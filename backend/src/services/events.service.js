@@ -10,7 +10,7 @@ const DAY_MS = 24 * 3600 * 1000;
 
 const notFound = () => new AppError(404, 'EVENT_NOT_FOUND', 'El evento no existe');
 
-function toEvent(event, myAttendance) {
+export function toEvent(event, myAttendance) {
   const rest = { ...event };
   delete rest.organizerId;
   const availableSpots = Math.max(event.capacity - event.confirmedCount, 0);
