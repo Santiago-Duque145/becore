@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import { toast } from 'sonner';
-import { Check } from 'lucide-react';
+import { CheckIcon } from '../icons/index.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useCancelAttendance, useConfirmAttendance } from '../../hooks/useAttendance.js';
-import { Button } from '../ui/Button.jsx';
-import { Modal } from '../ui/Modal.jsx';
+import { Button, Modal, useToast } from '../ui/index.js';
 
 // Estado de la acción según el evento (ui.md §4). `compact` se usa en las tarjetas.
 function resolveState(event) {
@@ -26,6 +24,7 @@ const DISABLED_LABELS = {
 
 export function AttendanceButton({ event, compact = false }) {
   const { profile } = useAuth();
+  const toast = useToast();
   const confirm = useConfirmAttendance(event.id);
   const cancel = useCancelAttendance(event.id);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
@@ -53,16 +52,16 @@ export function AttendanceButton({ event, compact = false }) {
     if (compact) return null;
     return (
       <div className="flex flex-col items-start gap-2">
-        <span className="inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-emerald-500/15 px-4 font-semibold text-navy-900">
-          <Check size={18} className="text-emerald-500" aria-hidden="true" /> Vas a ir
+        <span className="inline-flex min-h-12 items-center gap-2 rounded-field bg-success/15 px-4 text-sm font-semibold text-success">
+          <CheckIcon size={18} /> Vas a ir
         </span>
         {state === 'confirmed' && (
-          <Button variant="danger" onClick={() => setConfirmingCancel(true)} disabled={cancel.isPending}>
+          <Button variant="danger" onClick={() => setConfirmingCancel(true)} loading={cancel.isPending}>
             Cancelar asistencia
           </Button>
         )}
         <Modal open={confirmingCancel} title="¿Cancelar tu asistencia?" onClose={() => setConfirmingCancel(false)}>
-          <p className="mb-5 text-gray-500">Liberarás tu cupo para que otra persona pueda ir.</p>
+          <p className="mb-5 text-sm text-ink-muted">Liberarás tu cupo para que otra persona pueda ir.</p>
           <div className="flex flex-col-reverse gap-2 md:flex-row md:justify-end">
             <Button variant="secondary" onClick={() => setConfirmingCancel(false)}>
               Mantener cupo
@@ -78,8 +77,8 @@ export function AttendanceButton({ event, compact = false }) {
 
   if (state === 'available') {
     return (
-      <Button onClick={handleConfirm} disabled={confirm.isPending} className={compact ? 'w-full' : 'w-full md:w-auto'}>
-        {confirm.isPending ? 'Confirmando…' : 'Confirmar asistencia'}
+      <Button onClick={handleConfirm} loading={confirm.isPending} className={compact ? 'w-full' : 'w-full md:w-auto'}>
+        Confirmar asistencia
       </Button>
     );
   }

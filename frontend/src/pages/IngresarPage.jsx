@@ -1,16 +1,15 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, Navigate, useNavigate } from 'react-router';
-import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { loginSchema } from '../lib/auth-schemas.js';
-import { AuthLayout } from '../components/layout/AuthLayout.jsx';
-import { Input } from '../components/ui/Field.jsx';
-import { Button } from '../components/ui/Button.jsx';
+import { AuthLayout } from '../layouts/AuthLayout.jsx';
+import { Button, Input, PasswordInput, useToast } from '../components/ui/index.js';
 
 export default function IngresarPage() {
   const { session, loading, signIn } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const {
     register,
     handleSubmit,
@@ -35,7 +34,7 @@ export default function IngresarPage() {
       footer={
         <>
           ¿Aún no tienes cuenta?{' '}
-          <Link to="/registro" className="font-medium text-teal-500 underline">
+          <Link to="/registro" className="focus-ring rounded font-semibold text-accent hover:text-accent-soft">
             Regístrate
           </Link>
         </>
@@ -43,15 +42,14 @@ export default function IngresarPage() {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
         <Input label="Correo" type="email" autoComplete="email" error={errors.email?.message} {...register('email')} />
-        <Input
+        <PasswordInput
           label="Contraseña"
-          type="password"
           autoComplete="current-password"
           error={errors.password?.message}
           {...register('password')}
         />
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Entrando…' : 'Ingresar'}
+        <Button type="submit" loading={isSubmitting}>
+          Ingresar
         </Button>
       </form>
     </AuthLayout>

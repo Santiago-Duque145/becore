@@ -1,22 +1,21 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, Navigate, useNavigate } from 'react-router';
-import { toast } from 'sonner';
-import { CalendarPlus, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { registerSchema } from '../lib/auth-schemas.js';
-import { AuthLayout } from '../components/layout/AuthLayout.jsx';
-import { Input } from '../components/ui/Field.jsx';
-import { Button } from '../components/ui/Button.jsx';
+import { AuthLayout } from '../layouts/AuthLayout.jsx';
+import { CalendarIcon, UsersIcon } from '../components/icons/index.js';
+import { Button, Input, PasswordInput, useToast } from '../components/ui/index.js';
 
 const ROLES = [
-  { value: 'organizer', label: 'Quiero organizar eventos', Icon: CalendarPlus },
-  { value: 'participant', label: 'Quiero participar en eventos', Icon: Users },
+  { value: 'organizer', label: 'Quiero organizar eventos', Icon: CalendarIcon },
+  { value: 'participant', label: 'Quiero participar en eventos', Icon: UsersIcon },
 ];
 
 export default function RegistroPage() {
   const { session, loading, signUp } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const {
     register,
     handleSubmit,
@@ -40,50 +39,49 @@ export default function RegistroPage() {
       footer={
         <>
           ¿Ya tienes cuenta?{' '}
-          <Link to="/ingresar" className="font-medium text-teal-500 underline">
+          <Link to="/ingresar" className="focus-ring rounded font-semibold text-accent hover:text-accent-soft">
             Inicia sesión
           </Link>
         </>
       }
     >
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
+        {/* Selector de rol con radios nativos: sale del registro en R3 (auth-onboarding §5) */}
         <fieldset className="flex flex-col gap-2">
-          <legend className="mb-1.5 text-sm font-medium text-navy-900">¿Cómo vas a usar Be Core?</legend>
+          <legend className="mb-[7px] text-xs font-semibold text-ink-muted">¿Cómo vas a usar Be Core?</legend>
           {ROLES.map(({ value, label, Icon }) => (
             <label
               key={value}
-              className="flex min-h-[56px] cursor-pointer items-center gap-3 rounded-xl border border-gray-200 px-4 text-navy-900 has-[:checked]:border-teal-500 has-[:checked]:bg-teal-500/10 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-teal-500"
+              className="flex min-h-14 cursor-pointer items-center gap-3 rounded-card border border-line bg-panel px-4 text-sm text-ink transition-colors has-[:checked]:border-accent has-[:checked]:bg-accent/10 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent"
             >
               <input type="radio" value={value} className="sr-only" {...register('role')} />
-              <Icon size={22} className="text-teal-600" aria-hidden="true" />
-              <span className="font-medium">{label}</span>
+              <Icon size={20} className="text-accent-soft" />
+              <span className="font-semibold">{label}</span>
             </label>
           ))}
           {errors.role && (
-            <p role="alert" className="text-sm text-orange-500">
+            <p role="alert" className="text-xs font-medium text-danger">
               {errors.role.message}
             </p>
           )}
         </fieldset>
         <Input label="Nombre completo" autoComplete="name" error={errors.fullName?.message} {...register('fullName')} />
         <Input label="Correo" type="email" autoComplete="email" error={errors.email?.message} {...register('email')} />
-        <Input
+        <PasswordInput
           label="Contraseña"
-          type="password"
           autoComplete="new-password"
           hint="Mínimo 8 caracteres"
           error={errors.password?.message}
           {...register('password')}
         />
-        <Input
+        <PasswordInput
           label="Confirmar contraseña"
-          type="password"
           autoComplete="new-password"
           error={errors.confirmPassword?.message}
           {...register('confirmPassword')}
         />
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Creando cuenta…' : 'Crear cuenta'}
+        <Button type="submit" loading={isSubmitting}>
+          Crear cuenta
         </Button>
       </form>
     </AuthLayout>

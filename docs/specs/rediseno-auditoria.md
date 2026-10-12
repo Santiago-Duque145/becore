@@ -187,3 +187,37 @@ Las rutas solo para organizador se envuelven en `RoleRoute role="organizer"`.
 - n.º 6: `sonner` estilizado o `Toast` propio.
 - Riesgo n.º 4: ticker global de Descubre (solo Realtime o un nuevo `GET /activity` en `api.md`).
 - Riesgo n.º 4: quién hace los endpoints `/dashboard/*` (S3-01 y S3-03) antes de R5, R7 y R8.
+
+---
+
+## e) Notas de R1 (fundaciones) · 2026-10-11
+
+**Decisiones de R0 que R1 resolvió siguiendo el plan de `PROMPTS-rediseno.md`** (y no la propuesta de d):
+- n.º 5 Íconos: `components/icons/` con SVG propios. Son los 16 de los mockups y 5 adicionales que usaban las páginas (`x`, `trash`, `loader`, `alert-circle`, `info`). `lucide-react` ya no se importa.
+- n.º 6 Toasts: `Toast` + `ToastProvider` + `useToast` propios. `sonner` ya no se importa.
+- n.º 20 Carpeta: los layouts quedan en `src/layouts/`; las guardas (`ProtectedRoute`, `RoleRoute`) siguen en `components/layout/`.
+- `lucide-react` y `sonner` siguen en `frontend/package.json` sin uso. No se desinstalaron porque R1 prohíbe tocar dependencias; se pueden quitar en R9.
+
+**Navegación provisional** (n.º 4 sigue abierta para el equipo; todo vive en `layouts/navigation.js`):
+- Móvil: la pestaña Inicio del participante lleva a `/eventos` (futuro `/descubre`), y la del organizador a `/panel`, que sigue siendo un stub hasta R8. "Mis eventos" del organizador lleva a `/eventos`.
+- Citas no tiene pestaña. En móvil se llega desde un botón de la cabecera; el organizador tiene además "Crear evento" (+) ahí, porque el botón de `/eventos` solo se ve en escritorio.
+- `/mis-eventos` y `/avisos` muestran `ProximamentePage` hasta R7. El punto naranja de Avisos ya está en `MobileTabBar` (`hasUnread`), pero falta el dato de la API.
+- El buscador de la barra superior de escritorio se omitió hasta R5.
+
+**Ajustes frente a la skill:**
+- `Input` usa `text-base` (16 px) en móvil y `text-sm` desde `md`: con menos de 16 px, iOS hace zoom al enfocar (`frontend/CLAUDE.md` §6).
+- La ayuda de los campos va en `ink-muted`, no en `ink-faint`, porque `ink-faint` sobre `bg` no llega a 4.5:1.
+- Los textos de la barra inferior van en 11 px (el mockup usa 10.5 px; la skill prohíbe menos de 11) y en `ink-muted` (d n.º 13).
+- `Chip` mantiene el alto visual del mockup y amplía el área táctil a 44 px con un `::after`.
+- `GoogleButton` es el único componente con hex (`#FFFFFF`/`#1F1F1F` y el logo), por las guías de marca de Google.
+- `Badge` usa 11 px en lugar de los 10–10.5 px del mockup (mínimo de la skill).
+
+**Riesgo nuevo (para todas las sesiones):** pasar a un componente clases que contradicen las suyas (`mb-0` contra `mb-4`, `text-danger` contra `text-accent`) no sirve, porque gana el orden del CSS generado y no el del atributo. Por eso `Field` tiene la prop `flush`. Ajusta con props o amplía el componente.
+
+**Páginas grandes (paso 6 de R1, sin refactorizar):** ninguna pasa de 250 líneas. Las más cargadas siguen siendo `NuevaCitaPage` (183), `DetalleEventoPage` (153), `CitasPage` (144) y `EventosPage` (131). Los riesgos de lógica mezclada de c) n.º 7 siguen vigentes para R6 y R8.
+
+**Verificación hecha en R1:**
+- `npm run lint` y `npm test` en verde.
+- `npm run build` sin errores. Solo el aviso de chunk > 500 kB, que ya existía; el bundle bajó de 746 a 724 kB.
+- `/dev/ui` y `/ingresar` revisadas a 390 y 1440 px.
+- Navegación probada con Edge headless (CDP) con un organizador y un participante del seed, a 390 y 1440 px: la pestaña activa lleva `aria-current` y no hay scroll horizontal en ninguna ruta.

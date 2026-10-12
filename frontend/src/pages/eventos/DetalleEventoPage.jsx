@@ -1,26 +1,31 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router';
-import { toast } from 'sonner';
-import { ArrowLeft, CalendarClock, MapPin, UserRound } from 'lucide-react';
+import { CalendarIcon, ChevronLeftIcon, MapPinIcon, UserIcon } from '../../components/icons/index.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useCancelEvent, useEvent, usePublishEvent } from '../../hooks/useEvent.js';
 import { formatDate } from '../../lib/format.js';
 import { AttendanceButton } from '../../components/events/AttendanceButton.jsx';
-import { CapacityBar } from '../../components/events/CapacityBar.jsx';
 import { CategoryChip, StatusBadges } from '../../components/events/EventBadges.jsx';
-import { Button, LinkButton } from '../../components/ui/Button.jsx';
-import { ErrorState, Skeleton } from '../../components/ui/Feedback.jsx';
-import { Modal } from '../../components/ui/Modal.jsx';
+import {
+  Button,
+  CapacityBar,
+  ErrorState,
+  LinkButton,
+  Modal,
+  Skeleton,
+  useToast,
+} from '../../components/ui/index.js';
 
 export default function DetalleEventoPage() {
   const { id } = useParams();
   const { profile } = useAuth();
+  const toast = useToast();
   const { data: event, isPending, isError, error, refetch } = useEvent(id);
   const cancelEvent = useCancelEvent(id);
   const publishEvent = usePublishEvent(id);
   const [confirmingCancel, setConfirmingCancel] = useState(false);
 
-  if (isPending) return <Skeleton className="h-96" />;
+  if (isPending) return <Skeleton className="mx-auto h-96 max-w-2xl" />;
   if (isError) {
     return error.code === 'EVENT_NOT_FOUND' ? (
       <ErrorState message="El evento no existe o ya no está disponible." />
@@ -55,8 +60,11 @@ export default function DetalleEventoPage() {
 
   return (
     <article className="mx-auto flex max-w-2xl flex-col gap-5">
-      <Link to="/eventos" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-teal-600">
-        <ArrowLeft size={16} aria-hidden="true" /> Volver a eventos
+      <Link
+        to="/eventos"
+        className="focus-ring inline-flex min-h-11 items-center gap-1 self-start rounded-field text-sm font-semibold text-accent hover:text-accent-soft"
+      >
+        <ChevronLeftIcon size={16} /> Volver a eventos
       </Link>
 
       <header className="flex flex-col gap-3">
@@ -64,40 +72,40 @@ export default function DetalleEventoPage() {
           <CategoryChip category={event.category} />
           <StatusBadges event={event} />
         </div>
-        <h1 className="font-display text-2xl font-bold text-navy-900">{event.title}</h1>
+        <h1 className="font-display text-xl font-semibold text-ink md:text-[22px]">{event.title}</h1>
       </header>
 
-      <section className="flex flex-col gap-3 rounded-2xl bg-white p-5 shadow-sm">
-        <p className="flex items-start gap-2 text-navy-900">
-          <CalendarClock size={18} className="mt-0.5 shrink-0 text-teal-600" aria-hidden="true" />
+      <section className="flex flex-col gap-3 rounded-card border border-line bg-panel p-5">
+        <p className="flex items-start gap-2 text-sm text-ink">
+          <CalendarIcon size={18} className="mt-0.5 shrink-0 text-accent-soft" />
           <span className="capitalize">
             {formatDate(event.startsAt)}
             {event.endsAt && <span className="normal-case"> · hasta {formatDate(event.endsAt)}</span>}
           </span>
         </p>
-        <p className="flex items-start gap-2 text-navy-900">
-          <MapPin size={18} className="mt-0.5 shrink-0 text-teal-600" aria-hidden="true" />
+        <p className="flex items-start gap-2 text-sm text-ink">
+          <MapPinIcon size={18} className="mt-0.5 shrink-0 text-accent-soft" />
           <span>{event.location}</span>
         </p>
-        <p className="flex items-start gap-2 text-navy-900">
-          <UserRound size={18} className="mt-0.5 shrink-0 text-teal-600" aria-hidden="true" />
+        <p className="flex items-start gap-2 text-sm text-ink">
+          <UserIcon size={18} className="mt-0.5 shrink-0 text-accent-soft" />
           <span>Organiza {event.organizer.fullName}</span>
         </p>
-        <CapacityBar confirmedCount={event.confirmedCount} capacity={event.capacity} />
-        <p className="text-sm text-gray-500">
+        <CapacityBar confirmedCount={event.confirmedCount} capacity={event.capacity} className="mt-1" />
+        <p className="text-xs text-ink-muted">
           {event.isFull ? 'Sin cupos disponibles' : `${event.availableSpots} cupos disponibles`}
         </p>
       </section>
 
       {event.description && (
-        <section className="rounded-2xl bg-white p-5 shadow-sm">
-          <h2 className="mb-2 font-display text-lg font-semibold text-navy-900">Sobre el evento</h2>
-          <p className="whitespace-pre-line text-navy-900">{event.description}</p>
+        <section className="rounded-card border border-line bg-panel p-5">
+          <h2 className="mb-2 font-display text-base font-semibold text-ink">Sobre el evento</h2>
+          <p className="text-[13px] leading-relaxed whitespace-pre-line text-ink-muted">{event.description}</p>
         </section>
       )}
 
       {event.status === 'cancelled' && (
-        <p role="status" className="rounded-xl bg-orange-500/10 p-4 font-medium text-orange-500">
+        <p role="status" className="rounded-field border border-action/30 bg-action/10 p-4 text-sm font-semibold text-action">
           Este evento fue cancelado.
         </p>
       )}
@@ -107,8 +115,8 @@ export default function DetalleEventoPage() {
       {isOwner && (
         <section aria-label="Acciones del organizador" className="flex flex-col gap-2 md:flex-row md:flex-wrap">
           {event.status === 'draft' && canModify && (
-            <Button onClick={handlePublish} disabled={publishEvent.isPending}>
-              {publishEvent.isPending ? 'Publicando…' : 'Publicar evento'}
+            <Button onClick={handlePublish} loading={publishEvent.isPending}>
+              Publicar evento
             </Button>
           )}
           {canModify && (
@@ -128,15 +136,15 @@ export default function DetalleEventoPage() {
       )}
 
       <Modal open={confirmingCancel} title="¿Cancelar este evento?" onClose={() => setConfirmingCancel(false)}>
-        <p className="mb-5 text-gray-500">
+        <p className="mb-5 text-sm text-ink-muted">
           El evento quedará cancelado y esta acción no se puede deshacer. Los confirmados verán que ya no se realiza.
         </p>
         <div className="flex flex-col-reverse gap-2 md:flex-row md:justify-end">
           <Button variant="secondary" onClick={() => setConfirmingCancel(false)}>
             Mantener evento
           </Button>
-          <Button variant="danger" onClick={handleCancel} disabled={cancelEvent.isPending}>
-            {cancelEvent.isPending ? 'Cancelando…' : 'Sí, cancelar evento'}
+          <Button variant="danger" onClick={handleCancel} loading={cancelEvent.isPending}>
+            Sí, cancelar evento
           </Button>
         </div>
       </Modal>

@@ -15,7 +15,7 @@ frontend/
 ├── vite.config.js
 ├── .env.example
 └── src/
-    ├── main.jsx                 ← QueryClientProvider, AuthProvider, RouterProvider, Toaster
+    ├── main.jsx                 ← QueryClientProvider, ToastProvider, AuthProvider, RouterProvider
     ├── router.jsx               ← todas las rutas (ver ui.md §2)
     ├── index.css                ← Tailwind 4 + tokens de marca (@theme de la skill becore-ui §1)
     ├── lib/
@@ -28,10 +28,13 @@ frontend/
     ├── hooks/                   ← useEvents, useEvent, useConfirmAttendance, useRealtimeEvent, ...
     ├── services/                ← funciones que llaman a la API (events.api.js, ...)
     ├── components/
-    │   ├── ui/                  ← Button, Input, Select, Card, Badge, Modal, Spinner, EmptyState
-    │   ├── layout/              ← AppShell, Navbar, ProtectedRoute, RoleRoute
+    │   ├── ui/                  ← componentes base de la skill §3; se importan siempre desde ui/index.js
+    │   ├── icons/               ← íconos SVG propios (trazo 2 px, 24×24, currentColor)
+    │   ├── layout/              ← ProtectedRoute, RoleRoute (guardas de ruta)
     │   └── events/ ...          ← componentes por módulo
-    └── pages/                   ← una carpeta o archivo por ruta
+    ├── layouts/                 ← AppShell (por rol y ancho), MobileTabBar, MobileHeader,
+    │                              DesktopTopBar, DesktopSidebar, AuthLayout, navigation.js
+    └── pages/                   ← una carpeta o archivo por ruta (pages/dev/ solo en desarrollo: /dev/ui)
 ```
 
 ## 2. Variables de entorno (`frontend/.env.example`)
@@ -143,7 +146,8 @@ api.interceptors.response.use(
 - Toda llamada a la API vive en `src/services/*.api.js` y se consume con hooks de TanStack Query en `src/hooks/`.
 - Las páginas no llaman a Axios directamente.
 - Después de una mutación, invalida las claves afectadas definidas en `query-keys.js`.
-- Muestra errores con `toast.error(error.message)` de `sonner`; éxitos con `toast.success(...)`.
+- Muestra errores con `toast.error(error.message)` y éxitos con `toast.success(...)`, donde `const toast = useToast()`
+  sale de `components/ui` (desde R1 ya no se usa `sonner`).
 - Cada lista tiene tres estados diseñados: cargando (skeleton), vacío (`EmptyState` con acción) y error.
 
 ### 4.5 Realtime
@@ -178,7 +182,11 @@ fijos que la skill no define. Las contradicciones ya detectadas y su resolución
 - Usa solo los tokens de la skill `becore-ui` §1. No inventes colores ni fuentes. Nada de hex sueltos en componentes.
 - Reutiliza `components/ui/` antes de crear estilos ad hoc (skill §0 y §3).
 - Botones y enlaces con estado de foco visible. Imágenes con `alt`. Formularios con `<label>`.
-- Iconos de `lucide-react`. Nada de emojis en la interfaz.
+- Iconos de `components/icons/` (SVG propios; desde R1 ya no se usa `lucide-react`). Si falta uno, agrégalo ahí
+  con el mismo trazo. Nada de emojis en la interfaz.
+- Para ajustar un componente de `ui/` usa sus props (`size`, `variant`, `flush`…), no clases que contradigan las
+  suyas: en Tailwind gana el orden del CSS generado, no el del atributo `class`.
+- Revisa los componentes en `/dev/ui` (solo con `npm run dev`) a 390 px y 1440 px antes de usarlos en una pantalla.
 - Confirmar asistencia debe tomar **3 toques o menos** desde el listado (RNF-01).
 
 ## 6. App instalable en iPhone (PWA)
