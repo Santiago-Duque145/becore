@@ -10,8 +10,11 @@ import { StatusBadges } from './EventBadges.jsx';
 // Tarjeta de mobile-descubre / desktop-descubre: portada por categoría, título, fecha, lugar,
 // cupo y acción. Sin distancia ni avatares (la API no trae asistentes por evento).
 // El enlace al detalle y el botón de asistencia son hermanos: no se anidan controles interactivos.
-export function EventCard({ event, reason, className }) {
+// preview: vista previa del formulario de evento, sin enlace ni acciones reales (como la ve un participante)
+export function EventCard({ event, reason, className, preview = false }) {
   const going = event.myAttendance?.status === 'confirmed';
+  const Body = preview ? 'div' : Link;
+  const bodyProps = preview ? {} : { to: `/eventos/${event.id}` };
   return (
     <article
       className={cn(
@@ -19,7 +22,7 @@ export function EventCard({ event, reason, className }) {
         className,
       )}
     >
-      <Link to={`/eventos/${event.id}`} className="focus-ring flex flex-1 flex-col rounded-card">
+      <Body {...bodyProps} className="focus-ring flex flex-1 flex-col rounded-card">
         <EventCover event={event} />
         <div className="flex flex-1 flex-col gap-2 px-3.5 pt-3 md:px-4 md:pt-3.5">
           {reason && <p className="text-[11.5px] font-semibold text-accent-soft">{reason}</p>}
@@ -43,10 +46,16 @@ export function EventCard({ event, reason, className }) {
             </div>
           )}
         </div>
-      </Link>
+      </Body>
       <div className="flex items-end gap-3 px-3.5 pt-2.5 pb-3.5 md:px-4 md:pb-4">
         <CapacityBar confirmedCount={event.confirmedCount} capacity={event.capacity} className="min-w-0 flex-1" />
-        <AttendanceButton event={event} compact />
+        {preview ? (
+          <span aria-hidden="true" className="inline-flex min-h-11 items-center rounded-lg bg-accent px-3.5 text-xs font-bold text-on-accent">
+            Confirmar
+          </span>
+        ) : (
+          <AttendanceButton event={event} compact />
+        )}
       </div>
     </article>
   );

@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../lib/supabase.js';
 
-// Ticker "en vivo" de Descubre: escucha los INSERT de activity_log por Supabase Realtime
+// Actividad "en vivo": escucha los INSERT de activity_log por Supabase Realtime
 // (la tabla ya está en la publicación supabase_realtime y su RLS deja leerla a los autenticados).
-// No hay un endpoint de actividad global, así que el ticker muestra lo que pase mientras la página
-// está abierta. El título del evento sale de la caché de TanStack Query (listas y "Para ti").
+// No hay un endpoint de actividad global, así que se muestra lo que pase mientras la página está abierta.
 
 function findCachedEventTitle(queryClient, eventId) {
   for (const [, data] of queryClient.getQueriesData({ queryKey: ['events'] })) {
@@ -16,27 +15,41 @@ function findCachedEventTitle(queryClient, eventId) {
   return null;
 }
 
-export function useActivityFeed() {
+let channelCount = 0;
+
+// Lista de movimientos, más reciente primero. eventIds (opcional) filtra a esos eventos (panel del organizador).
+export function useActivityStream({ eventIds, max = 6 } = {}) {
   const queryClient = useQueryClient();
-  const [latest, setLatest] = useState(null); // { id, actorName, action, eventTitle, createdAt }
+  const [items, setItems] = useState([]); // { id, eventId, actorName, action, eventTitle, createdAt }
+  const filterRef = useRef(null);
+  filterRef.current = eventIds ? new Set(eventIds) : null;
 
   useEffect(() => {
+    // Nombre único por suscripción: dos componentes pueden escuchar a la vez (ticker y panel)
     const channel = supabase
-      .channel('activity-feed')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' }, ({ new: row }) =>
-        setLatest({
+      .channel(`activity-feed-${++channelCount}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' }, ({ new: row }) => {
+        if (filterRef.current && !filterRef.current.has(row.event_id)) return;
+        const item = {
           id: row.id,
+          eventId: row.event_id,
           actorName: row.actor_name,
           action: row.action,
           eventTitle: findCachedEventTitle(queryClient, row.event_id),
           createdAt: row.created_at,
-        }),
-      )
+        };
+        setItems((current) => [item, ...current].slice(0, max));
+      })
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, max]);
 
-  return latest;
+  return items;
+}
+
+// Ticker de Descubre: solo el último movimiento
+export function useActivityFeed() {
+  return useActivityStream({ max: 1 })[0] ?? null;
 }

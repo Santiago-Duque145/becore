@@ -21,7 +21,9 @@ export function DesktopSidebar({ profile, hasUnread = false }) {
                 className={({ isActive }) =>
                   cn(
                     'focus-ring group flex items-center gap-3 rounded-[10px] px-3 py-[11px] text-sm font-medium transition-colors',
-                    isActive ? 'bg-panel text-ink' : 'text-ink-muted hover:bg-panel/60 hover:text-ink',
+                    isActive
+                      ? 'bg-panel text-ink'
+                      : 'text-ink-muted hover:bg-panel/60 hover:text-ink',
                   )
                 }
               >

@@ -55,9 +55,11 @@ export default function DescubrePage() {
             <p className="mt-1 hidden text-[13px] text-ink-muted md:block">Descubre los eventos de tu comunidad en Medellín</p>
           </div>
           {isOrganizer && (
-            <LinkButton to="/eventos/nuevo" variant="secondary" size="sm" className="hidden md:inline-flex">
-              Crear evento
-            </LinkButton>
+            <div className="hidden md:block">
+              <LinkButton to="/eventos/nuevo" variant="secondary" size="sm">
+                Crear evento
+              </LinkButton>
+            </div>
           )}
         </div>
 

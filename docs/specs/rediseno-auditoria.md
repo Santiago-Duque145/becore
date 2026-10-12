@@ -324,3 +324,23 @@ Las rutas solo para organizador se envuelven en `RoleRoute role="organizer"`.
 **Diferencias con `mobile-mis-eventos.html` a 390 px:** queda la cabecera global de R1 encima del título; el contador va dentro de cada pestaña; las horas usan el formato es-CO y el lugar se corta con "…" si no cabe; los colores de estado salen de los tokens de `Badge` (Confirmado `success`, Asistió `accent`, Cancelado gris, Evento cancelado `action`).
 
 **Verificación:** lint, 191 pruebas del backend y 38 del frontend, build. En Edge headless: pestañas con contador y estados (`jugador1`, 5 próximos y 1 pasado), Avisos con recordatorios reales y punto naranja, "Marcar todas como leídas" y abrir un aviso (con los `POST` respondidos en el navegador para no tocar los avisos reales). `jugador12`: sin gustos no hay "Para ti"; tras elegir Cine y Fines de semana en Perfil aparece con "Porque te gusta la cultura"; luego se dejaron los gustos vacíos otra vez (queda una fila en `user_preferences` con listas vacías).
+
+---
+
+## k) Notas de R8 (organizador: panel, evento, asistentes y citas) · 2026-10-12
+
+**Backend:** `GET /dashboard/organizer` (S3-01) implementado según `api.md`; cada fila suma `category` y `location` (aditivo, documentado). Ningún otro contrato cambió.
+
+**Frontend:**
+- `/panel` según `desktop-panel-organizador.html`, sin mini-mapa ni "van en camino": 4 métricas (Eventos activos, Confirmados, Cupos ocupados %, Cancelaciones) con etiquetas calculadas de datos reales ("2 esta semana", "0 llegaron", "0 eventos casi llenos", "últimos 30 días"; el mockup trae cifras como "+22 hoy" que la API no da), tabla de eventos con ícono de categoría, barra de cupo y estado, y "Actividad en vivo" (Realtime de `activity_log` filtrado a sus eventos; empieza vacía porque no hay endpoint de actividad global). Móvil: métricas 2×2, la tabla pasa a tarjetas y la actividad va debajo. `useActivityFeed` pasó a `useActivityStream` (lista) y el ticker de Descubre usa el último.
+- Formulario de evento: validación al salir del campo, categoría con `OptionCard` e ícono, fecha y hora, **duración opcional** (se convierte en `endsAt`; al editar un evento con fin no se puede quitar porque la API no acepta `endsAt: null`), lugar, cupo con stepper (− / +, `aria-label`), descripción con contador y vista previa con la misma `EventCard` (modo `preview`). Crear: "Guardar borrador" / "Publicar". Editar borrador: lo mismo (Publicar = PATCH + publish). Editar publicado: "Guardar cambios".
+- Asistentes: tarjeta "N de M llegaron" con barra, búsqueda por nombre o correo sin tildes, avatar por persona; el switch (`role="switch"`) y la lógica no cambian.
+- Citas: tarjeta con fecha destacada como "Mis eventos"; formulario y disponibilidad ya usaban los componentes de la skill desde R1 (sin cambios de lógica).
+
+**Errores corregidos:**
+- Validación de fechas: con el campo vacío, Zod 4 seguía corriendo los `refine` y `bogotaInputToIso('')` lanzaba `RangeError`, lo que tumbaba toda la validación del formulario (ni el error del título aparecía). Pasaba en eventos y en citas; ahora la conversión es segura y hay pruebas.
+- "Crear evento" con `hidden md:inline-flex` se veía en móvil (el `inline-flex` del botón ganaba): ahora el `hidden` va en un contenedor (Panel y Descubre).
+
+**Diferencias con el mockup a 1440 px:** sin "Mapa en vivo", "Participantes" ni "Configuración" en la barra lateral; subtítulo con el mes (sin barrio); fechas en formato es-CO (más largas, pueden ocupar dos líneas); "Actividad en vivo" vacía hasta que haya movimientos.
+
+**Verificación:** lint, 194 pruebas del backend y 47 del frontend, build. En Edge headless con `santiago`: panel a 1440 (la tabla cabe completa) y 390 (sin scroll horizontal); evento de punta a punta: validación onBlur, stepper, contador, vista previa, "Guardar borrador" → editar (duración precargada) → "Publicar" → editar título y cupo → "Cancelar evento" → el panel lo muestra "Cancelado". Asistentes con datos reales ("0 de 8 llegaron", búsqueda, switch deshabilitado antes de abrir el check-in). Quedaron **dos eventos de prueba cancelados** "[Prueba R8] Partido de verificación (editado)" de `santiago` (uno por corrida).

@@ -16,7 +16,10 @@ function useEventMutation(mutationFn) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.eventsRoot }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.eventsRoot });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard('organizer') });
+    },
   });
 }
 

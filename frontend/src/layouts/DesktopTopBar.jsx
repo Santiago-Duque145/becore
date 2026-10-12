@@ -17,7 +17,10 @@ function TopBarSearch() {
     if (event.target.value) next.set('q', event.target.value);
     else next.delete('q');
     const search = next.toString();
-    navigate({ pathname: '/descubre', search: search ? `?${search}` : '' }, { replace: onDescubre });
+    navigate(
+      { pathname: '/descubre', search: search ? `?${search}` : '' },
+      { replace: onDescubre },
+    );
   }
 
   return (
@@ -25,7 +28,14 @@ function TopBarSearch() {
       <label htmlFor="buscar-eventos" className="sr-only">
         Buscar eventos
       </label>
-      <Input id="buscar-eventos" type="search" icon={SearchIcon} placeholder="Buscar eventos" value={value} onChange={handleChange} />
+      <Input
+        id="buscar-eventos"
+        type="search"
+        icon={SearchIcon}
+        placeholder="Buscar eventos"
+        value={value}
+        onChange={handleChange}
+      />
     </div>
   );
 }
@@ -53,11 +63,14 @@ export function DesktopTopBar({ profile, hasUnread = false }) {
                 >
                   {label}
                   {to === '/avisos' && hasUnread && (
-                  <>
-                    <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-action" />
-                    <span className="sr-only">(hay avisos sin leer)</span>
-                  </>
-                )}
+                    <>
+                      <span
+                        aria-hidden="true"
+                        className="h-2 w-2 shrink-0 rounded-full bg-action"
+                      />
+                      <span className="sr-only">(hay avisos sin leer)</span>
+                    </>
+                  )}
                 </NavLink>
               </li>
             ))}

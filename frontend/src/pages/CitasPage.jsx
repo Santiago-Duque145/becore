@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CalendarIcon, MapPinIcon, UsersIcon } from '../components/icons/index.js';
+import { CalendarIcon, UsersIcon } from '../components/icons/index.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useAppointments, useCancelAppointment } from '../hooks/useAppointments.js';
 import { formatDate } from '../lib/format.js';
@@ -20,37 +20,44 @@ const TABS = [
   ['past', 'Pasadas'],
 ];
 
+const dayFormatter = new Intl.DateTimeFormat('es-CO', { day: 'numeric', timeZone: 'America/Bogota' });
+const monthFormatter = new Intl.DateTimeFormat('es-CO', { month: 'short', timeZone: 'America/Bogota' });
+
+// Misma fila que Mis eventos: fecha destacada, título, hora · lugar y estado
 function AppointmentCard({ appointment, isOwner, onCancel }) {
   const cancelled = appointment.status === 'cancelled';
+  const start = new Date(appointment.startsAt);
   return (
-    <li className="flex flex-col gap-2 rounded-card border border-line bg-panel p-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <h2 className="text-[14.5px] font-semibold text-ink">{appointment.title}</h2>
-        {cancelled && <Badge tone="action">Cancelada</Badge>}
-      </div>
-      <p className="flex items-center gap-2 text-sm text-ink">
-        <CalendarIcon size={16} className="text-accent-soft" />
-        <span className="capitalize">{formatDate(appointment.startsAt)}</span>
-      </p>
-      {appointment.location && (
-        <p className="flex items-center gap-2 text-sm text-ink-muted">
-          <MapPinIcon size={16} /> {appointment.location}
+    <li className="flex items-start gap-3 rounded-[14px] border border-white/[0.06] bg-panel px-3.5 py-[13px]">
+      <span className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-[10px] bg-accent/12 text-[10.5px] leading-[1.2] font-bold text-accent-soft uppercase" aria-hidden="true">
+        <span>{dayFormatter.format(start)}</span>
+        <span>{monthFormatter.format(start).replace('.', '')}</span>
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="text-[13.5px] font-semibold text-ink">{appointment.title}</h2>
+          {cancelled && <Badge tone="action" className="shrink-0">Cancelada</Badge>}
+        </div>
+        <p className="flex items-center gap-1.5 text-[11.5px] text-ink-muted">
+          <CalendarIcon size={12} className="shrink-0" />
+          <span className="first-letter:uppercase">{formatDate(appointment.startsAt)}</span>
+          {appointment.location && <span className="truncate">· {appointment.location}</span>}
         </p>
-      )}
-      <p className="flex items-start gap-2 text-sm text-ink-muted">
-        <UsersIcon size={16} className="mt-0.5 shrink-0" />
-        <span>
-          {isOwner
-            ? appointment.participants.map((p) => p.fullName).join(', ')
-            : `Organiza ${appointment.organizer.fullName}`}
-        </span>
-      </p>
-      {appointment.notes && <p className="text-sm whitespace-pre-line text-ink-muted">{appointment.notes}</p>}
-      {isOwner && !cancelled && (
-        <Button variant="danger" size="sm" className="self-start" onClick={() => onCancel(appointment)}>
-          Cancelar cita
-        </Button>
-      )}
+        <p className="flex items-start gap-1.5 text-[11.5px] text-ink-muted">
+          <UsersIcon size={12} className="mt-0.5 shrink-0" />
+          <span>
+            {isOwner
+              ? appointment.participants.map((p) => p.fullName).join(', ')
+              : `Organiza ${appointment.organizer.fullName}`}
+          </span>
+        </p>
+        {appointment.notes && <p className="text-xs whitespace-pre-line text-ink/80">{appointment.notes}</p>}
+        {isOwner && !cancelled && (
+          <Button variant="danger" size="sm" className="mt-1 self-start" onClick={() => onCancel(appointment)}>
+            Cancelar cita
+          </Button>
+        )}
+      </div>
     </li>
   );
 }
@@ -75,7 +82,7 @@ export default function CitasPage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-xl font-semibold text-ink md:text-[22px]">Mis citas</h1>
+        <h1 className="font-display text-[21px] font-semibold text-ink md:text-[22px]">Mis citas</h1>
         {isOrganizer && (
           <div className="flex flex-wrap gap-2">
             <LinkButton to="/disponibilidad" variant="secondary" size="sm">

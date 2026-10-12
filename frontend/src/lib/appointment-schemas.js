@@ -2,16 +2,24 @@ import { z } from 'zod';
 import { bogotaInputToIso } from './format.js';
 
 const MAX_SLOT_MS = 8 * 3600 * 1000;
-const isValidInput = (v) => !Number.isNaN(new Date(bogotaInputToIso(v)).getTime());
-const toMs = (v) => new Date(bogotaInputToIso(v)).getTime();
+// Zod 4 sigue corriendo los refine aunque falle min(1): un valor vacío no debe lanzar RangeError
+function toMs(v) {
+  if (!v) return NaN;
+  try {
+    return new Date(bogotaInputToIso(v)).getTime();
+  } catch {
+    return NaN;
+  }
+}
+const isValidInput = (v) => !Number.isNaN(toMs(v));
 
 const startField = z
   .string()
   .min(1, 'Elige la fecha y hora de inicio')
   .refine(isValidInput, 'Fecha y hora inválidas')
-  .refine((v) => toMs(v) > Date.now(), 'La fecha debe estar en el futuro');
+  .refine((v) => !isValidInput(v) || toMs(v) > Date.now(), 'La fecha debe estar en el futuro');
 const endField = z.string().min(1, 'Elige la fecha y hora de fin').refine(isValidInput, 'Fecha y hora inválidas');
-const endsAfter = (d) => !d.startsAt || !d.endsAt || toMs(d.endsAt) > toMs(d.startsAt);
+const endsAfter = (d) => !isValidInput(d.startsAt) || !isValidInput(d.endsAt) || toMs(d.endsAt) > toMs(d.startsAt);
 const endsAfterMessage = { message: 'La hora de fin debe ser posterior al inicio', path: ['endsAt'] };
 
 // Mismos límites que appointments.schemas.js del backend (docs/specs/api.md)
