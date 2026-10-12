@@ -95,3 +95,25 @@ export const InfoIcon = createIcon('InfoIcon', [
   ['circle', { cx: 12, cy: 12, r: 9 }],
   ['path', { d: 'M12 11v5M12 8h.01' }],
 ]);
+
+// Portadas de evento por categoría (sin fotos externas): deporte, cultura, recreación y otros
+export const TrophyIcon = createIcon('TrophyIcon', [
+  ['path', { d: 'M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0V4z' }],
+  ['path', { d: 'M17 6h2a2 2 0 010 4h-2M7 6H5a2 2 0 000 4h2' }],
+]);
+
+export const MusicIcon = createIcon('MusicIcon', [
+  ['path', { d: 'M9 18V5l12-2v13' }],
+  ['circle', { cx: 6, cy: 18, r: 3 }],
+  ['circle', { cx: 18, cy: 16, r: 3 }],
+]);
+
+export const TreeIcon = createIcon('TreeIcon', [
+  ['path', { d: 'M12 3l6 8h-3l4 6H5l4-6H6l6-8z' }],
+  ['path', { d: 'M12 17v4' }],
+]);
+
+export const SparklesIcon = createIcon('SparklesIcon', [
+  ['path', { d: 'M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z' }],
+  ['path', { d: 'M19 17v4M17 19h4' }],
+]);

@@ -1,10 +1,36 @@
-import { Link, NavLink } from 'react-router';
-import { Avatar, BrandMark } from '../components/ui/index.js';
+import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router';
+import { Avatar, BrandMark, Input } from '../components/ui/index.js';
+import { SearchIcon } from '../components/icons/index.js';
 import { cn } from '../lib/cn.js';
 import { TOP_BAR_LINKS } from './navigation.js';
 
-// Barra superior del participante (desktop-descubre.html: padding 20×40, enlaces 13.5 px con gap 30).
-// El buscador del mockup llega con Descubre en R5.
+// Buscador de desktop-descubre (240 px). Escribe ?q= en /descubre, que filtra la lista.
+function TopBarSearch() {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [params] = useSearchParams();
+  const onDescubre = pathname === '/descubre';
+  const value = onDescubre ? (params.get('q') ?? '') : '';
+
+  function handleChange(event) {
+    const next = new URLSearchParams(onDescubre ? params : undefined);
+    if (event.target.value) next.set('q', event.target.value);
+    else next.delete('q');
+    const search = next.toString();
+    navigate({ pathname: '/descubre', search: search ? `?${search}` : '' }, { replace: onDescubre });
+  }
+
+  return (
+    <div role="search" className="w-60">
+      <label htmlFor="buscar-eventos" className="sr-only">
+        Buscar eventos
+      </label>
+      <Input id="buscar-eventos" type="search" icon={SearchIcon} placeholder="Buscar eventos" value={value} onChange={handleChange} />
+    </div>
+  );
+}
+
+// Barra superior del participante (desktop-descubre.html: padding 20×40, enlaces 13.5 px con gap 30)
 export function DesktopTopBar({ profile }) {
   return (
     <header className="pt-safe sticky top-0 z-40 border-b border-line bg-bg/95 backdrop-blur-md">
@@ -31,9 +57,12 @@ export function DesktopTopBar({ profile }) {
             ))}
           </ul>
         </nav>
-        <Link to="/perfil" aria-label="Mi perfil" className="focus-ring rounded-full">
-          <Avatar name={profile?.fullName} decorative />
-        </Link>
+        <div className="flex items-center gap-[18px]">
+          <TopBarSearch />
+          <Link to="/perfil" aria-label="Mi perfil" className="focus-ring rounded-full">
+            <Avatar name={profile?.fullName} decorative />
+          </Link>
+        </div>
       </div>
     </header>
   );

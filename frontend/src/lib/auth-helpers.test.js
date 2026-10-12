@@ -62,7 +62,7 @@ describe('destinationAfterAuth', () => {
 
   it('sin origen va al inicio de su rol', () => {
     expect(destinationAfterAuth({ role: 'organizer', onboardingCompleted: true }, null)).toBe('/panel');
-    expect(destinationAfterAuth({ role: 'participant', onboardingCompleted: true })).toBe('/eventos');
+    expect(destinationAfterAuth({ role: 'participant', onboardingCompleted: true })).toBe('/descubre');
   });
 
   it('rechaza orígenes externos y pantallas de auth', () => {

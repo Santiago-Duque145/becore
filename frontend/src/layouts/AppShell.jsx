@@ -56,7 +56,8 @@ export function AppShell() {
       <SkipLink />
       <DesktopTopBar profile={profile} />
       <main id="contenido" className="px-10 py-[30px]">
-        <div className="mx-auto w-full max-w-6xl">
+        {/* 1360 px = 1440 − 2 × 40 de desktop-descubre; las páginas angostas se limitan solas */}
+        <div className="mx-auto w-full max-w-[1360px]">
           <Outlet />
         </div>
       </main>

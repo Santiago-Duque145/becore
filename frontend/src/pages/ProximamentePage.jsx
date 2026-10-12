@@ -9,7 +9,7 @@ export default function ProximamentePage({ title }) {
         title="Muy pronto verás esto aquí"
         description="Estamos terminando esta sección. Mientras tanto, mira lo que se viene."
         action={
-          <LinkButton to="/eventos" variant="secondary" size="sm">
+          <LinkButton to="/descubre" variant="secondary" size="sm">
             Ver eventos
           </LinkButton>
         }

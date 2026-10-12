@@ -9,7 +9,7 @@ export default function NotFoundPage() {
         title="No encontramos esta página."
         description="Puede que el enlace esté mal escrito o que la página ya no exista."
         action={
-          <LinkButton to="/eventos" variant="secondary" size="sm">
+          <LinkButton to="/descubre" variant="secondary" size="sm">
             Volver a eventos
           </LinkButton>
         }

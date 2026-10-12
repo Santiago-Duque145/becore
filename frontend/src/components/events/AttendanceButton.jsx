@@ -22,6 +22,9 @@ const DISABLED_LABELS = {
   started: 'El evento ya empezó',
 };
 
+// En las tarjetas, botón pequeño con los textos de desktop-descubre (auditoría d-10)
+const COMPACT_DISABLED_LABELS = { ...DISABLED_LABELS, full: 'Cupo lleno', started: 'Ya empezó' };
+
 export function AttendanceButton({ event, compact = false }) {
   const { profile } = useAuth();
   const toast = useToast();
@@ -75,16 +78,33 @@ export function AttendanceButton({ event, compact = false }) {
     );
   }
 
+  if (compact) {
+    return state === 'available' ? (
+      <Button
+        size="sm"
+        onClick={handleConfirm}
+        loading={confirm.isPending}
+        aria-label={`Confirmar asistencia a ${event.title}`}
+      >
+        Confirmar
+      </Button>
+    ) : (
+      <Button size="sm" variant="secondary" disabled>
+        {COMPACT_DISABLED_LABELS[state]}
+      </Button>
+    );
+  }
+
   if (state === 'available') {
     return (
-      <Button onClick={handleConfirm} loading={confirm.isPending} className={compact ? 'w-full' : 'w-full md:w-auto'}>
+      <Button onClick={handleConfirm} loading={confirm.isPending} className="w-full md:w-auto">
         Confirmar asistencia
       </Button>
     );
   }
 
   return (
-    <Button disabled className={compact ? 'w-full' : 'w-full md:w-auto'}>
+    <Button disabled className="w-full md:w-auto">
       {DISABLED_LABELS[state]}
     </Button>
   );

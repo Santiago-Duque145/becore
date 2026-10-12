@@ -10,7 +10,7 @@ import RecuperarPage from './pages/auth/RecuperarPage.jsx';
 import NuevaContrasenaPage from './pages/auth/NuevaContrasenaPage.jsx';
 import AuthCallbackPage from './pages/auth/AuthCallbackPage.jsx';
 import BienvenidaPage from './pages/onboarding/BienvenidaPage.jsx';
-import EventosPage from './pages/EventosPage.jsx';
+import DescubrePage from './pages/descubre/DescubrePage.jsx';
 import NuevoEventoPage from './pages/eventos/NuevoEventoPage.jsx';
 import DetalleEventoPage from './pages/eventos/DetalleEventoPage.jsx';
 import EditarEventoPage from './pages/eventos/EditarEventoPage.jsx';
@@ -26,7 +26,7 @@ import ProximamentePage from './pages/ProximamentePage.jsx';
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/eventos" replace />,
+    element: <Navigate to="/descubre" replace />,
   },
   // Auth (auth-onboarding §4 y §5). /ingresar queda como alias para enlaces viejos.
   { path: '/login', element: <LoginPage /> },
@@ -55,7 +55,9 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { path: '/eventos', element: <EventosPage /> },
+      { path: '/descubre', element: <DescubrePage /> },
+      // Ruta vieja del listado (ui.md §2): se conserva como alias
+      { path: '/eventos', element: <Navigate to="/descubre" replace /> },
       {
         path: '/eventos/nuevo',
         element: (

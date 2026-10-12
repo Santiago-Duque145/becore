@@ -11,7 +11,7 @@ export function RoleRoute({ role, children }) {
         title="Esta sección es solo para organizadores"
         description="No tienes permiso para ver esta página."
         action={
-          <LinkButton to="/eventos" variant="secondary" size="sm">
+          <LinkButton to="/descubre" variant="secondary" size="sm">
             Volver a eventos
           </LinkButton>
         }

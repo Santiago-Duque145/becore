@@ -88,6 +88,15 @@
     }
   }
 
+  /* Punto "en vivo" del ticker (la única animación en bucle que permite la skill §4) */
+  --animate-blink: blink 1.6s ease-in-out infinite;
+
+  @keyframes blink {
+    50% {
+      opacity: 0.25;
+    }
+  }
+
   /* Check del final del onboarding: el círculo aparece y el trazo se dibuja */
   --animate-pop: pop 250ms var(--ease-out-soft) both;
   --animate-draw: draw 300ms var(--ease-out-soft) 150ms both;
@@ -117,6 +126,21 @@
       0 0 0 2px var(--color-bg),
       0 0 0 4px var(--color-accent);
   }
+}
+
+/* Portadas de evento por categoría (degradado del mockup con el color de la skill §1: sport turquesa,
+   culture amarillo, recreation verde, other gris). Sin fotos externas. */
+@utility bg-cover-sport {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 28%, var(--color-bg)), var(--color-bg));
+}
+@utility bg-cover-culture {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-culture) 24%, var(--color-bg)), var(--color-bg));
+}
+@utility bg-cover-recreation {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-success) 26%, var(--color-bg)), var(--color-bg));
+}
+@utility bg-cover-other {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-ink-muted) 22%, var(--color-bg)), var(--color-bg));
 }
 
 /* Fondo del hero del login y de la página de auth en escritorio (mobile-login.html) */

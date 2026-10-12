@@ -18,7 +18,7 @@ export default function NuevoEventoPage() {
     <div className="mx-auto max-w-2xl">
       <h1 className="mb-5 font-display text-xl font-semibold text-ink md:text-[22px]">Crear evento</h1>
       <div className="rounded-card border border-line bg-panel p-5">
-        <EventForm submitLabel="Publicar evento" onSubmit={handleSubmit} onCancel={() => navigate('/eventos')} />
+        <EventForm submitLabel="Publicar evento" onSubmit={handleSubmit} onCancel={() => navigate('/descubre')} />
       </div>
     </div>
   );

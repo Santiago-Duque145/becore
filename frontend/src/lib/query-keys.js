@@ -2,6 +2,7 @@ export const queryKeys = {
   me: ['me'],
   eventsRoot: ['events'],
   events: (filters) => ['events', 'list', filters],
+  recommendedEvents: ['events', 'recommended'],
   event: (id) => ['events', 'detail', id],
   eventAttendees: (id) => ['events', 'detail', id, 'attendees'],
   eventActivity: (id) => ['events', 'detail', id, 'activity'],

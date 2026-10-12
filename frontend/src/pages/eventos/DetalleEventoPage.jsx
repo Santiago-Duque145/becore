@@ -61,7 +61,7 @@ export default function DetalleEventoPage() {
   return (
     <article className="mx-auto flex max-w-2xl flex-col gap-5">
       <Link
-        to="/eventos"
+        to="/descubre"
         className="focus-ring inline-flex min-h-11 items-center gap-1 self-start rounded-field text-sm font-semibold text-accent hover:text-accent-soft"
       >
         <ChevronLeftIcon size={16} /> Volver a eventos

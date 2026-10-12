@@ -1,24 +1,24 @@
 import { BellIcon, CalendarIcon, ClockIcon, HomeIcon, PlusIcon, UserIcon } from '../components/icons/index.js';
 
 // Navegación por rol (skill becore-ui, "Navegación"). Sin ítems de mapa (fuera de alcance).
-// Provisional hasta R5/R7/R8: Inicio del participante sigue en /eventos (futuro /descubre);
-// "Mis eventos" del organizador lleva a /eventos, y "Crear evento" va en la cabecera móvil.
+// Provisional hasta R7/R8: "Mis eventos" del organizador lleva a /descubre, y "Crear evento" va en la
+// cabecera móvil.
 
-// Inicio por rol, destino por defecto después de entrar (auth-onboarding §4). Pasa a /descubre en R5.
+// Inicio por rol, destino por defecto después de entrar (auth-onboarding §4)
 export function homePathFor(role) {
-  return role === 'organizer' ? '/panel' : '/eventos';
+  return role === 'organizer' ? '/panel' : '/descubre';
 }
 
 export const MOBILE_TABS = {
   participant: [
-    { to: '/eventos', label: 'Inicio', Icon: HomeIcon },
+    { to: '/descubre', label: 'Inicio', Icon: HomeIcon },
     { to: '/mis-eventos', label: 'Mis eventos', Icon: CalendarIcon },
     { to: '/avisos', label: 'Avisos', Icon: BellIcon, notifications: true },
     { to: '/perfil', label: 'Perfil', Icon: UserIcon },
   ],
   organizer: [
     { to: '/panel', label: 'Inicio', Icon: HomeIcon },
-    { to: '/eventos', label: 'Mis eventos', Icon: CalendarIcon },
+    { to: '/descubre', label: 'Mis eventos', Icon: CalendarIcon },
     { to: '/avisos', label: 'Avisos', Icon: BellIcon, notifications: true },
     { to: '/perfil', label: 'Perfil', Icon: UserIcon },
   ],
@@ -26,7 +26,7 @@ export const MOBILE_TABS = {
 
 // Barra superior del participante en escritorio (desktop-descubre.html, sin "Mapa")
 export const TOP_BAR_LINKS = [
-  { to: '/eventos', label: 'Descubre' },
+  { to: '/descubre', label: 'Descubre' },
   { to: '/mis-eventos', label: 'Mis eventos' },
   { to: '/citas', label: 'Citas' },
   { to: '/avisos', label: 'Notificaciones' },
@@ -36,7 +36,7 @@ export const TOP_BAR_LINKS = [
 // "Participantes" y "Configuración" se agregan cuando exista su página)
 export const SIDEBAR_LINKS = [
   { to: '/panel', label: 'Panel' },
-  { to: '/eventos', label: 'Eventos' },
+  { to: '/descubre', label: 'Eventos' },
   { to: '/citas', label: 'Citas' },
   { to: '/avisos', label: 'Notificaciones' },
   { to: '/perfil', label: 'Perfil' },
