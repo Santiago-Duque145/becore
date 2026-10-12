@@ -9,7 +9,7 @@ import RegistroPage from './pages/auth/RegistroPage.jsx';
 import RecuperarPage from './pages/auth/RecuperarPage.jsx';
 import NuevaContrasenaPage from './pages/auth/NuevaContrasenaPage.jsx';
 import AuthCallbackPage from './pages/auth/AuthCallbackPage.jsx';
-import BienvenidaPage from './pages/BienvenidaPage.jsx';
+import BienvenidaPage from './pages/onboarding/BienvenidaPage.jsx';
 import EventosPage from './pages/EventosPage.jsx';
 import NuevoEventoPage from './pages/eventos/NuevoEventoPage.jsx';
 import DetalleEventoPage from './pages/eventos/DetalleEventoPage.jsx';

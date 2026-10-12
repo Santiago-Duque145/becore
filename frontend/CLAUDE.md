@@ -25,6 +25,8 @@ frontend/
     │   ├── auth-errors.js       ← errores de Supabase Auth → mensajes en español
     │   ├── auth-redirect.js     ← a dónde ir después de entrar (onboarding, ruta de origen, inicio por rol)
     │   └── query-keys.js        ← claves de TanStack Query centralizadas
+    ├── constants/
+    │   └── preferences.js       ← opciones del onboarding; mismas listas que backend/src/constants (con test)
     ├── contexts/
     │   └── AuthContext.jsx
     ├── hooks/                   ← useEvents, useEvent, useConfirmAttendance, useRealtimeEvent, ...
@@ -38,7 +40,8 @@ frontend/
     ├── layouts/                 ← AppShell (por rol y ancho), MobileTabBar, MobileHeader,
     │                              DesktopTopBar, DesktopSidebar, AuthLayout, navigation.js
     └── pages/                   ← una carpeta o archivo por ruta (pages/auth/: login, registro, recuperar,
-                                   nueva contraseña y callback; pages/dev/ solo en desarrollo: /dev/ui)
+                                   nueva contraseña y callback; pages/onboarding/: /bienvenida;
+                                   pages/dev/ solo en desarrollo: /dev/ui)
 ```
 
 ## 2. Variables de entorno (`frontend/.env.example`)

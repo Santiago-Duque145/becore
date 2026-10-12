@@ -87,6 +87,26 @@
       transform: translateY(0.5rem);
     }
   }
+
+  /* Check del final del onboarding: el círculo aparece y el trazo se dibuja */
+  --animate-pop: pop 250ms var(--ease-out-soft) both;
+  --animate-draw: draw 300ms var(--ease-out-soft) 150ms both;
+
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+  }
+
+  @keyframes draw {
+    from {
+      stroke-dashoffset: 24;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
 }
 
 /* Enfoque visible común a todos los controles (skill §4, Accesibilidad) */

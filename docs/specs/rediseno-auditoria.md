@@ -248,3 +248,17 @@ Las rutas solo para organizador se envuelven en `RoleRoute role="organizer"`.
 4. Ojo de mostrar/ocultar en la contraseña (el mockup no lo dibuja; la skill lo pide).
 
 **Verificación hecha:** lint, 178 pruebas (160 del backend y 18 del frontend) y build en verde. Flujos probados en Edge headless contra el Supabase real: credenciales inválidas, validación al salir del campo y foco en el primer error, sin sesión → `/login` → vuelta a la ruta de origen, inicio por rol, `/login` con sesión, red caída, Google desactivado, Google cancelado en el callback, enlace de recuperación vencido, `/nueva-contrasena` sin sesión, "misma contraseña", correo ya registrado (con enlace a iniciar sesión), indicador de fuerza, guard de onboarding (con `GET /me` reescrito en el navegador, sin tocar la base), `/bienvenida` → Continuar, y login por la IP de la Wi-Fi. **No se pudo probar**: registro nuevo hasta el final y envío real de correos (límite de 2 correos por hora y dominios de prueba rechazados), Google (desactivado) y un celular físico.
+
+---
+
+## g) Notas de R4 (onboarding de gustos) · 2026-10-11
+
+- `/bienvenida` real en `pages/onboarding/`: 5 pasos con los textos de `auth-onboarding.md` §6, estado en un `useReducer` (`onboarding-reducer.js`, con pruebas) y guardado con `PUT /me/onboarding` (`hooks/useCompleteOnboarding.js`).
+- Opciones en `frontend/src/constants/preferences.js`. `preferences.test.js` importa `backend/src/constants/preferences.js` y compara slugs, orden, categorías, textos y límites.
+- El perfil vive en `AuthContext`, no en una query: al guardar se invalida `queryKeys.me` (hoy nadie la usa) y además se actualiza el contexto, que es lo que hace que el guard deje pasar.
+- "Omitir" guarda lo que haya más el rol y va directo al inicio del rol, sin la pantalla "¡Listo!". "Ver mis eventos" muestra el final y redirige a los 1.2 s al inicio del rol (`homePathFor`; `/descubre` llega en R5).
+- Textos agregados que §6 no define: "Elige hasta 2." y el contador "n de 2 elegidas" en el paso 4 (con 2 elegidas, los demás chips se deshabilitan), y las etiquetas de grupo "Días" y "Franja" del paso 3, tomadas de la spec.
+- `Toast` acepta una acción opcional (`toast.error(msg, { action: { label, onClick } })`); con acción dura 8 s. La usa el "Reintentar" del onboarding.
+- Animaciones nuevas en `index.css`: `animate-pop` (círculo) y `animate-draw` (trazo del check). Se apagan con `motion-reduce`.
+
+**Verificación:** lint, 29 pruebas del frontend y build en verde. En Edge headless, con `GET /me` reescrito para simular un onboarding pendiente y el `PUT` respondido en el navegador (no se escribió nada en la base): flujo completo eligiendo organizador (con teclado en el paso 1, foco al título en cada paso, atrás conserva, máximo 2, Enter envía, primer guardado fallido → Toast + Reintentar sin perder nada, final y redirección a `/panel` en ~1.2 s, body del PUT exacto), "Omitir" desde el paso 1, recarga a mitad (vuelve al paso 1 sin errores), usuario del seed nunca ve `/bienvenida`, `prefers-reduced-motion` y 390/1440 px sin scroll horizontal. **No se probó con un usuario nuevo real**: la confirmación de correo sigue activada en Supabase (`mailer_autoconfirm=false`) y sin SMTP propio.
