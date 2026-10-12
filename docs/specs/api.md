@@ -108,6 +108,7 @@ Leyenda de acceso: **todos** = cualquier usuario autenticado; **org** = rol `org
 | Método | Ruta | Acceso | Body / Query | Respuesta |
 |---|---|---|---|---|
 | GET | `/events` | todos | ver "Filtros" | `{ data: Event[], meta: { total, page, pageSize } }` |
+| GET | `/events/recommended` | todos | query `limit` 1–20 (defecto 6) | `(Event & { reason })[]` "Para ti", ver abajo |
 | POST | `/events` | org | ver "Crear" | 201 `Event` |
 | GET | `/events/:id` | todos | — | `Event` |
 | PATCH | `/events/:id` | dueño | mismos campos de crear, todos opcionales (mínimo uno) | `Event` |
@@ -121,6 +122,12 @@ Leyenda de acceso: **todos** = cualquier usuario autenticado; **org** = rol `org
 - `organizer`: solo acepta `me` → eventos del usuario actual (incluye cancelados).
 - `page` (defecto 1), `pageSize` (defecto 12, máximo 50).
 - Sin `organizer=me`, los eventos cancelados **no** aparecen.
+
+**"Para ti" — `GET /events/recommended`** (`auth-onboarding.md` §8, `services/recommendations/`):
+sin preferencias guardadas devuelve `[]`. Candidatos: `published`, `starts_at > now()`, con cupo, que el usuario no organiza
+ni tiene confirmados. Puntaje por reglas en hora de Bogotá (categoría +3; día, franja y zona +1 cada uno); se
+excluyen los de puntaje 0 y se ordena por puntaje desc y luego `startsAt` asc. `reason` es la señal más fuerte
+("Porque te gusta el deporte", "Es en tu zona", "Encaja con tus fines de semana"…). Va antes de `/events/:id` en el router.
 
 **Crear evento — body:**
 | Campo | Regla |

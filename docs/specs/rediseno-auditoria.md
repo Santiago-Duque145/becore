@@ -262,3 +262,30 @@ Las rutas solo para organizador se envuelven en `RoleRoute role="organizer"`.
 - Animaciones nuevas en `index.css`: `animate-pop` (círculo) y `animate-draw` (trazo del check). Se apagan con `motion-reduce`.
 
 **Verificación:** lint, 29 pruebas del frontend y build en verde. En Edge headless, con `GET /me` reescrito para simular un onboarding pendiente y el `PUT` respondido en el navegador (no se escribió nada en la base): flujo completo eligiendo organizador (con teclado en el paso 1, foco al título en cada paso, atrás conserva, máximo 2, Enter envía, primer guardado fallido → Toast + Reintentar sin perder nada, final y redirección a `/panel` en ~1.2 s, body del PUT exacto), "Omitir" desde el paso 1, recarga a mitad (vuelve al paso 1 sin errores), usuario del seed nunca ve `/bienvenida`, `prefers-reduced-motion` y 390/1440 px sin scroll horizontal. **No se probó con un usuario nuevo real**: la confirmación de correo sigue activada en Supabase (`mailer_autoconfirm=false`) y sin SMTP propio.
+
+---
+
+## h) Notas de R5 (Descubre y "Para ti") · 2026-10-12
+
+**Backend:** `GET /events/recommended` en `services/recommendations/`: `getCandidates(user)` → `scoreEvent(event, prefs)` (pura, hora de Bogotá) → `rankScored`. El comentario de `index.js` dice dónde entraría un re-ranking con IA sin cambiar el contrato. El filtro `confirmed_count < capacity` se hace en el servicio porque PostgREST no compara dos columnas. Pruebas de cada señal, del desempate, del servicio y de la ruta.
+
+**Frontend:**
+- `/descubre` reemplaza a `EventosPage` (borrada); `/eventos` redirige y la navegación e inicio del participante apuntan a `/descubre`. Se pierden la pestaña "Pasados" y los filtros por fecha del listado viejo (el historial llega con "Mis eventos" en R7).
+- Chips Todos · Deporte · Cultura · Recreación (texto del prompt de R5; la auditoría d-7 proponía plurales). Categoría (`?cat=`) y búsqueda (`?q=`) viven en la URL; el buscador de la barra superior de escritorio escribe el mismo `?q=`.
+- Buscador: la API no busca por texto, así que filtra lo ya cargado (título y lugar, sin tildes).
+- Ticker: Realtime de `activity_log` (INSERT), título del evento desde la caché. No hay endpoint de actividad global: muestra lo que pase con la página abierta y, mientras tanto, "Aquí verás en vivo quién se apunta a los eventos".
+- "Para ti" arriba del listado, oculto mientras carga, si falla, si viene vacío y mientras hay un filtro o búsqueda activos.
+- Columna derecha (≥ 1024 px): "Próximas citas" con `GET /appointments?scope=upcoming`; solo se pide cuando la columna se ve.
+- `AppShell` del participante en escritorio pasa de `max-w-6xl` a `max-w-[1360px]` (1440 − 2 × 40, como el mockup).
+- Tarjeta compacta: botón `sm` "Confirmar" / "Cupo lleno" con `aria-label` completo. Íconos nuevos de portada: `TrophyIcon`, `MusicIcon`, `TreeIcon`, `SparklesIcon`; degradados `bg-cover-*` en `index.css`.
+
+**Diferencias con los mockups (390 y 1440 px, lado a lado):**
+1. Sin distancia, mapa, "Cerca de ti" ni avatares de asistentes (la API no los trae).
+2. Móvil: queda la cabecera global de R1 (marca + Citas) encima del saludo, sin la campana del mockup (Avisos está en la barra inferior); sin emoji en el saludo.
+3. Subtítulo "Descubre los eventos de tu comunidad en Medellín" y placeholder "Buscar eventos" (sin "cerca de ti").
+4. El ticker también se muestra en escritorio.
+5. Tarjetas más altas: llevan `CapacityBar` (la pide R5) y, si aplica, "Vas a ir"; la fecha usa el formato de `ui.md` §5 ("lun, 12 de oct, 5:41 p. m.") y va en su propia línea también en móvil.
+6. Botón de la tarjeta de 44 px de alto (mínimo táctil de la skill) frente a ~31 px del mockup.
+7. Portada con ícono de categoría y color fijo por categoría (d-8).
+
+**Verificación:** lint, 181 pruebas del backend y 33 del frontend, build. En Edge headless con usuarios del seed: Network sin llamadas duplicadas en móvil (`/me`, `/events`, `/events/recommended`) ni en escritorio (más `/appointments` una vez); móvil no pide citas; filtro Cultura, búsqueda sin resultados, buscador de la barra superior, sin scroll horizontal a 1440. "Para ti" se vio respondiendo `/events/recommended` en el navegador con eventos reales (los usuarios del seed no tienen preferencias y no se escribió en la base). **No se vio** un mensaje real en el ticker (habría que confirmar una asistencia con otra cuenta mientras la página está abierta).

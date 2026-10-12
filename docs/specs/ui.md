@@ -22,7 +22,7 @@ Tagline: "Tu comunidad en movimiento". Tono cercano, activo y comunitario; tutea
 | `/nueva-contrasena` | enlace de correo | Crear la contraseña nueva | RF-02 |
 | `/auth/callback` | público | Vuelta de Google y de la confirmación de correo ("Entrando…") | RF-02 |
 | `/bienvenida` | sesión | Onboarding de 5 pasos: rol, gustos, disponibilidad, motivación y zona (auth-onboarding §6) | RF-03 |
-| `/eventos` | todos | Descubre eventos: tarjetas, filtros por categoría y fecha, pestañas Próximos / Pasados | RF-07 |
+| `/descubre` | todos | Descubre: saludo, buscador, ticker en vivo, chips de categoría, "Para ti" y tarjetas de próximos eventos; en escritorio, columna de próximas citas. `/eventos` redirige aquí | RF-07 |
 | `/eventos/nuevo` | org | Formulario crear evento | RF-04, RF-09 |
 | `/eventos/:id` | todos | Detalle: datos, barra de cupo, botón confirmar/cancelar (part), acciones de organizador (dueño), ticker de actividad | RF-08, RF-11, RF-12 |
 | `/eventos/:id/editar` | dueño | Formulario editar | RF-05 |

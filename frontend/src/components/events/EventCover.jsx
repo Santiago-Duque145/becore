@@ -18,8 +18,8 @@ export function EventCover({ event, className }) {
   return (
     <div className={cn('relative h-[84px] shrink-0 overflow-hidden md:h-[108px]', cover.bg, className)}>
       <cover.Icon
-        size={56}
-        className={cn('absolute -right-1 -bottom-3 opacity-25', cover.text)}
+        size={36}
+        className={cn('absolute right-3 bottom-2.5 opacity-40 md:size-11', cover.text)}
         strokeWidth={1.5}
       />
       <span className={cn(pill, 'left-2.5', cover.text)}>{CATEGORY_LABELS[event.category]}</span>
