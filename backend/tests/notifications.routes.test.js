@@ -91,3 +91,10 @@ describe('avisos de la app', () => {
     expect(res.body.data).toEqual({ updated: 4 });
   });
 });
+
+describe('GET /dashboard/organizer', () => {
+  it('participante → 403', async () => {
+    const res = await auth(request(app).get('/api/v1/dashboard/organizer'));
+    expect(res.status).toBe(403);
+  });
+});

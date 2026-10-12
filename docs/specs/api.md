@@ -176,6 +176,8 @@ excluyen los de puntaje 0 y se ordena por puntaje desc y luego `startsAt` asc. `
 }
 ```
 `occupancyRate` = suma de `confirmedCount` ÷ suma de `capacity` de los eventos próximos no cancelados (0 si no hay).
+Implementado en R8: cada fila trae además `category` y `location` (los usa la tabla del panel). `upcomingEvents` cuenta
+los próximos o en curso sin cancelados ni borradores; `confirmed` suma los no cancelados; `cancelled` y `checkedIn` suman todos.
 
 **`GET /dashboard/participant`** (todos) →
 ```json

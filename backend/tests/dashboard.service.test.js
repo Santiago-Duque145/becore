@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-vi.mock('../src/repositories/events.repository.js', () => ({ findEventsByIds: vi.fn() }));
+vi.mock('../src/repositories/events.repository.js', () => ({ findEventsByIds: vi.fn(), listOrganizerEventsSince: vi.fn() }));
 vi.mock('../src/repositories/attendance.repository.js', () => ({
   listUserAttendances: vi.fn(),
+  listAttendanceStatuses: vi.fn(),
   findUserAttendances: vi.fn(),
   listConfirmedUserIds: vi.fn(),
 }));
@@ -78,5 +79,49 @@ describe('getParticipantDashboard', () => {
     const result = await getParticipantDashboard(user);
     expect(findEventsByIds).toHaveBeenCalledWith([]);
     expect(result.upcomingEvents).toEqual([]);
+  });
+});
+
+describe('getOrganizerDashboard', () => {
+  it('cuenta canceladas y llegadas por evento y calcula los totales', async () => {
+    const { listOrganizerEventsSince } = await import('../src/repositories/events.repository.js');
+    const { listAttendanceStatuses } = await import('../src/repositories/attendance.repository.js');
+    const { getOrganizerDashboard } = await import('../src/services/dashboard.service.js');
+    listOrganizerEventsSince.mockResolvedValue([
+      ev('pasado', { startsAt: hours(-48), status: 'finished', capacity: 10, confirmedCount: 8 }),
+      ev('activo', { capacity: 10, confirmedCount: 6 }),
+      ev('borrador', { status: 'draft', capacity: 20, confirmedCount: 0 }),
+      ev('cancelado', { status: 'cancelled', capacity: 30, confirmedCount: 5 }),
+      ev('curso', { startsAt: hours(-1), status: 'in_progress', capacity: 10, confirmedCount: 2 }),
+    ]);
+    listAttendanceStatuses.mockResolvedValue([
+      { eventId: 'pasado', status: 'confirmed', checkedIn: true },
+      { eventId: 'pasado', status: 'cancelled', checkedIn: false },
+      { eventId: 'activo', status: 'cancelled', checkedIn: false },
+      { eventId: 'activo', status: 'confirmed', checkedIn: false },
+    ]);
+
+    const { totals, events } = await getOrganizerDashboard({ id: 'org', role: 'organizer' });
+    expect(totals).toEqual({
+      upcomingEvents: 2, // activo y en curso
+      confirmed: 16, // 8 + 6 + 0 + 2 (sin el cancelado)
+      cancelled: 2,
+      checkedIn: 1,
+      occupancyRate: 8 / 20,
+    });
+    expect(events.find((e) => e.id === 'pasado')).toMatchObject({ isPast: true, cancelledCount: 1, checkedInCount: 1 });
+    expect(events[0]).toHaveProperty('location');
+    expect(events[0]).not.toHaveProperty('organizerId');
+  });
+
+  it('sin eventos próximos la ocupación es 0', async () => {
+    const { listOrganizerEventsSince } = await import('../src/repositories/events.repository.js');
+    const { listAttendanceStatuses } = await import('../src/repositories/attendance.repository.js');
+    const { getOrganizerDashboard } = await import('../src/services/dashboard.service.js');
+    listOrganizerEventsSince.mockResolvedValue([]);
+    listAttendanceStatuses.mockResolvedValue([]);
+    const { totals } = await getOrganizerDashboard({ id: 'org' });
+    expect(totals.occupancyRate).toBe(0);
+    expect(totals.upcomingEvents).toBe(0);
   });
 });

@@ -129,3 +129,16 @@ export async function listPublishedStartingBetween(fromIso, toIso) {
 export async function refreshEventStatuses() {
   return unwrap(await supabaseAdmin.rpc('refresh_event_statuses'));
 }
+
+// Panel del organizador: sus eventos (todos los estados) que empiezan desde fromIso, orden ascendente
+export async function listOrganizerEventsSince(organizerId, fromIso) {
+  const data = unwrap(
+    await supabaseAdmin
+      .from('events')
+      .select(COLUMNS)
+      .eq('organizer_id', organizerId)
+      .gte('starts_at', fromIso)
+      .order('starts_at', { ascending: true }),
+  );
+  return data.map(toCamel);
+}
