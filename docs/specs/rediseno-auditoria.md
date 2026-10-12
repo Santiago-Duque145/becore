@@ -289,3 +289,19 @@ Las rutas solo para organizador se envuelven en `RoleRoute role="organizer"`.
 7. Portada con ícono de categoría y color fijo por categoría (d-8).
 
 **Verificación:** lint, 181 pruebas del backend y 33 del frontend, build. En Edge headless con usuarios del seed: Network sin llamadas duplicadas en móvil (`/me`, `/events`, `/events/recommended`) ni en escritorio (más `/appointments` una vez); móvil no pide citas; filtro Cultura, búsqueda sin resultados, buscador de la barra superior, sin scroll horizontal a 1440. "Para ti" se vio respondiendo `/events/recommended` en el navegador con eventos reales (los usuarios del seed no tienen preferencias y no se escribió en la base). **No se vio** un mensaje real en el ticker (habría que confirmar una asistencia con otra cuenta mientras la página está abierta).
+
+---
+
+## i) Notas de R6 (detalle de evento) · 2026-10-12
+
+- `/eventos/:id` según `mobile-detalle-evento.html`: portada por categoría (230 px) con "Volver" y píldora de categoría, título, filas de fecha/hora y lugar, bloque "Cupos disponibles" con punto en vivo, descripción, "N personas confirmadas", organizador y barra de acción fija abajo.
+- **Móvil inmersivo:** la ruta lleva `handle: { immersive: true }` y `AppShell` la muestra sin cabecera ni barra de pestañas (como el mockup). En escritorio se mantiene el layout por rol; columna de 720 px y la barra de acción al final de la columna, no fija.
+- **Cupo en vivo:** `hooks/useRealtimeEvent.js` (no existía en el frontend; la tabla `events` ya estaba en la publicación de Realtime) actualiza la caché del detalle con cada `UPDATE` de la fila.
+- **Asistencia:** misma lógica (mutación optimista de R1/S2). Por ser optimista, el estado "cargando" casi no se ve: pasa directo a "Confirmado" (verde, con `animate-pop` al confirmar), al lado de "Cancelar asistencia" secundario con diálogo. "Cupo lleno", "Evento cancelado", "Evento finalizado" y "El evento ya empezó" son botones deshabilitados en gris. 1 toque para confirmar desde el detalle, 2 desde Descubre.
+- **Dueño:** "Ver asistentes / check-in" (principal), "Editar" y "Cancelar evento" (con diálogo); "Publicar evento" si es borrador.
+- **Estados:** skeleton con la forma de la página, "No encontramos este evento" con "Volver a Descubre" (sin reintentar el 404) y banner "Este evento fue cancelado".
+- Ajustes globales: el toast sube a 6.5 rem para no tapar la barra de acción.
+
+**Diferencias con el mockup a 390 px:** sin "Ver ruta", distancia, dirección secundaria, chat ni mapa (§9); sin avatares de asistentes ni "van en camino" (la API no los trae): queda "N personas confirmadas"; avatar del organizador con iniciales y de 34 px (`Avatar md`, el mockup usa 30); horas en formato es-CO ("5:41 p. m.").
+
+**Verificación:** lint, 181 + 33 pruebas, build. En Edge headless con dos navegadores: `jugador12` confirmó y canceló en "Cine al aire libre: Encanto" y la pestaña de `jugador11` vio el cupo pasar 8 → 9 → 8 por Realtime; diálogo con `aria-modal`, foco dentro, Escape cierra y el foco vuelve al botón; vista del dueño (`santiago`); 404; escritorio a 1440 (columna de 720 y barra estática). Estados cancelado, confirmado y lleno vistos con la respuesta reescrita en el navegador. La asistencia de prueba quedó cancelada (el cupo volvió a 8).

@@ -66,7 +66,7 @@ export const router = createBrowserRouter([
           </RoleRoute>
         ),
       },
-      { path: '/eventos/:id', element: <DetalleEventoPage /> },
+      { path: '/eventos/:id', element: <DetalleEventoPage />, handle: { immersive: true } },
       { path: '/eventos/:id/editar', element: <RoleRoute role="organizer"><EditarEventoPage /></RoleRoute> },
       { path: '/eventos/:id/asistentes', element: <RoleRoute role="organizer"><AsistentesPage /></RoleRoute> },
       { path: '/panel', element: <PanelPage /> },

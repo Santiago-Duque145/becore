@@ -1,153 +1,102 @@
-import { useState } from 'react';
-import { Link, useParams } from 'react-router';
-import { CalendarIcon, ChevronLeftIcon, MapPinIcon, UserIcon } from '../../components/icons/index.js';
+import { useParams } from 'react-router';
+import { AlertCircleIcon, CalendarIcon, MapPinIcon } from '../../components/icons/index.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import { useCancelEvent, useEvent, usePublishEvent } from '../../hooks/useEvent.js';
-import { formatDate } from '../../lib/format.js';
+import { useEvent } from '../../hooks/useEvent.js';
+import { useRealtimeEvent } from '../../hooks/useRealtimeEvent.js';
+import { formatLongDay, formatTime } from '../../lib/format.js';
 import { AttendanceButton } from '../../components/events/AttendanceButton.jsx';
-import { CategoryChip, StatusBadges } from '../../components/events/EventBadges.jsx';
-import {
-  Button,
-  CapacityBar,
-  ErrorState,
-  LinkButton,
-  Modal,
-  Skeleton,
-  useToast,
-} from '../../components/ui/index.js';
+import { DetailCover, DetailSkeleton, InfoRow } from '../../components/events/EventDetailParts.jsx';
+import { OwnerActions } from '../../components/events/OwnerActions.jsx';
+import { Avatar, CapacityBar, EmptyState, ErrorState, LinkButton } from '../../components/ui/index.js';
 
+// /eventos/:id según mobile-detalle-evento.html, sin distancia, "Ver ruta", chat ni mapa (CLAUDE.md §9).
+// Móvil: pantalla completa (AppShell inmersivo) con barra de acción fija abajo.
+// Escritorio: columna centrada de 720 px y la barra de acción al final de la columna.
 export default function DetalleEventoPage() {
   const { id } = useParams();
   const { profile } = useAuth();
-  const toast = useToast();
   const { data: event, isPending, isError, error, refetch } = useEvent(id);
-  const cancelEvent = useCancelEvent(id);
-  const publishEvent = usePublishEvent(id);
-  const [confirmingCancel, setConfirmingCancel] = useState(false);
+  useRealtimeEvent(id);
 
-  if (isPending) return <Skeleton className="mx-auto h-96 max-w-2xl" />;
+  if (isPending) return <DetailSkeleton />;
   if (isError) {
-    return error.code === 'EVENT_NOT_FOUND' ? (
-      <ErrorState message="El evento no existe o ya no está disponible." />
-    ) : (
-      <ErrorState message={error.message} onRetry={refetch} />
+    return (
+      <div className="mx-auto max-w-[720px] px-[22px] pt-16 md:px-0 md:pt-0">
+        {error.code === 'EVENT_NOT_FOUND' ? (
+          <EmptyState
+            title="No encontramos este evento"
+            description="Puede que lo hayan borrado o que el enlace esté mal."
+            action={
+              <LinkButton to="/descubre" variant="secondary" size="sm">
+                Volver a Descubre
+              </LinkButton>
+            }
+          />
+        ) : (
+          <ErrorState message={error.message} onRetry={refetch} />
+        )}
+      </div>
     );
   }
 
-  const isOwner = event.organizer.id === profile?.id;
-  const isActive = event.status === 'draft' || event.status === 'published' || event.status === 'in_progress';
-  const canModify = isOwner && isActive && !event.isPast;
-
-  function handleCancel() {
-    cancelEvent.mutate(undefined, {
-      onSuccess: () => {
-        toast.success('Cancelaste el evento.');
-        setConfirmingCancel(false);
-      },
-      onError: (err) => {
-        toast.error(err.message);
-        setConfirmingCancel(false);
-      },
-    });
-  }
-
-  function handlePublish() {
-    publishEvent.mutate(undefined, {
-      onSuccess: () => toast.success('Evento publicado.'),
-      onError: (err) => toast.error(err.message),
-    });
-  }
+  const isOwner = event.organizer?.id === profile?.id;
+  const showAttendance = !isOwner && profile?.role === 'participant' && event.status !== 'draft';
+  const hasActionBar = isOwner || showAttendance;
+  const timeRange = event.endsAt
+    ? `${formatTime(event.startsAt)} — ${formatTime(event.endsAt)}`
+    : formatTime(event.startsAt);
 
   return (
-    <article className="mx-auto flex max-w-2xl flex-col gap-5">
-      <Link
-        to="/descubre"
-        className="focus-ring inline-flex min-h-11 items-center gap-1 self-start rounded-field text-sm font-semibold text-accent hover:text-accent-soft"
-      >
-        <ChevronLeftIcon size={16} /> Volver a eventos
-      </Link>
+    <article className="mx-auto w-full max-w-[720px]">
+      <DetailCover event={event} />
 
-      <header className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <CategoryChip category={event.category} />
-          <StatusBadges event={event} />
+      <div className={hasActionBar ? 'px-[22px] pt-[22px] pb-36 md:px-0 md:pb-0' : 'px-[22px] py-[22px] md:px-0'}>
+        <h1 className="mb-3.5 font-display text-[21px] font-semibold text-ink md:text-[22px]">{event.title}</h1>
+
+        {event.status === 'cancelled' && (
+          <p
+            role="status"
+            className="mb-4 flex items-start gap-2 rounded-field border border-action/30 bg-action/10 p-3.5 text-[13px] font-semibold text-action"
+          >
+            <AlertCircleIcon size={16} className="mt-px shrink-0" />
+            Este evento fue cancelado. Ya no se realiza.
+          </p>
+        )}
+
+        <InfoRow icon={CalendarIcon} main={formatLongDay(event.startsAt)} sub={timeRange} />
+        <InfoRow icon={MapPinIcon} main={event.location} />
+
+        <div className="mt-1.5 mb-4 rounded-[14px] border border-white/[0.06] bg-panel px-4 py-3.5">
+          <CapacityBar
+            confirmedCount={event.confirmedCount}
+            capacity={event.capacity}
+            label="Cupos disponibles"
+            live={event.status === 'published' || event.status === 'in_progress'}
+          />
         </div>
-        <h1 className="font-display text-xl font-semibold text-ink md:text-[22px]">{event.title}</h1>
-      </header>
 
-      <section className="flex flex-col gap-3 rounded-card border border-line bg-panel p-5">
-        <p className="flex items-start gap-2 text-sm text-ink">
-          <CalendarIcon size={18} className="mt-0.5 shrink-0 text-accent-soft" />
-          <span className="capitalize">
-            {formatDate(event.startsAt)}
-            {event.endsAt && <span className="normal-case"> · hasta {formatDate(event.endsAt)}</span>}
-          </span>
-        </p>
-        <p className="flex items-start gap-2 text-sm text-ink">
-          <MapPinIcon size={18} className="mt-0.5 shrink-0 text-accent-soft" />
-          <span>{event.location}</span>
-        </p>
-        <p className="flex items-start gap-2 text-sm text-ink">
-          <UserIcon size={18} className="mt-0.5 shrink-0 text-accent-soft" />
-          <span>Organiza {event.organizer.fullName}</span>
-        </p>
-        <CapacityBar confirmedCount={event.confirmedCount} capacity={event.capacity} className="mt-1" />
-        <p className="text-xs text-ink-muted">
-          {event.isFull ? 'Sin cupos disponibles' : `${event.availableSpots} cupos disponibles`}
-        </p>
-      </section>
+        {event.description && (
+          <p className="mb-4 text-[13px] leading-[1.55] whitespace-pre-line text-ink/80">{event.description}</p>
+        )}
 
-      {event.description && (
-        <section className="rounded-card border border-line bg-panel p-5">
-          <h2 className="mb-2 font-display text-base font-semibold text-ink">Sobre el evento</h2>
-          <p className="text-[13px] leading-relaxed whitespace-pre-line text-ink-muted">{event.description}</p>
-        </section>
-      )}
-
-      {event.status === 'cancelled' && (
-        <p role="status" className="rounded-field border border-action/30 bg-action/10 p-4 text-sm font-semibold text-action">
-          Este evento fue cancelado.
+        <p className="mb-[18px] text-[11.5px] text-ink-muted">
+          {event.confirmedCount === 1 ? '1 persona confirmada' : `${event.confirmedCount} personas confirmadas`}
         </p>
-      )}
 
-      <AttendanceButton event={event} />
-
-      {isOwner && (
-        <section aria-label="Acciones del organizador" className="flex flex-col gap-2 md:flex-row md:flex-wrap">
-          {event.status === 'draft' && canModify && (
-            <Button onClick={handlePublish} loading={publishEvent.isPending}>
-              Publicar evento
-            </Button>
-          )}
-          {canModify && (
-            <LinkButton to={`/eventos/${event.id}/editar`} variant="secondary">
-              Editar
-            </LinkButton>
-          )}
-          <LinkButton to={`/eventos/${event.id}/asistentes`} variant="secondary">
-            Ver asistentes
-          </LinkButton>
-          {canModify && (
-            <Button variant="danger" onClick={() => setConfirmingCancel(true)}>
-              Cancelar evento
-            </Button>
-          )}
-        </section>
-      )}
-
-      <Modal open={confirmingCancel} title="¿Cancelar este evento?" onClose={() => setConfirmingCancel(false)}>
-        <p className="mb-5 text-sm text-ink-muted">
-          El evento quedará cancelado y esta acción no se puede deshacer. Los confirmados verán que ya no se realiza.
-        </p>
-        <div className="flex flex-col-reverse gap-2 md:flex-row md:justify-end">
-          <Button variant="secondary" onClick={() => setConfirmingCancel(false)}>
-            Mantener evento
-          </Button>
-          <Button variant="danger" onClick={handleCancel} loading={cancelEvent.isPending}>
-            Sí, cancelar evento
-          </Button>
+        <div className="flex items-center gap-2.5 pt-1">
+          <Avatar name={event.organizer?.fullName} decorative />
+          <div>
+            <p className="text-[12.5px] font-semibold text-ink">{event.organizer?.fullName}</p>
+            <p className="text-[11px] text-ink-muted">Organizador</p>
+          </div>
         </div>
-      </Modal>
+
+        {hasActionBar && (
+          <div className="fixed inset-x-0 bottom-0 z-30 flex gap-2.5 border-t border-white/[0.06] bg-bg px-[22px] pt-4 pb-[max(24px,env(safe-area-inset-bottom))] md:static md:z-auto md:mt-7 md:border-t md:px-0 md:pt-6 md:pb-0">
+            {isOwner ? <OwnerActions event={event} /> : <AttendanceButton event={event} />}
+          </div>
+        )}
+      </div>
     </article>
   );
 }

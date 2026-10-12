@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router';
+import { Outlet, useMatches } from 'react-router';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useMediaQuery } from '../hooks/useMediaQuery.js';
 import { DesktopSidebar } from './DesktopSidebar.jsx';
@@ -23,6 +23,20 @@ export function AppShell() {
   const { profile } = useAuth();
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const role = profile?.role === 'organizer' ? 'organizer' : 'participant';
+  const immersive = useMatches().some((match) => match.handle?.immersive);
+
+  // Pantallas de pantalla completa en móvil (detalle de evento): sin cabecera ni barra inferior,
+  // la página trae su propia barra de acción fija (mobile-detalle-evento.html)
+  if (!isDesktop && immersive) {
+    return (
+      <div className="min-h-dvh">
+        <SkipLink />
+        <main id="contenido">
+          <Outlet />
+        </main>
+      </div>
+    );
+  }
 
   if (!isDesktop) {
     return (

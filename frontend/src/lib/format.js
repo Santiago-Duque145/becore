@@ -41,3 +41,21 @@ export function isoToBogotaInput(iso) {
 }
 
 export const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABELS).map(([value, label]) => ({ value, label }));
+
+// Detalle de evento (mobile-detalle-evento): "Sábado, 12 de octubre" y "8:00 a. m."
+const longDayFormatter = new Intl.DateTimeFormat('es-CO', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  timeZone: 'America/Bogota',
+});
+const timeFormatter = new Intl.DateTimeFormat('es-CO', { hour: 'numeric', minute: '2-digit', timeZone: 'America/Bogota' });
+
+export function formatLongDay(iso) {
+  const text = longDayFormatter.format(new Date(iso));
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+export function formatTime(iso) {
+  return timeFormatter.format(new Date(iso));
+}
