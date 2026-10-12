@@ -88,7 +88,7 @@ export default function AsistentesPage() {
       )}
 
       {confirmed.length > 0 && (
-        <Field label="Buscar por nombre" className="mb-0">
+        <Field label="Buscar por nombre" flush>
           <Input icon={SearchIcon} type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Ej. María" />
         </Field>
       )}

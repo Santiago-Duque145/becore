@@ -3,7 +3,8 @@ import { cn } from '../../lib/cn.js';
 import { FieldContext } from './field-context.js';
 
 // Envuelve label + control + ayuda/error (skill §3). El control hijo toma id y aria-* del contexto.
-export const Field = forwardRef(function Field({ label, hint, error, id, className, children }, ref) {
+// mb-4 por defecto (skill); flush lo quita cuando el contenedor ya separa con gap.
+export const Field = forwardRef(function Field({ label, hint, error, id, flush = false, className, children }, ref) {
   const autoId = useId();
   const controlId = id ?? autoId;
   const context = {
@@ -16,7 +17,7 @@ export const Field = forwardRef(function Field({ label, hint, error, id, classNa
 
   return (
     <FieldContext.Provider value={context}>
-      <div ref={ref} className={cn('mb-4', className)}>
+      <div ref={ref} className={cn(!flush && 'mb-4', className)}>
         <label htmlFor={controlId} className="mb-[7px] block text-xs font-semibold text-ink-muted">
           {label}
         </label>

@@ -8,7 +8,7 @@ const ROLE_LABELS = { organizer: 'Organizador', participant: 'Participante' };
 // Barra lateral del organizador (desktop-panel-organizador.html: 240 px, fondo bg-deep, padding 28×20)
 export function DesktopSidebar({ profile }) {
   return (
-    <aside className="pt-safe sticky top-0 flex h-dvh w-60 shrink-0 flex-col gap-8 border-r border-line bg-bg-deep px-5 py-7">
+    <aside className="sticky top-0 flex h-dvh w-60 shrink-0 flex-col gap-8 border-r border-line bg-bg-deep px-5 pt-[max(1.75rem,env(safe-area-inset-top))] pb-7">
       <Link to="/" aria-label="Be Core, inicio" className="focus-ring self-start rounded-field">
         <BrandMark size={30} />
       </Link>

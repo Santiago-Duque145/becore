@@ -5,11 +5,11 @@ import { controlClass } from './control-classes.js';
 import { describedBy, useFieldContext } from './field-context.js';
 
 // Control base. Dentro de <Field> toma id y aria-* del contexto.
-// Atajo: <Input label="…" error="…" hint="…" /> se envuelve solo en un Field sin margen.
+// Atajo: <Input label="…" error="…" hint="…" /> se envuelve solo en un Field flush (sin margen).
 export const Input = forwardRef(function Input({ label, hint, error, ...props }, ref) {
   if (label !== undefined) {
     return (
-      <Field label={label} hint={hint} error={error} className="mb-0">
+      <Field label={label} hint={hint} error={error} flush>
         <InputControl ref={ref} {...props} />
       </Field>
     );

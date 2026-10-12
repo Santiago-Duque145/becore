@@ -23,7 +23,7 @@ const TextareaControl = forwardRef(function TextareaControl({ invalid, className
 export const Textarea = forwardRef(function Textarea({ label, hint, error, ...props }, ref) {
   if (label !== undefined) {
     return (
-      <Field label={label} hint={hint} error={error} className="mb-0">
+      <Field label={label} hint={hint} error={error} flush>
         <TextareaControl ref={ref} {...props} />
       </Field>
     );

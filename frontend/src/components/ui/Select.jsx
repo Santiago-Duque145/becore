@@ -31,7 +31,7 @@ const SelectControl = forwardRef(function SelectControl({ invalid, className, ch
 export const Select = forwardRef(function Select({ label, hint, error, ...props }, ref) {
   if (label !== undefined) {
     return (
-      <Field label={label} hint={hint} error={error} className="mb-0">
+      <Field label={label} hint={hint} error={error} flush>
         <SelectControl ref={ref} {...props} />
       </Field>
     );

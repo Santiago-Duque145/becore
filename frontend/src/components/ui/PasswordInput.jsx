@@ -28,7 +28,7 @@ const PasswordControl = forwardRef(function PasswordControl({ className, ...prop
 export const PasswordInput = forwardRef(function PasswordInput({ label, hint, error, ...props }, ref) {
   if (label !== undefined) {
     return (
-      <Field label={label} hint={hint} error={error} className="mb-0">
+      <Field label={label} hint={hint} error={error} flush>
         <PasswordControl ref={ref} {...props} />
       </Field>
     );

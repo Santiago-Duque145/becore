@@ -1,4 +1,5 @@
-import { Link } from 'react-router';
+import { Link, NavLink } from 'react-router';
+import { cn } from '../lib/cn.js';
 import { BrandMark } from '../components/ui/index.js';
 import { MOBILE_HEADER_ACTIONS } from './navigation.js';
 
@@ -13,14 +14,20 @@ export function MobileHeader({ role }) {
         </Link>
         <div className="flex items-center gap-2">
           {actions.map(({ to, label, Icon }) => (
-            <Link
+            <NavLink
               key={to}
               to={to}
+              end
               aria-label={label}
-              className="focus-ring flex h-11 w-11 items-center justify-center rounded-field bg-field text-ink-muted transition-colors hover:text-ink"
+              className={({ isActive }) =>
+                cn(
+                  'focus-ring flex h-11 w-11 items-center justify-center rounded-field bg-field transition-colors',
+                  isActive ? 'text-accent' : 'text-ink-muted hover:text-ink',
+                )
+              }
             >
               <Icon size={18} />
-            </Link>
+            </NavLink>
           ))}
         </div>
       </div>
