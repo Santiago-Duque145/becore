@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { CalendarPlus, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { registerSchema } from '../lib/auth-schemas.js';
-import { AuthLayout } from '../components/layout/AuthLayout.jsx';
+import { AuthLayout } from '../layouts/AuthLayout.jsx';
 import { Input } from '../components/ui/Field.jsx';
 import { Button } from '../components/ui/Button.jsx';
 

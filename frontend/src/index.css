@@ -92,3 +92,10 @@
       0 0 0 4px var(--color-accent);
   }
 }
+
+/* Fondo del hero del login y de la página de auth en escritorio (mobile-login.html) */
+@utility bg-hero {
+  background:
+    radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--color-accent) 25%, transparent), transparent 60%),
+    linear-gradient(160deg, var(--color-bg-deep), var(--color-bg));
+}
