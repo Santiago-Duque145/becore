@@ -70,3 +70,25 @@
 @utility pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* Entrada de elementos: opacity + translate-y-2 (skill §4, Movimiento) */
+@theme {
+  --animate-enter: enter 200ms var(--ease-out-soft) both;
+
+  @keyframes enter {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem);
+    }
+  }
+}
+
+/* Enfoque visible común a todos los controles (skill §4, Accesibilidad) */
+@utility focus-ring {
+  outline: none;
+  &:focus-visible {
+    box-shadow:
+      0 0 0 2px var(--color-bg),
+      0 0 0 4px var(--color-accent);
+  }
+}

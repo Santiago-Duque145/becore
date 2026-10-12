@@ -1,75 +1,42 @@
 import { forwardRef, useId } from 'react';
+import { cn } from '../../lib/cn.js';
+import { FieldContext } from './field-context.js';
 
-const CONTROL =
-  'w-full rounded-xl border bg-white px-3 min-h-[44px] text-navy-900 placeholder:text-gray-500 ' +
-  'focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-teal-500';
-
-function FieldShell({ id, label, error, hint, children }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-medium text-navy-900">
-        {label}
-      </label>
-      {children}
-      {hint && !error && <p className="text-xs text-gray-500">{hint}</p>}
-      {error && (
-        <p id={`${id}-error`} role="alert" className="text-sm text-orange-500">
-          {error}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function controlProps(id, error) {
-  return {
-    id,
-    'aria-invalid': Boolean(error),
-    'aria-describedby': error ? `${id}-error` : undefined,
+// Envuelve label + control + ayuda/error (skill §3). El control hijo toma id y aria-* del contexto.
+export const Field = forwardRef(function Field({ label, hint, error, id, className, children }, ref) {
+  const autoId = useId();
+  const controlId = id ?? autoId;
+  const context = {
+    id: controlId,
+    errorId: `${controlId}-error`,
+    hintId: `${controlId}-hint`,
+    invalid: Boolean(error),
+    hint: Boolean(hint && !error),
   };
-}
 
-export const Input = forwardRef(function Input({ label, error, hint, className = '', ...props }, ref) {
-  const id = useId();
   return (
-    <FieldShell id={id} label={label} error={error} hint={hint}>
-      <input
-        ref={ref}
-        {...controlProps(id, error)}
-        className={`${CONTROL} ${error ? 'border-orange-500' : 'border-gray-200'} ${className}`}
-        {...props}
-      />
-    </FieldShell>
-  );
-});
-
-export const Textarea = forwardRef(function Textarea({ label, error, hint, className = '', ...props }, ref) {
-  const id = useId();
-  return (
-    <FieldShell id={id} label={label} error={error} hint={hint}>
-      <textarea
-        ref={ref}
-        rows={4}
-        {...controlProps(id, error)}
-        className={`${CONTROL} py-2 ${error ? 'border-orange-500' : 'border-gray-200'} ${className}`}
-        {...props}
-      />
-    </FieldShell>
-  );
-});
-
-export const Select = forwardRef(function Select({ label, error, hint, children, ...props }, ref) {
-  const id = useId();
-  return (
-    <FieldShell id={id} label={label} error={error} hint={hint}>
-      <select
-        ref={ref}
-        {...controlProps(id, error)}
-        className={`${CONTROL} ${error ? 'border-orange-500' : 'border-gray-200'}`}
-        {...props}
-      >
+    <FieldContext.Provider value={context}>
+      <div ref={ref} className={cn('mb-4', className)}>
+        <label htmlFor={controlId} className="mb-[7px] block text-xs font-semibold text-ink-muted">
+          {label}
+        </label>
         {children}
-      </select>
-    </FieldShell>
+        {hint && !error && (
+          <p id={context.hintId} className="mt-1.5 text-xs text-ink-muted">
+            {hint}
+          </p>
+        )}
+        {error && (
+          <p id={context.errorId} role="alert" className="mt-1.5 text-xs font-medium text-danger">
+            {error}
+          </p>
+        )}
+      </div>
+    </FieldContext.Provider>
   );
 });
+
+// Compatibilidad temporal: las páginas aún importan los controles desde aquí (se retira en la migración).
+export { Input } from './Input.jsx';
+export { Textarea } from './Textarea.jsx';
+export { Select } from './Select.jsx';
