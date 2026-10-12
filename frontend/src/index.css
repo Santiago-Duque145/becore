@@ -1,36 +1,72 @@
 @import "tailwindcss";
 
+/* Tokens de marca: skill becore-ui §1. Prohibido usar hex sueltos en componentes. */
 @theme {
-  --color-navy-900: #0D1B2A;
-  --color-navy-800: #1E293B;
-  --color-graphite: #2D3640;
-  --color-gray-500: #6B7280;
-  --color-gray-200: #E5E7EB;
-  --color-teal-500: #14B8A6;
-  --color-teal-600: #0E9F92;
-  --color-emerald-500: #10B981;
-  --color-orange-500: #F97316;
-  --color-yellow-400: #FACC15;
+  /* Superficies (de más profundo a más elevado) */
+  --color-bg: #0B1420;
+  --color-bg-deep: #0D1B2A;
+  --color-sheet: #101B29;
+  --color-panel: #14202E;
+  --color-field: #172436;
+  --color-line: rgb(255 255 255 / 0.08);
 
-  --font-display: "Poppins", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* Texto */
+  --color-ink: #F1F5F9;
+  --color-ink-muted: #94A3B8;
+  --color-ink-faint: #64748B;
+
+  /* Acentos de marca */
+  --color-accent: #14B8A6;
+  --color-accent-soft: #5EEAD4;
+  --color-on-accent: #04241F;
+  --color-success: #10B981;
+  --color-action: #F97316;
+  --color-culture: #FACC15;
+  --color-danger: #F87171;
+
+  /* Tipografía */
+  --font-display: "Poppins", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+
+  /* Radios */
+  --radius-field: 12px;
+  --radius-card: 16px;
+  --radius-sheet: 28px;
+
+  /* Animación */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-html,
-body,
-#root {
-  min-height: 100dvh;
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100dvh; /* nunca 100vh */
+  }
+
+  body {
+    @apply bg-bg font-sans text-ink antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+
+  /* Evita el zoom automático de iOS al enfocar campos (frontend/CLAUDE.md §6) */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
-body {
-  background-color: #0D1B2A;
-  -webkit-tap-highlight-color: transparent;
-  overscroll-behavior-y: none;
-  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+/* Márgenes de zona segura para barras fijas (muesca y barra de gestos) */
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
 }
 
-input,
-select,
-textarea {
-  font-size: 16px;
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
 }
