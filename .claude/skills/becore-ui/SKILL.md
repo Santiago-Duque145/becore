@@ -107,7 +107,7 @@ Crea/usa estos y solo estos para lo básico. Todos aceptan `className` para ajus
 | Componente | Especificación |
 |---|---|
 | `Button` | Variantes `primary` (`bg-accent text-on-accent font-bold`), `secondary` (`bg-field border border-line text-ink`), `ghost`, `danger`. Alto mínimo 48 px en móvil, `rounded-field`, `py-4 text-[14.5px]`. Prop `loading` → spinner + `aria-busy` + deshabilitado. `active:scale-[0.98]` con `transition`. |
-| `Input` | `bg-field border border-line rounded-field px-4 py-3.5 text-sm text-ink placeholder:text-ink-faint`. Foco: `focus:border-accent focus:ring-2 focus:ring-accent/30 outline-none`. Error: borde `danger` + mensaje debajo con `role="alert"`. Siempre con `<label>` asociado. |
+| `Input` | `bg-field border border-line rounded-field px-4 py-3.5 text-base md:text-sm text-ink placeholder:text-ink-faint` (16 px en móvil para que iOS no haga zoom al enfocar). Foco: `focus:border-accent focus:ring-2 focus:ring-accent/30 outline-none`. Error: borde `danger` + mensaje debajo con `role="alert"`. Siempre con `<label>` asociado. |
 | `PasswordInput` | `Input` + botón de ojo para mostrar/ocultar (`aria-label="Mostrar contraseña"`). |
 | `Field` | Envuelve label + input + ayuda/error. `mb-4`. |
 | `GoogleButton` | Fondo blanco `#FFFFFF`, texto `#1F1F1F`, logo "G" oficial a color en SVG inline (18 px), `rounded-field`, mismo alto que `Button`. Texto: "Continuar con Google". Sigue las guías de marca de Google: no recolorear el logo. |
@@ -128,6 +128,7 @@ Crea/usa estos y solo estos para lo básico. Todos aceptan `className` para ajus
 - Mensajes de error humanos y accionables: "Ese correo ya tiene cuenta. ¿Quieres iniciar sesión?" (con enlace), no "Error 409".
 - `autoComplete` correcto: `email`, `current-password`, `new-password`, `name`. `inputMode="email"` en correo.
 - Enter envía. El foco va al primer campo con error tras enviar.
+- `Field` trae `mb-4`. Cuando el contenedor ya separa los campos (`flex gap-*`), usa la prop `flush`; no pases `mb-0` para pisar `mb-4`: en Tailwind gana el orden del CSS generado, no el del atributo `class`. Lo mismo para cualquier componente de `ui/`: ajústalo con sus props, no con clases que contradigan las suyas.
 
 **Carga y feedback**
 - Toda acción de red: estado `loading` en el botón que la disparó (no spinners de pantalla completa).
