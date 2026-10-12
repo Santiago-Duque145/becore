@@ -1,12 +1,17 @@
-import { updateProfile } from '../repositories/profiles.repository.js';
-import { AppError } from '../utils/app-error.js';
+import * as meService from '../services/me.service.js';
 
 export async function getMe(req, res) {
-  res.json({ data: req.user });
+  res.json({ data: await meService.getMe(req.user) });
 }
 
 export async function patchMe(req, res) {
-  const updated = await updateProfile(req.user.id, req.body);
-  if (!updated) throw new AppError(404, 'NOT_FOUND', 'No encontramos lo que buscas');
-  res.json({ data: updated });
+  res.json({ data: await meService.updateName(req.user, req.body) });
+}
+
+export async function putOnboarding(req, res) {
+  res.json({ data: await meService.completeOnboarding(req.user, req.body) });
+}
+
+export async function putPreferences(req, res) {
+  res.json({ data: await meService.updatePreferences(req.user, req.body) });
 }

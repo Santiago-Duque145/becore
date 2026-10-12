@@ -10,8 +10,17 @@ Registro, inicio y cierre de sesión **no** pasan por esta API: el frontend los 
 
 ### Profile
 ```json
-{ "id": "uuid", "email": "ana@correo.com", "fullName": "Ana Gómez", "role": "organizer", "createdAt": "ISO" }
+{
+  "id": "uuid", "email": "ana@correo.com", "fullName": "Ana Gómez", "role": "organizer", "createdAt": "ISO",
+  "onboardingCompleted": true,
+  "preferences": {
+    "categories": ["sport", "culture"], "interests": ["football", "cinema"], "days": ["weekends"],
+    "timeSlots": ["evening"], "motivations": ["fun"], "zone": "Belén", "updatedAt": "ISO"
+  }
+}
 ```
+`preferences` es `null` si el usuario nunca respondió el cuestionario. `categories` lo calcula el backend a partir de
+`interests` (`backend/src/constants/preferences.js`); el cliente no lo envía. Listas cerradas: `auth-onboarding.md` §6.
 
 ### Event
 ```json
@@ -70,6 +79,7 @@ Formato: `{ "error": { "code": "EVENT_FULL", "message": "El evento ya no tiene c
 | `CAPACITY_BELOW_CONFIRMED` | 409 | El cupo no puede ser menor que los confirmados actuales |
 | `CHECKIN_NOT_OPEN` | 409 | El check-in se habilita 2 horas antes del evento |
 | `APPOINTMENT_NOT_ACTIVE` | 409 | La cita fue cancelada |
+| `ONBOARDING_ALREADY_COMPLETED` | 409 | Ya completaste tu bienvenida; tu rol ya no se puede cambiar |
 | `DUPLICATE`, `CONSTRAINT_VIOLATION` | 409 | Ese registro ya existe / Los datos no cumplen las reglas |
 | `INTERNAL_ERROR` | 500 | Algo salió mal, intenta de nuevo |
 
@@ -85,6 +95,13 @@ Leyenda de acceso: **todos** = cualquier usuario autenticado; **org** = rol `org
 | GET | `/health` | público | — | `{ data: { status: "ok" } }` |
 | GET | `/me` | todos | — | `Profile` |
 | PATCH | `/me` | todos | `{ fullName }` 2–80 | `Profile` |
+| PUT | `/me/onboarding` | todos | `{ role, interests[], days[], timeSlots[], motivations[] (≤ 2), zone? (≤ 80) }`; listas opcionales (vacías por defecto) | `Profile` |
+| PUT | `/me/preferences` | todos | lo mismo sin `role` (si llega, se ignora) | `Profile` |
+
+`PUT /me/onboarding`: guarda las respuestas (upsert en `user_preferences`) y, si el onboarding estaba pendiente, fija
+`role` y `onboarding_completed_at = now()`. Si ya estaba completo: mismo rol → solo actualiza los gustos; otro rol →
+409 `ONBOARDING_ALREADY_COMPLETED` sin escribir nada. `PUT /me/preferences` nunca cambia `role` ni
+`onboarding_completed_at` (edición desde Perfil).
 
 ### Eventos (RF-04 a RF-09)
 

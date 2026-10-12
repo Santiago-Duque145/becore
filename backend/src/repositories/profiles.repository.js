@@ -6,14 +6,17 @@ function toCamel(row) {
     email: row.email,
     fullName: row.full_name,
     role: row.role,
+    onboardingCompletedAt: row.onboarding_completed_at,
     createdAt: row.created_at,
   };
 }
 
+const PROFILE_COLUMNS = 'id, email, full_name, role, onboarding_completed_at, created_at';
+
 export async function findProfileById(id) {
   const { data, error } = await supabaseAdmin
     .from('profiles')
-    .select('id, email, full_name, role, created_at')
+    .select(PROFILE_COLUMNS)
     .eq('id', id)
     .single();
 
@@ -25,7 +28,7 @@ export async function findProfilesByIds(ids) {
   if (!ids.length) return [];
   const { data, error } = await supabaseAdmin
     .from('profiles')
-    .select('id, email, full_name, role, created_at')
+    .select(PROFILE_COLUMNS)
     .in('id', ids);
   if (error) throw error;
   return data.map(toCamel);
@@ -56,9 +59,23 @@ export async function updateProfile(id, { fullName }) {
     .from('profiles')
     .update({ full_name: fullName })
     .eq('id', id)
-    .select('id, email, full_name, role, created_at')
+    .select(PROFILE_COLUMNS)
     .single();
 
   if (error || !data) return null;
   return toCamel(data);
+}
+
+// Marca el onboarding como completado y fija el rol, solo si seguía pendiente.
+// Devuelve null si otro request lo completó antes (el filtro no encontró la fila).
+export async function completeOnboarding(id, role) {
+  const { data, error } = await supabaseAdmin
+    .from('profiles')
+    .update({ role, onboarding_completed_at: new Date().toISOString() })
+    .eq('id', id)
+    .is('onboarding_completed_at', null)
+    .select(PROFILE_COLUMNS)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? toCamel(data) : null;
 }

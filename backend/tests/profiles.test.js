@@ -13,6 +13,12 @@ vi.mock('../src/config/supabase.js', () => ({
 vi.mock('../src/repositories/profiles.repository.js', () => ({
   findProfileById: vi.fn(),
   updateProfile: vi.fn(),
+  completeOnboarding: vi.fn(),
+}));
+
+vi.mock('../src/repositories/preferences.repository.js', () => ({
+  findPreferencesByUserId: vi.fn().mockResolvedValue(null),
+  upsertPreferences: vi.fn(),
 }));
 
 import { supabaseAdmin } from '../src/config/supabase.js';
@@ -49,6 +55,7 @@ describe('GET /api/v1/me', () => {
     const res = await request(app).get('/api/v1/me').set('Authorization', 'Bearer valid-token');
     expect(res.status).toBe(200);
     expect(res.body.data.email).toBe('test@becore.test');
+    expect(res.body.data).toMatchObject({ onboardingCompleted: false, preferences: null });
   });
 });
 
@@ -74,5 +81,6 @@ describe('PATCH /api/v1/me', () => {
       .send({ fullName: 'Nuevo Nombre' });
     expect(res.status).toBe(200);
     expect(res.body.data.fullName).toBe('Nuevo Nombre');
+    expect(res.body.data).toHaveProperty('onboardingCompleted');
   });
 });
