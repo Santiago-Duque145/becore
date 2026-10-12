@@ -4,6 +4,11 @@ import { BellIcon, CalendarIcon, ClockIcon, HomeIcon, PlusIcon, UserIcon } from 
 // Provisional hasta R5/R7/R8: Inicio del participante sigue en /eventos (futuro /descubre);
 // "Mis eventos" del organizador lleva a /eventos, y "Crear evento" va en la cabecera móvil.
 
+// Inicio por rol, destino por defecto después de entrar (auth-onboarding §4). Pasa a /descubre en R5.
+export function homePathFor(role) {
+  return role === 'organizer' ? '/panel' : '/eventos';
+}
+
 export const MOBILE_TABS = {
   participant: [
     { to: '/eventos', label: 'Inicio', Icon: HomeIcon },

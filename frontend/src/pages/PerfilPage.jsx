@@ -36,7 +36,7 @@ export default function PerfilPage() {
 
   async function handleSignOut() {
     await signOut();
-    navigate('/ingresar', { replace: true });
+    navigate('/login', { replace: true });
   }
 
   if (!profile) return <Spinner />;

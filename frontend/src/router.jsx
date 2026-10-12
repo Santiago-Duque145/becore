@@ -1,10 +1,15 @@
 import { createBrowserRouter, Navigate } from 'react-router';
 import { AppShell } from './layouts/AppShell.jsx';
 import { ProtectedRoute } from './components/layout/ProtectedRoute.jsx';
+import { RequireOnboarding } from './components/layout/RequireOnboarding.jsx';
 import { RoleRoute } from './components/layout/RoleRoute.jsx';
 
-import IngresarPage from './pages/IngresarPage.jsx';
-import RegistroPage from './pages/RegistroPage.jsx';
+import LoginPage from './pages/auth/LoginPage.jsx';
+import RegistroPage from './pages/auth/RegistroPage.jsx';
+import RecuperarPage from './pages/auth/RecuperarPage.jsx';
+import NuevaContrasenaPage from './pages/auth/NuevaContrasenaPage.jsx';
+import AuthCallbackPage from './pages/auth/AuthCallbackPage.jsx';
+import BienvenidaPage from './pages/BienvenidaPage.jsx';
 import EventosPage from './pages/EventosPage.jsx';
 import NuevoEventoPage from './pages/eventos/NuevoEventoPage.jsx';
 import DetalleEventoPage from './pages/eventos/DetalleEventoPage.jsx';
@@ -23,18 +28,30 @@ export const router = createBrowserRouter([
     path: '/',
     element: <Navigate to="/eventos" replace />,
   },
+  // Auth (auth-onboarding §4 y §5). /ingresar queda como alias para enlaces viejos.
+  { path: '/login', element: <LoginPage /> },
+  { path: '/ingresar', element: <Navigate to="/login" replace /> },
+  { path: '/registro', element: <RegistroPage /> },
+  { path: '/recuperar', element: <RecuperarPage /> },
+  // Públicas a propósito: la sesión llega en la URL (Google, confirmación de correo, recuperación)
+  { path: '/auth/callback', element: <AuthCallbackPage /> },
+  { path: '/nueva-contrasena', element: <NuevaContrasenaPage /> },
   {
-    path: '/ingresar',
-    element: <IngresarPage />,
-  },
-  {
-    path: '/registro',
-    element: <RegistroPage />,
+    path: '/bienvenida',
+    element: (
+      <ProtectedRoute>
+        <RequireOnboarding>
+          <BienvenidaPage />
+        </RequireOnboarding>
+      </ProtectedRoute>
+    ),
   },
   {
     element: (
       <ProtectedRoute>
-        <AppShell />
+        <RequireOnboarding>
+          <AppShell />
+        </RequireOnboarding>
       </ProtectedRoute>
     ),
     children: [

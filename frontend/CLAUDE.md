@@ -22,6 +22,8 @@ frontend/
     │   ├── supabase.js          ← cliente con publishable key (Auth + Realtime)
     │   ├── api.js               ← instancia Axios con interceptores
     │   ├── format.js            ← fechas, categorías, plurales
+    │   ├── auth-errors.js       ← errores de Supabase Auth → mensajes en español
+    │   ├── auth-redirect.js     ← a dónde ir después de entrar (onboarding, ruta de origen, inicio por rol)
     │   └── query-keys.js        ← claves de TanStack Query centralizadas
     ├── contexts/
     │   └── AuthContext.jsx
@@ -30,11 +32,13 @@ frontend/
     ├── components/
     │   ├── ui/                  ← componentes base de la skill §3; se importan siempre desde ui/index.js
     │   ├── icons/               ← íconos SVG propios (trazo 2 px, 24×24, currentColor)
-    │   ├── layout/              ← ProtectedRoute, RoleRoute (guardas de ruta)
+    │   ├── layout/              ← ProtectedRoute, RequireOnboarding, RoleRoute (guardas de ruta)
+    │   ├── auth/                ← piezas de las pantallas de auth (GoogleSignIn, PasswordStrength…)
     │   └── events/ ...          ← componentes por módulo
     ├── layouts/                 ← AppShell (por rol y ancho), MobileTabBar, MobileHeader,
     │                              DesktopTopBar, DesktopSidebar, AuthLayout, navigation.js
-    └── pages/                   ← una carpeta o archivo por ruta (pages/dev/ solo en desarrollo: /dev/ui)
+    └── pages/                   ← una carpeta o archivo por ruta (pages/auth/: login, registro, recuperar,
+                                   nueva contraseña y callback; pages/dev/ solo en desarrollo: /dev/ui)
 ```
 
 ## 2. Variables de entorno (`frontend/.env.example`)
@@ -101,8 +105,9 @@ export const supabase = createClient(
 );
 ```
 
-Solo se usa para: `auth.signUp`, `auth.signInWithPassword`, `auth.signOut`, `auth.getSession`,
-`auth.onAuthStateChange` y `channel(...)` de Realtime. **Prohibido** `supabase.from(...)` en el frontend.
+Solo se usa para: `auth.signUp`, `auth.signInWithPassword`, `auth.signInWithOAuth` (Google),
+`auth.resetPasswordForEmail`, `auth.updateUser` (contraseña), `auth.initialize` (leer errores que vuelven en la URL),
+`auth.signOut`, `auth.getSession`, `auth.onAuthStateChange` y `channel(...)` de Realtime. Todo eso vive en `AuthContext`. **Prohibido** `supabase.from(...)` en el frontend.
 
 ### 4.2 Axios — `src/lib/api.js`
 
@@ -132,13 +137,17 @@ api.interceptors.response.use(
 ### 4.3 Autenticación — `src/contexts/AuthContext.jsx`
 
 - Estado: `session`, `profile` (de `GET /me`), `loading`.
-- Al montar: `supabase.auth.getSession()` y suscripción a `onAuthStateChange`. Cuando hay sesión, pide `GET /me`.
-- `signUp({ fullName, email, password, role })` →
-  `supabase.auth.signUp({ email, password, options: { data: { full_name: fullName, role } } })`.
-  La confirmación de correo está **desactivada** en Supabase, así que devuelve sesión de inmediato.
-- `signIn({ email, password })` → `supabase.auth.signInWithPassword(...)`.
+- Al montar: suscripción a `onAuthStateChange`. Cuando cambia el usuario, `loading=true` hasta que llega `GET /me`.
+- `signUp({ fullName, email, password })` → `supabase.auth.signUp({ email, password, options: { data: { full_name } } })`,
+  **sin rol** (se elige en `/bienvenida`). Devuelve `{ needsConfirmation }`: la confirmación de correo está
+  **activada** en Supabase (`mailer_autoconfirm=false`, revisado el 2026-10-11), así que el registro muestra
+  "Revisa tu correo". Si se desactiva, `signUp` devuelve sesión y se va directo a `/bienvenida`.
+- `signIn({ email, password })` → `supabase.auth.signInWithPassword(...)`. Las pantallas no navegan a mano:
+  cuando hay sesión y perfil, redirigen con `destinationAfterAuth(profile, from)` de `lib/auth-redirect.js`.
+- Google, la confirmación de correo y la recuperación arman sus URLs con `window.location.origin` para que
+  funcionen en `localhost` y por la IP de la Wi-Fi.
 - `signOut()` → `supabase.auth.signOut()` y `queryClient.clear()`.
-- Traduce los errores de Supabase Auth al español (tabla en `ui.md` §5). Nunca muestres mensajes en inglés.
+- Traduce los errores de Supabase Auth al español con `lib/auth-errors.js`. Nunca muestres mensajes en inglés.
 - El rol para decidir qué mostrar sale de `profile.role`, nunca de `session.user.user_metadata`.
 
 ### 4.4 Datos

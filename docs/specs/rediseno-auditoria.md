@@ -221,3 +221,30 @@ Las rutas solo para organizador se envuelven en `RoleRoute role="organizer"`.
 - `npm run build` sin errores. Solo el aviso de chunk > 500 kB, que ya existía; el bundle bajó de 746 a 724 kB.
 - `/dev/ui` y `/ingresar` revisadas a 390 y 1440 px.
 - Navegación probada con Edge headless (CDP) con un organizador y un participante del seed, a 390 y 1440 px: la pestaña activa lleva `aria-current` y no hay scroll horizontal en ninguna ruta.
+
+---
+
+## f) Notas de R3 (login, registro, Google y recuperar contraseña) · 2026-10-11
+
+**Configuración de Supabase Auth encontrada** (leída con la API de administración, sin cambiar nada):
+- Confirmación de correo **activada** (`mailer_autoconfirm=false`). El registro muestra "Revisa tu correo" con "Ya lo confirmé"; si el equipo la desactiva, el mismo código lleva directo a `/bienvenida`.
+- Google **desactivado** y sin Client ID. El botón avisa "El acceso con Google todavía no está disponible" sin sacar al usuario de la app (consulta `GET /auth/v1/settings` antes de redirigir). Falta el §10 de `auth-onboarding.md`.
+- `site_url` = `http://localhost:3000` y lista de URLs de redirección **vacía**. Mientras no se agreguen `http://localhost:5173/**` y `http://192.168.*.*:5173/**` (§10 paso 4), Supabase ignora el `redirectTo` y los enlaces de confirmación y recuperación caen en el puerto del backend.
+- Sin SMTP propio: el correo integrado de Supabase permite 2 correos por hora y solo entrega a miembros del equipo. Con la confirmación activada, registrar cuentas nuevas en la sustentación no es viable sin SMTP propio (el de Gmail del backend sirve) o sin desactivar la confirmación.
+- Supabase rechaza dominios no entregables (`@becore.test`) en `signUp` (`email_address_invalid`). Los usuarios del seed existen porque se crean con la API de administración.
+
+**Decisiones:**
+- `/ingresar` redirige a `/login`. Las demás rutas viejas (`/eventos`) siguen hasta R5.
+- Inicio por rol en `layouts/navigation.js` (`homePathFor`): organizador → `/panel`, participante → `/eventos` (pasa a `/descubre` en R5).
+- `/bienvenida` es **provisional** hasta R4: saludo + "Continuar", que llama a `PUT /me/onboarding` con el rol actual y sin gustos (equivale a "Omitir"). Existe para que el guard tenga destino y las cuentas nuevas no queden atrapadas.
+- La ruta de origen viaja en `location.state.from` (ProtectedRoute) o en `sessionStorage` cuando se sale a Google. Solo se aceptan rutas internas (`lib/auth-redirect.js`).
+- Las alturas del mockup salen de `line-height: normal`. Para igualarlas: `Input` usa `leading-[17px]` (47 px aunque el texto sea de 16 px), `Button md` y `GoogleButton` `leading-[17px]` (49 px), y `Divider`, la etiqueta de `Field`, el wordmark grande de `BrandMark` y los textos de `AuthLayout` usan `leading-[normal]`. Afecta a todas las pantallas: campos y botones bajan de 54 a 47/49 px, igual que en los mockups y por encima de 44 px.
+- `index.css` oculta el ojo nativo de Edge (`::-ms-reveal`), que duplicaba el de `PasswordInput`.
+
+**Diferencias que quedan en `/login` a 390 px** (medidas con Edge headless contra `mobile-login.html`; posiciones y tamaños iguales al píxel en todo lo demás):
+1. Bloque inferior: "o continúa con" + "Continuar con Google" (50 px) en lugar de "o continúa como" + Organizador/Participante (decisión de `auth-onboarding` §2).
+2. Texto de los campos en 16 px en móvil (14 px en el mockup) para que iOS no haga zoom; la caja mide lo mismo.
+3. Placeholders y divisor en `ink-faint` `#64748B` (el mockup usa `#475569`, sin contraste suficiente).
+4. Ojo de mostrar/ocultar en la contraseña (el mockup no lo dibuja; la skill lo pide).
+
+**Verificación hecha:** lint, 178 pruebas (160 del backend y 18 del frontend) y build en verde. Flujos probados en Edge headless contra el Supabase real: credenciales inválidas, validación al salir del campo y foco en el primer error, sin sesión → `/login` → vuelta a la ruta de origen, inicio por rol, `/login` con sesión, red caída, Google desactivado, Google cancelado en el callback, enlace de recuperación vencido, `/nueva-contrasena` sin sesión, "misma contraseña", correo ya registrado (con enlace a iniciar sesión), indicador de fuerza, guard de onboarding (con `GET /me` reescrito en el navegador, sin tocar la base), `/bienvenida` → Continuar, y login por la IP de la Wi-Fi. **No se pudo probar**: registro nuevo hasta el final y envío real de correos (límite de 2 correos por hora y dominios de prueba rechazados), Google (desactivado) y un celular físico.
