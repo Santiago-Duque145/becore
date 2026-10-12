@@ -9,4 +9,7 @@ export const queryKeys = {
   appointments: (scope) => ['appointments', scope],
   availability: ['availability'],
   dashboard: (role) => ['dashboard', role],
+  notificationsRoot: ['notifications'],
+  notifications: ['notifications', 'list'],
+  unreadCount: ['notifications', 'unread-count'],
 };

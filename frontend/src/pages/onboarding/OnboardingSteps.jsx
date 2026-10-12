@@ -33,7 +33,7 @@ const StepHeading = forwardRef(function StepHeading({ id, title, subtitle }, ref
 });
 
 // Grupo de chips multiselección con su subtítulo como etiqueta accesible
-function ChipGroup({ label, options, selected, onToggle }) {
+export function ChipGroup({ label, options, selected, onToggle }) {
   const labelId = useId();
   return (
     <div role="group" aria-labelledby={labelId} className="mb-6">

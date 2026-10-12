@@ -6,7 +6,7 @@ import { SIDEBAR_LINKS } from './navigation.js';
 const ROLE_LABELS = { organizer: 'Organizador', participant: 'Participante' };
 
 // Barra lateral del organizador (desktop-panel-organizador.html: 240 px, fondo bg-deep, padding 28×20)
-export function DesktopSidebar({ profile }) {
+export function DesktopSidebar({ profile, hasUnread = false }) {
   return (
     <aside className="sticky top-0 flex h-dvh w-60 shrink-0 flex-col gap-8 border-r border-line bg-bg-deep px-5 pt-[max(1.75rem,env(safe-area-inset-top))] pb-7">
       <Link to="/" aria-label="Be Core, inicio" className="focus-ring self-start rounded-field">
@@ -30,6 +30,12 @@ export function DesktopSidebar({ profile }) {
                   className="h-1.5 w-1.5 shrink-0 rounded-full bg-ink-faint group-aria-[current=page]:bg-accent"
                 />
                 {label}
+                {to === '/avisos' && hasUnread && (
+                  <>
+                    <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-action" />
+                    <span className="sr-only">(hay avisos sin leer)</span>
+                  </>
+                )}
               </NavLink>
             </li>
           ))}

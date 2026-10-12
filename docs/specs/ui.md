@@ -31,7 +31,9 @@ Tagline: "Tu comunidad en movimiento". Tono cercano, activo y comunitario; tutea
 | `/citas` | todos | Mis citas (próximas / pasadas) | RF-14 |
 | `/citas/nueva` | org | Crear cita: datos + buscador de participantes + bloques de disponibilidad como sugerencia | RF-14 |
 | `/disponibilidad` | org | Mis bloques de disponibilidad: crear y borrar | RF-15 |
-| `/perfil` | todos | Nombre editable, correo y rol de solo lectura, cerrar sesión | — |
+| `/mis-eventos` | todos | Mis eventos: pestañas Próximos / Pasados con contador, fecha destacada, estado (Confirmado, Asistió, Cancelado, Evento cancelado) y aviso de cambio de horario sin leer | RF-19 |
+| `/avisos` | todos | Avisos de la app agrupados en Hoy / Esta semana / Antes; abrir marca como leído; "Marcar todas como leídas" | RF-16, RF-17 |
+| `/perfil` | todos | Avatar con iniciales, nombre editable, correo y rol de solo lectura, "Tus gustos" (chips del onboarding, `PUT /me/preferences`) y cerrar sesión | RF-03 |
 | `*` | — | 404 con enlace a `/eventos` | — |
 
 `ProtectedRoute` redirige a `/login` sin sesión, guardando la ruta de origen. `RequireOnboarding` lleva a `/bienvenida` si el onboarding está pendiente. `RoleRoute role="organizer"` muestra 403 amable si el rol no coincide.

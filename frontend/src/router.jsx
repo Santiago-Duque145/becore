@@ -21,7 +21,8 @@ import NuevaCitaPage from './pages/NuevaCitaPage.jsx';
 import DisponibilidadPage from './pages/DisponibilidadPage.jsx';
 import PerfilPage from './pages/PerfilPage.jsx';
 import NotFoundPage from './pages/NotFoundPage.jsx';
-import ProximamentePage from './pages/ProximamentePage.jsx';
+import MisEventosPage from './pages/MisEventosPage.jsx';
+import AvisosPage from './pages/AvisosPage.jsx';
 
 export const router = createBrowserRouter([
   {
@@ -81,9 +82,8 @@ export const router = createBrowserRouter([
       },
       { path: '/disponibilidad', element: <RoleRoute role="organizer"><DisponibilidadPage /></RoleRoute> },
       { path: '/perfil', element: <PerfilPage /> },
-      // Destinos de la navegación nueva que se construyen en R7
-      { path: '/mis-eventos', element: <ProximamentePage title="Mis eventos" /> },
-      { path: '/avisos', element: <ProximamentePage title="Avisos" /> },
+      { path: '/mis-eventos', element: <MisEventosPage /> },
+      { path: '/avisos', element: <AvisosPage /> },
     ],
   },
   // Verificación del sistema de diseño: solo en desarrollo y fuera del bundle de producción

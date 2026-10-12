@@ -305,3 +305,22 @@ Las rutas solo para organizador se envuelven en `RoleRoute role="organizer"`.
 **Diferencias con el mockup a 390 px:** sin "Ver ruta", distancia, dirección secundaria, chat ni mapa (§9); sin avatares de asistentes ni "van en camino" (la API no los trae): queda "N personas confirmadas"; avatar del organizador con iniciales y de 34 px (`Avatar md`, el mockup usa 30); horas en formato es-CO ("5:41 p. m.").
 
 **Verificación:** lint, 181 + 33 pruebas, build. En Edge headless con dos navegadores: `jugador12` confirmó y canceló en "Cine al aire libre: Encanto" y la pestaña de `jugador11` vio el cupo pasar 8 → 9 → 8 por Realtime; diálogo con `aria-modal`, foco dentro, Escape cierra y el foco vuelve al botón; vista del dueño (`santiago`); 404; escritorio a 1440 (columna de 720 y barra estática). Estados cancelado, confirmado y lleno vistos con la respuesta reescrita en el navegador. La asistencia de prueba quedó cancelada (el cupo volvió a 8).
+
+---
+
+## j) Notas de R7 (Mis eventos, Avisos y Perfil) · 2026-10-12
+
+**Backend:**
+- `GET /dashboard/participant` (S3-03 del backlog) construido según `api.md`, con una extensión documentada ahí: trae también las asistencias **canceladas** por el usuario, que "Mis eventos" muestra como "Cancelado".
+- Avisos de la app, nuevos en `api.md`: `GET /notifications` (con `meta.unread`), `GET /notifications/unread-count`, `POST /notifications/:id/read` (404 si es de otro) y `POST /notifications/read-all`, sobre la tabla `notifications` (`message`, `read_at`). Sin cambios de esquema.
+
+**Frontend:**
+- `/mis-eventos` según `mobile-mis-eventos.html`: pestañas `Chip role="tab"` con contador (`?tab=pasados`), fecha destacada, hora · lugar y `Badge` de estado. El aviso naranja "Cambio de horario" sale solo si hay un `event_updated` sin leer de un próximo evento (d-15); al abrirlo se marca leído. Sin "En espera" (no existe lista de espera).
+- `/avisos`: agrupado por Hoy / Esta semana (6 días atrás) / Antes en hora de Bogotá; abrir un aviso lo marca leído y lleva a su evento (o a Citas); "Marcar todas como leídas" optimista.
+- Punto naranja en Avisos en las tres navegaciones (barra inferior, superior y lateral) con `GET /notifications/unread-count`, refrescado por Realtime cuando llega un aviso propio (`INSERT` en `notifications`, ya publicada y con RLS por usuario).
+- `/perfil`: avatar con iniciales, "Tus datos" (nombre editable, correo y rol de solo lectura), "Tus gustos" con los mismos chips y el mismo reducer del onboarding (`PUT /me/preferences`; al guardar se refresca "Para ti") y "Cerrar sesión".
+- Confirmar o cancelar asistencia también invalida el panel del participante. Se borró `ProximamentePage`.
+
+**Diferencias con `mobile-mis-eventos.html` a 390 px:** queda la cabecera global de R1 encima del título; el contador va dentro de cada pestaña; las horas usan el formato es-CO y el lugar se corta con "…" si no cabe; los colores de estado salen de los tokens de `Badge` (Confirmado `success`, Asistió `accent`, Cancelado gris, Evento cancelado `action`).
+
+**Verificación:** lint, 191 pruebas del backend y 38 del frontend, build. En Edge headless: pestañas con contador y estados (`jugador1`, 5 próximos y 1 pasado), Avisos con recordatorios reales y punto naranja, "Marcar todas como leídas" y abrir un aviso (con los `POST` respondidos en el navegador para no tocar los avisos reales). `jugador12`: sin gustos no hay "Para ti"; tras elegir Cine y Fines de semana en Perfil aparece con "Porque te gusta la cultura"; luego se dejaron los gustos vacíos otra vez (queda una fila en `user_preferences` con listas vacías).

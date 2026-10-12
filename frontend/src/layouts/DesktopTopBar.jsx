@@ -31,7 +31,7 @@ function TopBarSearch() {
 }
 
 // Barra superior del participante (desktop-descubre.html: padding 20×40, enlaces 13.5 px con gap 30)
-export function DesktopTopBar({ profile }) {
+export function DesktopTopBar({ profile, hasUnread = false }) {
   return (
     <header className="pt-safe sticky top-0 z-40 border-b border-line bg-bg/95 backdrop-blur-md">
       <div className="flex items-center justify-between px-10 py-5">
@@ -46,12 +46,18 @@ export function DesktopTopBar({ profile }) {
                   to={to}
                   className={({ isActive }) =>
                     cn(
-                      'focus-ring rounded-md px-1 py-2 text-[13.5px] font-medium transition-colors',
+                      'focus-ring inline-flex items-center gap-1.5 rounded-md px-1 py-2 text-[13.5px] font-medium transition-colors',
                       isActive ? 'text-ink' : 'text-ink-muted hover:text-ink',
                     )
                   }
                 >
                   {label}
+                  {to === '/avisos' && hasUnread && (
+                  <>
+                    <span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full bg-action" />
+                    <span className="sr-only">(hay avisos sin leer)</span>
+                  </>
+                )}
                 </NavLink>
               </li>
             ))}
