@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup · desktop-descubre</title>
+<!-- Mockup estático de referencia (fuente: Be Core Mockups, Claude.ai). No es código de producción. -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    a { color: #14B8A6; text-decoration: none; } a:hover { color: #5EEAD4; }
+    .app { width: 1440px; height: 900px; background: #0B1420; color: #F1F5F9; font-family: 'Inter', system-ui, sans-serif; overflow: hidden; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 20px 40px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-name { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 18px; color: #FFFFFF; }
+    .brand-name span { color: #14B8A6; }
+    .navlinks { display: flex; gap: 30px; font-size: 13.5px; font-weight: 500; color: #94A3B8; }
+    .navlinks .on { color: #F1F5F9; }
+    .right { display: flex; align-items: center; gap: 18px; }
+    .search { display: flex; align-items: center; gap: 8px; background: #14202E; border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 9px 14px; width: 240px; color: #64748B; font-size: 13px; }
+    .avatar { width: 34px; height: 34px; border-radius: 999px; background: linear-gradient(135deg,#14B8A6,#0D1B2A); flex-shrink: 0; }
+    .body { display: flex; padding: 30px 40px; gap: 28px; }
+    .h1 { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 22px; margin: 0 0 4px; }
+    .sub { color: #94A3B8; font-size: 13px; margin: 0 0 20px; }
+    .chips { display: flex; gap: 10px; margin-bottom: 22px; }
+    .chip { padding: 8px 16px; border-radius: 999px; font-size: 12.5px; font-weight: 600; border: 1px solid rgba(255,255,255,0.08); color: #94A3B8; }
+    .chip.on { background: #14B8A6; color: #04241F; border-color: transparent; }
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 18px; }
+    .card { background: #14202E; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+    .cover { height: 108px; position: relative; }
+    .cat-pill { position: absolute; top: 10px; left: 10px; font-size: 10.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: rgba(11,20,32,0.6); backdrop-filter: blur(2px); }
+    .card-body { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+    .card-title { font-weight: 600; font-size: 14.5px; }
+    .card-meta { font-size: 12px; color: #94A3B8; display: flex; align-items: center; gap: 6px; }
+    .card-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+    .cupo-mini { font-size: 11px; color: #94A3B8; }
+    .btn-sm { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 12px; border-radius: 8px; padding: 8px 14px; border: none; background: #14B8A6; color: #04241F; cursor: pointer; }
+    .side { width: 300px; flex-shrink: 0; }
+    .panel { background: #14202E; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 20px; }
+    .panel-title { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 14px; margin-bottom: 14px; }
+    .appt { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .appt:first-of-type { border-top: none; padding-top: 0; }
+    .appt-date { width: 42px; height: 42px; border-radius: 10px; background: rgba(20,184,166,0.12); color: #5EEAD4; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+    .appt-title { font-size: 13px; font-weight: 600; }
+    .appt-sub { font-size: 11.5px; color: #94A3B8; margin-top: 2px; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="34" height="34" rx="9" fill="#0D1B2A"/>
+        <path d="M10 24 L10 10 Q10 8 12 8 L18 8 Q23 8 23 12.5 Q23 16 19 17 Q24 18 24 22.5 Q24 27 18 27 L12 27 Q10 27 10 25 Z" fill="url(#g2)"/>
+        <defs><linearGradient id="g2" x1="10" y1="8" x2="24" y2="27" gradientUnits="userSpaceOnUse"><stop stop-color="#14B8A6"/><stop offset="1" stop-color="#FFFFFF"/></linearGradient></defs>
+      </svg>
+      <div class="brand-name">Be <span>Core</span></div>
+    </div>
+    <div class="navlinks">
+      <div class="on">Descubre</div>
+      <div>Mapa</div>
+      <div>Mis eventos</div>
+      <div>Citas</div>
+      <div>Notificaciones</div>
+    </div>
+    <div class="right">
+      <div class="search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        Buscar eventos
+      </div>
+      <div class="avatar"></div>
+    </div>
+  </div>
+
+  <div class="body">
+    <div style="flex:1;min-width:0;">
+      <h1 class="h1">Hola, Camila</h1>
+      <p class="sub">Descubre eventos cerca de ti en Medellín</p>
+      <div class="chips">
+        <div class="chip on">Todos</div>
+        <div class="chip">Deportivos</div>
+        <div class="chip">Culturales</div>
+        <div class="chip">Cerca de ti</div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="cover" style="background:linear-gradient(135deg,#0D3B33,#0B1420);"><div class="cat-pill" style="color:#5EEAD4;">Deportivo</div></div>
+          <div class="card-body">
+            <div class="card-title">Torneo barrial de fútbol</div>
+            <div class="card-meta">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+              Sáb, 12 oct · 8:00 a.m.
+            </div>
+            <div class="card-meta">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              Cancha La Floresta
+            </div>
+            <div class="card-foot">
+              <div class="cupo-mini">24 / 40 cupos</div>
+              <button class="btn-sm">Confirmar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cover" style="background:linear-gradient(135deg,#3B2E0D,#0B1420);"><div class="cat-pill" style="color:#FDE68A;">Cultural</div></div>
+          <div class="card-body">
+            <div class="card-title">Noche de teatro comunitario</div>
+            <div class="card-meta">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+              Vie, 18 oct · 6:30 p.m.
+            </div>
+            <div class="card-meta">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              Casa de la Cultura
+            </div>
+            <div class="card-foot">
+              <div class="cupo-mini">46 / 50 cupos</div>
+              <button class="btn-sm" style="background:#FACC15;">Casi lleno</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cover" style="background:linear-gradient(135deg,#0D2A3B,#0B1420);"><div class="cat-pill" style="color:#7DD3FC;">Cultural</div></div>
+          <div class="card-body">
+            <div class="card-title">Cine al aire libre</div>
+            <div class="card-meta">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+              Dom, 27 oct · 7:00 p.m.
+            </div>
+            <div class="card-meta">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              Parque La Presita
+            </div>
+            <div class="card-foot">
+              <div class="cupo-mini">28 / 80 cupos</div>
+              <button class="btn-sm">Confirmar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cover" style="background:linear-gradient(135deg,#241B3B,#0B1420);"><div class="cat-pill" style="color:#C4B5FD;">Cultural</div></div>
+          <div class="card-body">
+            <div class="card-title">Feria de emprendedores</div>
+            <div class="card-meta">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+              Sáb, 2 nov · 10:00 a.m.
+            </div>
+            <div class="card-meta">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              Plazoleta central
+            </div>
+            <div class="card-foot">
+              <div class="cupo-mini">12 / 60 cupos</div>
+              <button class="btn-sm">Confirmar</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cover" style="background:linear-gradient(135deg,#0D3B33,#0B1420);"><div class="cat-pill" style="color:#5EEAD4;">Deportivo</div></div>
+          <div class="card-body">
+            <div class="card-title">Clase abierta de zumba</div>
+            <div class="card-meta">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+              Mié, 2 sep · 5:00 p.m.
+            </div>
+            <div class="card-meta">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              Polideportivo El Roble
+            </div>
+            <div class="card-foot">
+              <div class="cupo-mini">30 / 30 cupos</div>
+              <button class="btn-sm" style="background:#334155;color:#94A3B8;">Cupo lleno</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cover" style="background:linear-gradient(135deg,#3B1D0D,#0B1420);"><div class="cat-pill" style="color:#FDBA74;">Deportivo</div></div>
+          <div class="card-body">
+            <div class="card-title">Ciclopaseo nocturno</div>
+            <div class="card-meta">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
+              Jue, 9 oct · 7:30 p.m.
+            </div>
+            <div class="card-meta">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748B" stroke-width="2"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+              Punto de encuentro: Parque Lleras
+            </div>
+            <div class="card-foot">
+              <div class="cupo-mini">55 / 100 cupos</div>
+              <button class="btn-sm">Confirmar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="panel">
+        <div class="panel-title">Próximas citas</div>
+        <div class="appt">
+          <div class="appt-date">12<br>OCT</div>
+          <div>
+            <div class="appt-title">Reunión de organizadores</div>
+            <div class="appt-sub">10:00 a.m. · Virtual</div>
+          </div>
+        </div>
+        <div class="appt">
+          <div class="appt-date">20<br>OCT</div>
+          <div>
+            <div class="appt-title">Entrega de camisetas</div>
+            <div class="appt-sub">4:00 p.m. · Sede comunal</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

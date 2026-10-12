@@ -14,6 +14,7 @@ cancelan su asistencia; el sistema impide el sobrecupo, envía recordatorios por
 - Equipo: Santiago Duque Gallego y Jheitson Felipe Jaramillo Vélez.
 - Entrega: MVP corriendo **en local** para la sustentación (primera semana de noviembre de 2026).
 - No hay despliegue. No hay app móvil nativa: es web responsive, mobile-first.
+- Asistente de código: **Claude Code con Opus 5.5**.
 - Cualquier mención a "BeTrayn" en documentos viejos es un error: el proyecto es Be Core.
 
 ## 2. Stack (decidido, no proponer alternativas)
@@ -52,11 +53,17 @@ becore/
 │   ├── specs/
 │   │   ├── database.md        ← tablas, funciones, reglas de cupos, RLS
 │   │   ├── api.md             ← contrato de cada endpoint (request, response, errores)
-│   │   ├── ui.md              ← rutas, pantallas, identidad visual, textos
+│   │   ├── ui.md              ← rutas, pantallas, textos (lo visual queda bajo la skill becore-ui, ver §5.1)
+│   │   ├── auth-onboarding.md ← login, Google, onboarding de gustos y "Para ti"
+│   │   ├── rediseno-auditoria.md ← estado del frontend frente a los mockups y contradicciones resueltas
 │   │   └── backlog.md         ← tareas por sprint con criterios de aceptación
+│   ├── mockups/               ← 6 pantallas HTML estáticas de referencia visual
 │   ├── PROMPTS.md             ← cómo pedirle tareas a Claude Code
+│   ├── PROMPTS-rediseno.md    ← sesiones R0–R9 del rediseño del frontend
 │   └── progreso/              ← un .md por avance: NN_YYYY-MM-DD_titulo.md
-└── .claude/settings.json      ← permisos de Claude Code
+└── .claude/
+    ├── settings.json          ← permisos de Claude Code
+    └── skills/becore-ui/      ← skill de UX/UI, obligatoria para todo lo visual
 ```
 
 ## 4. Comandos
@@ -85,6 +92,19 @@ Cada tarea del backlog tiene un ID (ej. `S1-04`). Para cada tarea:
 4. **Verifica**: `npm run lint` y `npm test` sin errores. Si la tarea tiene pantalla, di exactamente cómo probarla a mano.
 5. **Resume** al final: archivos cambiados, cómo probar, pendientes. Propón el mensaje de commit.
 6. Si algo de la spec es ambiguo o contradictorio, **pregunta**. No inventes columnas, endpoints, rutas ni códigos de error que no estén en `docs/specs/`.
+
+### 5.1 Tareas visuales
+
+Toda tarea que cree o modifique una pantalla, un componente, un estilo o un texto visible en `frontend/`:
+
+1. **Carga la skill `becore-ui`** (`.claude/skills/becore-ui/SKILL.md`) antes de escribir código.
+2. **Compara contra `docs/mockups/`**: si la pantalla tiene mockup, ábrelo y revisa el resultado a 390 px (y a 1440 px si hay versión de escritorio). Al terminar, lista las diferencias que queden.
+3. Revisa `docs/specs/rediseno-auditoria.md` §d antes de decidir entre fuentes que se contradicen.
+
+Precedencia cuando las fuentes chocan: este `CLAUDE.md` (alcance, librerías, seguridad) → `docs/specs/auth-onboarding.md`
+(solo auth y onboarding) → skill `becore-ui` → mockups → `docs/specs/ui.md`. Es decir, **la parte de UI de `ui.md`
+(principios visuales, tokens §3, colores y estilos de componentes §4) queda subordinada a la skill** cuando se
+contradigan; `ui.md` sigue mandando en lo que la skill no cubre (rutas ↔ RF, formatos de fecha, textos fijos).
 
 ## 6. Reglas globales de código
 

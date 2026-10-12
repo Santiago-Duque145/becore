@@ -1,7 +1,11 @@
 # frontend/CLAUDE.md — React de Be Core
 
 Complementa el `CLAUDE.md` de la raíz. Aplica a todo lo que esté dentro de `frontend/`.
-Rutas, pantallas y textos: `docs/specs/ui.md`. Endpoints que consume: `docs/specs/api.md`.
+Asistente de código: **Claude Code con Opus 5.5**.
+Diseño visual y UX: **skill `becore-ui`** (`.claude/skills/becore-ui/SKILL.md`) + mockups de `docs/mockups/`.
+Rutas, pantallas y textos: `docs/specs/ui.md` (su parte visual queda subordinada a la skill, ver §5).
+Login y onboarding: `docs/specs/auth-onboarding.md`. Endpoints que consume: `docs/specs/api.md`.
+Estado del rediseño: `docs/specs/rediseno-auditoria.md`.
 
 ## 1. Estructura
 
@@ -13,7 +17,7 @@ frontend/
 └── src/
     ├── main.jsx                 ← QueryClientProvider, AuthProvider, RouterProvider, Toaster
     ├── router.jsx               ← todas las rutas (ver ui.md §2)
-    ├── index.css                ← Tailwind 4 + tokens de marca (@theme)
+    ├── index.css                ← Tailwind 4 + tokens de marca (@theme de la skill becore-ui §1)
     ├── lib/
     │   ├── supabase.js          ← cliente con publishable key (Auth + Realtime)
     │   ├── api.js               ← instancia Axios con interceptores
@@ -77,7 +81,8 @@ Las dependencias siempre se instalan desde la raíz con `-w frontend` (o `-w bac
 `cd frontend && npm i`, para que exista un solo `package-lock.json` en la raíz.
 
 Tailwind **4**: no hay `tailwind.config.js` ni `postcss.config.js`. Se agrega el plugin `@tailwindcss/vite`
-en `vite.config.js` y en `src/index.css` va `@import "tailwindcss";` seguido del bloque `@theme` de `ui.md` §3.
+en `vite.config.js` y en `src/index.css` va `@import "tailwindcss";` seguido del bloque `@theme` de la skill
+`becore-ui` §1 (reemplaza al de `ui.md` §3).
 React Router **7**: se importa desde `react-router` (no `react-router-dom`) y se usa `createBrowserRouter`.
 
 ## 4. Patrones obligatorios
@@ -162,8 +167,16 @@ Siempre dentro de un `useEffect` con limpieza. El payload llega en snake_case (`
 
 ## 5. Estilo y UI
 
+**Toda tarea visual** (pantalla, componente, estilo o texto visible) empieza cargando la skill `becore-ui` y
+termina comparando el resultado contra `docs/mockups/` a 390 px (y a 1440 px si el mockup es de escritorio),
+con una lista de las diferencias que queden. Si la skill y `docs/specs/ui.md` se contradicen, **manda la skill**
+(tokens, colores, componentes, navegación). `ui.md` sigue mandando en rutas ↔ RF, formatos de fecha y textos
+fijos que la skill no define. Las contradicciones ya detectadas y su resolución están en
+`docs/specs/rediseno-auditoria.md` §d.
+
 - Mobile-first: diseña a 390 px y amplía con `md:` y `lg:`. Debe verse bien a 1440 px.
-- Usa solo los tokens de `ui.md` §3. No inventes colores ni fuentes.
+- Usa solo los tokens de la skill `becore-ui` §1. No inventes colores ni fuentes. Nada de hex sueltos en componentes.
+- Reutiliza `components/ui/` antes de crear estilos ad hoc (skill §0 y §3).
 - Botones y enlaces con estado de foco visible. Imágenes con `alt`. Formularios con `<label>`.
 - Iconos de `lucide-react`. Nada de emojis en la interfaz.
 - Confirmar asistencia debe tomar **3 toques o menos** desde el listado (RNF-01).
