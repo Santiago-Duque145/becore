@@ -60,6 +60,10 @@ export const listEventsQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(50).default(12),
 });
 
+export const recommendedQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(20).default(6),
+});
+
 export const eventIdParamsSchema = z.object({
   id: z.uuid({ error: 'Identificador de evento inválido' }),
 });

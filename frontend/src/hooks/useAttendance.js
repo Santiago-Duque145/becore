@@ -40,7 +40,10 @@ function useAttendanceMutation(eventId, confirming, mutationFn) {
     onError: (_err, _vars, context) => {
       context?.snapshot.forEach(([key, data]) => queryClient.setQueryData(key, data));
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: queryKeys.eventsRoot }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.eventsRoot });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard('participant') });
+    },
   });
 }
 

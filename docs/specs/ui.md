@@ -15,10 +15,14 @@ Tagline: "Tu comunidad en movimiento". Tono cercano, activo y comunitario; tutea
 
 | Ruta | Acceso | Pantalla | RF |
 |---|---|---|---|
-| `/` | — | Redirige a `/eventos` si hay sesión, si no a `/ingresar` | — |
-| `/ingresar` | público | Inicio de sesión | RF-02 |
-| `/registro` | público | Crear cuenta con selector de rol | RF-01 |
-| `/eventos` | todos | Descubre eventos: tarjetas, filtros por categoría y fecha, pestañas Próximos / Pasados | RF-07 |
+| `/` | — | Redirige a `/eventos` si hay sesión, si no a `/login` | — |
+| `/login` | público | Inicio de sesión con correo o Google (`/ingresar` redirige aquí) | RF-02 |
+| `/registro` | público | Crear cuenta: nombre, correo y contraseña. El rol se elige en `/bienvenida` (auth-onboarding §5) | RF-01 |
+| `/recuperar` | público | Pedir el enlace para crear una contraseña nueva | RF-02 |
+| `/nueva-contrasena` | enlace de correo | Crear la contraseña nueva | RF-02 |
+| `/auth/callback` | público | Vuelta de Google y de la confirmación de correo ("Entrando…") | RF-02 |
+| `/bienvenida` | sesión | Onboarding de 5 pasos: rol, gustos, disponibilidad, motivación y zona (auth-onboarding §6) | RF-03 |
+| `/descubre` | todos | Descubre: saludo, buscador, ticker en vivo, chips de categoría, "Para ti" y tarjetas de próximos eventos; en escritorio, columna de próximas citas. `/eventos` redirige aquí | RF-07 |
 | `/eventos/nuevo` | org | Formulario crear evento | RF-04, RF-09 |
 | `/eventos/:id` | todos | Detalle: datos, barra de cupo, botón confirmar/cancelar (part), acciones de organizador (dueño), ticker de actividad | RF-08, RF-11, RF-12 |
 | `/eventos/:id/editar` | dueño | Formulario editar | RF-05 |
@@ -27,10 +31,12 @@ Tagline: "Tu comunidad en movimiento". Tono cercano, activo y comunitario; tutea
 | `/citas` | todos | Mis citas (próximas / pasadas) | RF-14 |
 | `/citas/nueva` | org | Crear cita: datos + buscador de participantes + bloques de disponibilidad como sugerencia | RF-14 |
 | `/disponibilidad` | org | Mis bloques de disponibilidad: crear y borrar | RF-15 |
-| `/perfil` | todos | Nombre editable, correo y rol de solo lectura, cerrar sesión | — |
+| `/mis-eventos` | todos | Mis eventos: pestañas Próximos / Pasados con contador, fecha destacada, estado (Confirmado, Asistió, Cancelado, Evento cancelado) y aviso de cambio de horario sin leer | RF-19 |
+| `/avisos` | todos | Avisos de la app agrupados en Hoy / Esta semana / Antes; abrir marca como leído; "Marcar todas como leídas" | RF-16, RF-17 |
+| `/perfil` | todos | Avatar con iniciales, nombre editable, correo y rol de solo lectura, "Tus gustos" (chips del onboarding, `PUT /me/preferences`) y cerrar sesión | RF-03 |
 | `*` | — | 404 con enlace a `/eventos` | — |
 
-`ProtectedRoute` redirige a `/ingresar` sin sesión. `RoleRoute role="organizer"` muestra 403 amable si el rol no coincide.
+`ProtectedRoute` redirige a `/login` sin sesión, guardando la ruta de origen. `RequireOnboarding` lleva a `/bienvenida` si el onboarding está pendiente. `RoleRoute role="organizer"` muestra 403 amable si el rol no coincide.
 
 Navegación: barra inferior fija en móvil (Eventos, Panel, Citas, Perfil; el organizador ve además un botón
 "+" central para crear evento). En escritorio, barra superior con las mismas entradas.
@@ -94,19 +100,11 @@ Pasado = `gray-500`.
 Fechas: `Intl.DateTimeFormat('es-CO', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'America/Bogota' })`.
 Tiempo relativo del ticker: `Intl.RelativeTimeFormat('es', { numeric: 'auto' })`.
 
-Errores de Supabase Auth → mensaje en español:
-| Mensaje original (contiene) | Mostrar |
-|---|---|
-| `Invalid login credentials` | Correo o contraseña incorrectos |
-| `User already registered` | Ese correo ya tiene una cuenta. Inicia sesión |
-| `Password should be at least` | La contraseña debe tener al menos 8 caracteres |
-| `Unable to validate email address` | Escribe un correo válido |
-| `INVALID_ROLE` / `Database error saving new user` | Elige si eres organizador o participante |
-| cualquier otro | No pudimos completar la acción, intenta de nuevo |
+Errores de Supabase Auth → mensaje en español: la tabla vive en `frontend/src/lib/auth-errors.js` con los textos de `auth-onboarding.md` §4 y §5 (credenciales, correo ya registrado, correo sin confirmar, red caída, Google cancelado o no disponible, límite de correos, enlace vencido). El error de rol desapareció: el registro ya no envía rol.
 
 Textos fijos:
 - Vacío en Descubre: "Todavía no hay eventos próximos." + (organizador) botón "Crear el primero".
 - Vacío en Mis eventos: "Aún no te has apuntado a nada. Mira lo que se viene." + enlace a `/eventos`.
 - Éxito al confirmar: "¡Listo! Tienes tu cupo." Al cancelar: "Cancelaste tu asistencia. Liberaste un cupo."
 - Éxito al crear evento: "Evento publicado."
-- Registro, selector de rol: "Quiero organizar eventos" / "Quiero participar en eventos".
+- El selector de rol salió del registro: ahora es el paso 1 de `/bienvenida`, con los textos de `auth-onboarding.md` §6.

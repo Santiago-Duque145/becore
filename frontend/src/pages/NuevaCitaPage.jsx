@@ -2,13 +2,11 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { toast } from 'sonner';
-import { ArrowLeft, X } from 'lucide-react';
+import { ChevronLeftIcon, XIcon } from '../components/icons/index.js';
 import { appointmentFormSchema, toSlotPayload } from '../lib/appointment-schemas.js';
 import { formatDate, isoToBogotaInput } from '../lib/format.js';
 import { useAvailability, useCreateAppointment, useParticipantSearch } from '../hooks/useAppointments.js';
-import { Input, Textarea } from '../components/ui/Field.jsx';
-import { Button } from '../components/ui/Button.jsx';
+import { Button, Chip, Input, Textarea, useToast } from '../components/ui/index.js';
 
 const FIELDS = ['title', 'notes', 'location', 'startsAt', 'endsAt', 'participantIds'];
 
@@ -30,36 +28,43 @@ function ParticipantPicker({ selected, onAdd, onRemove, error }) {
       {selected.length > 0 && (
         <ul className="flex flex-wrap gap-2" aria-label="Invitados elegidos">
           {selected.map((p) => (
-            <li key={p.id} className="inline-flex items-center gap-1 rounded-full bg-teal-500 py-1 pl-3 pr-1 text-sm font-medium text-navy-900">
+            <li
+              key={p.id}
+              className="inline-flex items-center gap-1 rounded-full bg-accent/15 py-1 pr-1 pl-3 text-xs font-semibold text-accent-soft"
+            >
               {p.fullName}
               <button
                 type="button"
                 aria-label={`Quitar a ${p.fullName}`}
                 onClick={() => onRemove(p.id)}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-navy-900/10 focus-visible:outline-2 focus-visible:outline-teal-500"
+                className="focus-ring inline-flex h-8 w-8 items-center justify-center rounded-full hover:bg-accent/20"
               >
-                <X size={14} aria-hidden="true" />
+                <XIcon size={14} />
               </button>
             </li>
           ))}
         </ul>
       )}
-      {search.enabled && (search.isFetching || search.pending) && <p className="text-sm text-gray-500">Buscando…</p>}
-      {search.isError && <p role="alert" className="text-sm text-orange-500">{search.error.message}</p>}
+      {search.enabled && (search.isFetching || search.pending) && <p className="text-sm text-ink-muted">Buscando…</p>}
+      {search.isError && (
+        <p role="alert" className="text-sm text-danger">
+          {search.error.message}
+        </p>
+      )}
       {search.enabled && !search.isFetching && !search.pending && search.data && results.length === 0 && (
-        <p className="text-sm text-gray-500">No encontramos participantes con ese texto.</p>
+        <p className="text-sm text-ink-muted">No encontramos participantes con ese texto.</p>
       )}
       {results.length > 0 && (
-        <ul className="divide-y divide-gray-200 rounded-xl border border-gray-200 bg-white">
+        <ul className="divide-y divide-line overflow-hidden rounded-field border border-line bg-field">
           {results.map((p) => (
             <li key={p.id}>
               <button
                 type="button"
                 onClick={() => onAdd(p)}
-                className="flex min-h-[44px] w-full flex-col items-start px-3 py-2 text-left hover:bg-gray-200/60 focus-visible:outline-2 focus-visible:outline-teal-500"
+                className="focus-ring flex min-h-11 w-full flex-col items-start px-4 py-2 text-left hover:bg-panel"
               >
-                <span className="font-medium text-navy-900">{p.fullName}</span>
-                <span className="text-sm text-gray-500">{p.email}</span>
+                <span className="text-sm font-semibold text-ink">{p.fullName}</span>
+                <span className="text-xs text-ink-muted">{p.email}</span>
               </button>
             </li>
           ))}
@@ -71,6 +76,7 @@ function ParticipantPicker({ selected, onAdd, onRemove, error }) {
 
 export default function NuevaCitaPage() {
   const navigate = useNavigate();
+  const toast = useToast();
   const createAppointment = useCreateAppointment();
   const slots = useAvailability();
   const [selected, setSelected] = useState([]);
@@ -119,10 +125,13 @@ export default function NuevaCitaPage() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-5">
-      <Link to="/citas" className="inline-flex min-h-[44px] items-center gap-1 text-sm font-medium text-teal-600">
-        <ArrowLeft size={16} aria-hidden="true" /> Volver a citas
+      <Link
+        to="/citas"
+        className="focus-ring inline-flex min-h-11 items-center gap-1 self-start rounded-field text-sm font-semibold text-accent hover:text-accent-soft"
+      >
+        <ChevronLeftIcon size={16} /> Volver a citas
       </Link>
-      <h1 className="font-display text-2xl font-bold text-navy-900">Crear cita</h1>
+      <h1 className="font-display text-xl font-semibold text-ink md:text-[22px]">Crear cita</h1>
 
       <form onSubmit={handleSubmit(submit)} noValidate className="flex flex-col gap-4">
         <Input label="Título" error={errors.title?.message} {...register('title')} />
@@ -133,20 +142,20 @@ export default function NuevaCitaPage() {
 
         {slots.data?.length > 0 && (
           <div className="flex flex-col gap-2">
-            <p className="text-sm font-medium text-navy-900">Tus bloques de disponibilidad (toca uno para usarlo)</p>
+            <p className="text-xs font-semibold text-ink-muted">Tus bloques de disponibilidad (toca uno para usarlo)</p>
             <div className="flex flex-wrap gap-2">
               {slots.data.map((slot) => (
-                <button
+                <Chip
                   key={slot.id}
-                  type="button"
+                  aria-pressed={undefined}
+                  className="capitalize"
                   onClick={() => {
                     setValue('startsAt', isoToBogotaInput(slot.startsAt), { shouldValidate: true });
                     setValue('endsAt', isoToBogotaInput(slot.endsAt), { shouldValidate: true });
                   }}
-                  className="min-h-[44px] rounded-xl border border-gray-200 bg-white px-3 text-sm capitalize text-navy-900 hover:bg-gray-200/60 focus-visible:outline-2 focus-visible:outline-teal-500"
                 >
                   {formatDate(slot.startsAt)}
-                </button>
+                </Chip>
               ))}
             </div>
           </div>
@@ -165,11 +174,10 @@ export default function NuevaCitaPage() {
           onRemove={(id) => setSelected((current) => current.filter((p) => p.id !== id))}
         />
 
-        <Button type="submit" disabled={createAppointment.isPending} className="md:self-end">
-          {createAppointment.isPending ? 'Creando…' : 'Crear cita'}
+        <Button type="submit" loading={createAppointment.isPending} className="md:self-end">
+          Crear cita
         </Button>
       </form>
     </div>
   );
 }
-

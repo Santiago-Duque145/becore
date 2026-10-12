@@ -28,6 +28,8 @@ backend/
 │   ├── utils/
 │   │   ├── app-error.js
 │   │   └── db-errors.js            ← traduce errores de Supabase/Postgres a AppError
+│   ├── constants/
+│   │   └── preferences.js          ← listas cerradas del onboarding (= checks de la migración) y sus textos
 │   ├── schemas/                    ← esquemas Zod por módulo (events.schemas.js, ...)
 │   ├── repositories/               ← SOLO consultas a Supabase
 │   ├── services/                   ← reglas de negocio

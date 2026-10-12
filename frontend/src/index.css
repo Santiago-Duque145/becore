@@ -1,36 +1,161 @@
 @import "tailwindcss";
 
+/* Tokens de marca: skill becore-ui §1. Prohibido usar hex sueltos en componentes. */
 @theme {
-  --color-navy-900: #0D1B2A;
-  --color-navy-800: #1E293B;
-  --color-graphite: #2D3640;
-  --color-gray-500: #6B7280;
-  --color-gray-200: #E5E7EB;
-  --color-teal-500: #14B8A6;
-  --color-teal-600: #0E9F92;
-  --color-emerald-500: #10B981;
-  --color-orange-500: #F97316;
-  --color-yellow-400: #FACC15;
+  /* Superficies (de más profundo a más elevado) */
+  --color-bg: #0B1420;
+  --color-bg-deep: #0D1B2A;
+  --color-sheet: #101B29;
+  --color-panel: #14202E;
+  --color-field: #172436;
+  --color-line: rgb(255 255 255 / 0.08);
 
-  --font-display: "Poppins", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  /* Texto */
+  --color-ink: #F1F5F9;
+  --color-ink-muted: #94A3B8;
+  --color-ink-faint: #8291A6;
+
+  /* Acentos de marca */
+  --color-accent: #14B8A6;
+  --color-accent-soft: #5EEAD4;
+  --color-on-accent: #04241F;
+  --color-success: #10B981;
+  --color-action: #F97316;
+  --color-culture: #FACC15;
+  --color-danger: #F87171;
+
+  /* Tipografía */
+  --font-display: "Poppins", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+
+  /* Radios */
+  --radius-field: 12px;
+  --radius-card: 16px;
+  --radius-sheet: 28px;
+
+  /* Animación */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-html,
-body,
-#root {
-  min-height: 100dvh;
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100dvh; /* nunca 100vh */
+  }
+
+  body {
+    @apply bg-bg font-sans text-ink antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+
+  /* Evita el zoom automático de iOS al enfocar campos (frontend/CLAUDE.md §6) */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+
+  /* Edge agrega su propio ojo a los campos de contraseña; PasswordInput ya trae el suyo */
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
+  }
 }
 
-body {
-  background-color: #0D1B2A;
-  -webkit-tap-highlight-color: transparent;
-  overscroll-behavior-y: none;
-  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+/* Márgenes de zona segura para barras fijas (muesca y barra de gestos) */
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
 }
 
-input,
-select,
-textarea {
-  font-size: 16px;
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Entrada de elementos: opacity + translate-y-2 (skill §4, Movimiento) */
+@theme {
+  --animate-enter: enter 200ms var(--ease-out-soft) both;
+
+  @keyframes enter {
+    from {
+      opacity: 0;
+      transform: translateY(0.5rem);
+    }
+  }
+
+  /* Punto "en vivo" del ticker (la única animación en bucle que permite la skill §4) */
+  --animate-blink: blink 1.6s ease-in-out infinite;
+
+  @keyframes blink {
+    50% {
+      opacity: 0.25;
+    }
+  }
+
+  /* Check del final del onboarding: el círculo aparece y el trazo se dibuja */
+  --animate-pop: pop 250ms var(--ease-out-soft) both;
+  --animate-draw: draw 300ms var(--ease-out-soft) 150ms both;
+
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+  }
+
+  @keyframes draw {
+    from {
+      stroke-dashoffset: 24;
+    }
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+}
+
+/* Área táctil de 44 px para enlaces dentro de texto sin mover el layout (skill §4, objetivos ≥ 44 × 44) */
+@utility hit-area {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -15px -4px;
+  }
+}
+
+/* Enfoque visible común a todos los controles (skill §4, Accesibilidad) */
+@utility focus-ring {
+  outline: none;
+  &:focus-visible {
+    box-shadow:
+      0 0 0 2px var(--color-bg),
+      0 0 0 4px var(--color-accent);
+  }
+}
+
+/* Portadas de evento por categoría (degradado del mockup con el color de la skill §1: sport turquesa,
+   culture amarillo, recreation verde, other gris). Sin fotos externas. */
+@utility bg-cover-sport {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-accent) 28%, var(--color-bg)), var(--color-bg));
+}
+@utility bg-cover-culture {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-culture) 24%, var(--color-bg)), var(--color-bg));
+}
+@utility bg-cover-recreation {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-success) 26%, var(--color-bg)), var(--color-bg));
+}
+@utility bg-cover-other {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-ink-muted) 22%, var(--color-bg)), var(--color-bg));
+}
+
+/* Fondo del hero del login y de la página de auth en escritorio (mobile-login.html) */
+@utility bg-hero {
+  background:
+    radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--color-accent) 25%, transparent), transparent 60%),
+    linear-gradient(160deg, var(--color-bg-deep), var(--color-bg));
 }

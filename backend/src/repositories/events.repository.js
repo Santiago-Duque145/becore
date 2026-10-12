@@ -59,6 +59,13 @@ export async function findEventById(id) {
   return data ? toCamel(data) : null;
 }
 
+// Varios eventos por id ("Mis eventos"); el orden lo decide el servicio
+export async function findEventsByIds(ids) {
+  if (!ids.length) return [];
+  const data = unwrap(await supabaseAdmin.from('events').select(COLUMNS).in('id', ids));
+  return data.map(toCamel);
+}
+
 export async function updateEvent(id, patch) {
   const data = unwrap(await supabaseAdmin.from('events').update(toSnake(patch)).eq('id', id).select(COLUMNS).single());
   return toCamel(data);
@@ -89,6 +96,22 @@ export async function listEvents(filters) {
   return { rows: data.map(toCamel), total: count ?? 0 };
 }
 
+// Candidatos de "Para ti": publicados y futuros, sin los del organizador indicado.
+// El filtro confirmed_count < capacity se hace en el servicio (PostgREST no compara dos columnas).
+export async function listRecommendationCandidates({ excludeOrganizerId, max = 200 }) {
+  const data = unwrap(
+    await supabaseAdmin
+      .from('events')
+      .select(COLUMNS)
+      .eq('status', 'published')
+      .gt('starts_at', new Date().toISOString())
+      .neq('organizer_id', excludeOrganizerId)
+      .order('starts_at', { ascending: true })
+      .limit(max),
+  );
+  return data.map(toCamel);
+}
+
 // Eventos publicados que empiezan en la ventana [fromIso, toIso] (recordatorios)
 export async function listPublishedStartingBetween(fromIso, toIso) {
   const data = unwrap(
@@ -105,4 +128,17 @@ export async function listPublishedStartingBetween(fromIso, toIso) {
 // Pasa a in_progress / finished los eventos que ya empezaron o terminaron. Devuelve cuántos cambió.
 export async function refreshEventStatuses() {
   return unwrap(await supabaseAdmin.rpc('refresh_event_statuses'));
+}
+
+// Panel del organizador: sus eventos (todos los estados) que empiezan desde fromIso, orden ascendente
+export async function listOrganizerEventsSince(organizerId, fromIso) {
+  const data = unwrap(
+    await supabaseAdmin
+      .from('events')
+      .select(COLUMNS)
+      .eq('organizer_id', organizerId)
+      .gte('starts_at', fromIso)
+      .order('starts_at', { ascending: true }),
+  );
+  return data.map(toCamel);
 }

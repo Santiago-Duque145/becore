@@ -6,6 +6,8 @@ export function useEvent(id) {
   return useQuery({
     queryKey: queryKeys.event(id),
     queryFn: async () => (await eventsApi.getEvent(id)).data,
+    // Un evento que no existe no va a aparecer al reintentar
+    retry: (failureCount, error) => error?.code !== 'EVENT_NOT_FOUND' && failureCount < 1,
   });
 }
 
@@ -14,7 +16,10 @@ function useEventMutation(mutationFn) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.eventsRoot }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.eventsRoot });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboard('organizer') });
+    },
   });
 }
 

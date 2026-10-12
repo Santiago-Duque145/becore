@@ -1,15 +1,15 @@
-# Cómo pedirle tareas a Claude Code (Sonnet) — Be Core
+# Cómo pedirle tareas a Claude Code (Opus 5.5) — Be Core
 
 Claude Code ya lee `CLAUDE.md` solo. Estos prompts le dicen **qué** tarea hacer y **cómo** cerrarla.
 Se copian tal cual, cambiando únicamente el ID de la tarea.
 
 ## Reglas de uso
 
-1. Abre la terminal en la raíz del repo, ejecuta `claude` y luego `/model sonnet`.
+1. Abre la terminal en la raíz del repo, ejecuta `claude` y luego `/model opus` (Opus 5.5).
 2. **No ejecutes `/init`**: reescribiría el `CLAUDE.md` que ya está escrito.
-3. **Una tarea por sesión.** Al terminar una tarea, `/clear` antes de la siguiente. El contexto limpio hace que Sonnet siga mejor las reglas.
+3. **Una tarea por sesión.** Al terminar una tarea, `/clear` antes de la siguiente. El contexto limpio hace que Claude siga mejor las reglas.
 4. Empieza cada tarea en **modo plan** (Shift+Tab hasta ver "plan mode"). Lee el plan, corrígelo si algo no cuadra con las specs y solo entonces apruébalo.
-5. Si Sonnet propone instalar algo fuera de la lista permitida o cambiar el esquema, responde "no, sigue la spec".
+5. Si Claude propone instalar algo fuera de la lista permitida o cambiar el esquema, responde "no, sigue la spec".
 6. Antes de hacer el PR, revisa tú el diff completo. Ustedes deben poder explicar cada línea en la sustentación.
 
 ---

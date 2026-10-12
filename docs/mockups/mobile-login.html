@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup · mobile-login</title>
+<!-- Mockup estático de referencia (fuente: Be Core Mockups, Claude.ai). No es código de producción. -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700&family=Inter:wght@400;500;600&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    a { color: #14B8A6; text-decoration: none; } a:hover { color: #5EEAD4; }
+    .screen { width: 390px; height: 844px; background: #0B1420; color: #F1F5F9; font-family: 'Inter', system-ui, sans-serif; display: flex; flex-direction: column; overflow: hidden; }
+    .hero { height: 300px; background: radial-gradient(circle at 30% 20%, rgba(20,184,166,0.25), transparent 60%), linear-gradient(160deg,#0D1B2A,#0B1420); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; flex-shrink: 0; }
+    .brand-name { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 24px; color: #FFFFFF; }
+    .brand-name span { color: #14B8A6; }
+    .tagline { font-size: 12.5px; color: #94A3B8; }
+    .sheet { flex: 1; background: #101B29; border-radius: 28px 28px 0 0; padding: 30px 26px; display: flex; flex-direction: column; }
+    .h1 { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 20px; margin: 0 0 6px; }
+    .sub { font-size: 13px; color: #94A3B8; margin: 0 0 24px; }
+    .field-label { font-size: 12px; font-weight: 600; color: #94A3B8; margin-bottom: 7px; display: block; }
+    .field { background: #172436; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px 16px; font-size: 14px; color: #F1F5F9; margin-bottom: 16px; }
+    .field.placeholder { color: #475569; }
+    .row-between { display: flex; align-items: center; justify-content: space-between; margin: -6px 0 20px; }
+    .link-sm { font-size: 12px; color: #14B8A6; font-weight: 600; }
+    .btn-primary { background: #14B8A6; color: #04241F; border: none; border-radius: 12px; padding: 16px; font-size: 14.5px; font-weight: 700; text-align: center; font-family: 'Inter', sans-serif; }
+    .divider { display: flex; align-items: center; gap: 12px; color: #475569; font-size: 11.5px; margin: 22px 0; }
+    .divider::before, .divider::after { content: ""; height: 1px; flex: 1; background: rgba(255,255,255,0.08); }
+    .footer { margin-top: auto; text-align: center; font-size: 13px; color: #94A3B8; padding-top: 10px; }
+    .footer b { color: #14B8A6; }
+  </style>
+</head>
+<body>
+
+<div class="screen">
+  <div class="hero">
+    <svg width="52" height="52" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="34" height="34" rx="9" fill="#0D1B2A"/>
+      <path d="M10 24 L10 10 Q10 8 12 8 L18 8 Q23 8 23 12.5 Q23 16 19 17 Q24 18 24 22.5 Q24 27 18 27 L12 27 Q10 27 10 25 Z" fill="url(#g3)"/>
+      <defs><linearGradient id="g3" x1="10" y1="8" x2="24" y2="27" gradientUnits="userSpaceOnUse"><stop stop-color="#14B8A6"/><stop offset="1" stop-color="#FFFFFF"/></linearGradient></defs>
+    </svg>
+    <div class="brand-name">Be <span>Core</span></div>
+    <div class="tagline">Tu comunidad en movimiento</div>
+  </div>
+
+  <div class="sheet">
+    <h1 class="h1">Bienvenido de nuevo</h1>
+    <p class="sub">Inicia sesión para ver tus eventos y citas</p>
+
+    <span class="field-label">Correo electrónico</span>
+    <div class="field placeholder">nombre@correo.com</div>
+
+    <span class="field-label">Contraseña</span>
+    <div class="field placeholder">••••••••</div>
+
+    <div class="row-between">
+      <div></div>
+      <div class="link-sm">¿Olvidaste tu contraseña?</div>
+    </div>
+
+    <div class="btn-primary">Iniciar sesión</div>
+
+    <div class="divider">o continúa como</div>
+    <div class="row-between" style="margin:0;gap:12px;">
+      <div class="field" style="flex:1;text-align:center;margin:0;">Organizador</div>
+      <div class="field" style="flex:1;text-align:center;margin:0;">Participante</div>
+    </div>
+
+    <div class="footer">¿No tienes cuenta? <b>Crear cuenta</b></div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mockup · desktop-panel-organizador</title>
+<!-- Mockup estático de referencia (fuente: Be Core Mockups, Claude.ai). No es código de producción. -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@400;500;600&display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    a { color: #14B8A6; text-decoration: none; } a:hover { color: #5EEAD4; }
+    .app { width: 1440px; height: 900px; background: #0B1420; color: #F1F5F9; font-family: 'Inter', system-ui, sans-serif; display: flex; overflow: hidden; }
+    .side { width: 240px; flex-shrink: 0; background: #0D1B2A; border-right: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; padding: 28px 20px; gap: 32px; }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-name { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 19px; color: #FFFFFF; }
+    .brand-name span { color: #14B8A6; }
+    .nav { display: flex; flex-direction: column; gap: 4px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 10px; font-size: 14px; font-weight: 500; color: #94A3B8; }
+    .nav-item.active { background: #14202E; color: #F1F5F9; }
+    .nav-item.active .dot { background: #14B8A6; }
+    .dot { width: 6px; height: 6px; border-radius: 999px; background: #475569; flex-shrink: 0; }
+    .side-foot { margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 12px; border-radius: 12px; background: #14202E; }
+    .avatar { width: 34px; height: 34px; border-radius: 999px; background: linear-gradient(135deg,#14B8A6,#0D1B2A); flex-shrink: 0; }
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 26px 36px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .h1 { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 22px; margin: 0; }
+    .sub { color: #94A3B8; font-size: 13px; margin-top: 4px; }
+    .btn { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 13px; border-radius: 10px; padding: 11px 18px; border: none; cursor: pointer; }
+    .btn-primary { background: #14B8A6; color: #04241F; }
+    .content { padding: 28px 36px; overflow: hidden; display: flex; gap: 20px; align-items: flex-start; }
+    .content-main { flex: 1; min-width: 0; }
+    .content-side { width: 280px; flex-shrink: 0; display: flex; flex-direction: column; gap: 16px; }
+    .activity-panel { background: #14202E; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 16px 18px; }
+    .activity-head { display: flex; align-items: center; gap: 7px; font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 13.5px; margin-bottom: 14px; }
+    .live-dot { width: 7px; height: 7px; border-radius: 999px; background: #14B8A6; animation: blink 1.6s ease-in-out infinite; }
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+    .activity-item { display: flex; gap: 10px; padding: 9px 0; border-top: 1px solid rgba(255,255,255,0.05); }
+    .activity-item:first-of-type { border-top: none; padding-top: 0; }
+    .activity-dot { width: 8px; height: 8px; border-radius: 999px; margin-top: 5px; flex-shrink: 0; }
+    .activity-text { font-size: 12px; color: #CBD5E1; line-height: 1.4; }
+    .activity-text b { color: #F1F5F9; }
+    .activity-time { font-size: 10.5px; color: #64748B; margin-top: 2px; }
+    .map-teaser { background: #14202E; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 14px; position: relative; overflow: hidden; height: 150px; }
+    .map-teaser .mt-road { position: absolute; background: #1E2C3B; }
+    .map-teaser .mt-park { position: absolute; background: rgba(16,185,129,0.14); border-radius: 50%; }
+    .map-teaser .mt-label { position: relative; z-index: 2; font-size: 11.5px; font-weight: 700; color: #5EEAD4; display: flex; align-items: center; gap: 6px; }
+    .map-teaser .mt-pin { position: absolute; z-index: 2; }
+    .stats { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: #14202E; border: 1px solid rgba(255,255,255,0.06); border-radius: 14px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; }
+    .stat-label { font-size: 12px; color: #94A3B8; }
+    .stat-value { font-family: 'Poppins', sans-serif; font-size: 26px; font-weight: 600; }
+    .stat-tag { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; width: fit-content; }
+    .panel { background: #14202E; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; overflow: hidden; }
+    .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .panel-title { font-family: 'Poppins', sans-serif; font-weight: 600; font-size: 15px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: #64748B; padding: 12px 22px; font-weight: 600; }
+    td { padding: 14px 22px; font-size: 13.5px; border-top: 1px solid rgba(255,255,255,0.05); }
+    .ev-name { font-weight: 600; }
+    .ev-meta { color: #94A3B8; font-size: 12px; margin-top: 2px; }
+    .badge { font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px; }
+    .bar-track { width: 120px; height: 6px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 999px; }
+    .cupo-text { font-size: 11px; color: #94A3B8; margin-top: 4px; }
+    .cat-icon { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <div class="side">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="34" height="34" rx="9" fill="#0D1B2A"/>
+        <path d="M10 24 L10 10 Q10 8 12 8 L18 8 Q23 8 23 12.5 Q23 16 19 17 Q24 18 24 22.5 Q24 27 18 27 L12 27 Q10 27 10 25 Z" fill="url(#g1)"/>
+        <defs><linearGradient id="g1" x1="10" y1="8" x2="24" y2="27" gradientUnits="userSpaceOnUse"><stop stop-color="#14B8A6"/><stop offset="1" stop-color="#FFFFFF"/></linearGradient></defs>
+      </svg>
+      <div class="brand-name">Be <span>Core</span></div>
+    </div>
+    <div class="nav">
+      <div class="nav-item active"><span class="dot"></span>Panel</div>
+      <div class="nav-item"><span class="dot"></span>Eventos</div>
+      <div class="nav-item"><span class="dot"></span>Mapa en vivo</div>
+      <div class="nav-item"><span class="dot"></span>Citas</div>
+      <div class="nav-item"><span class="dot"></span>Participantes</div>
+      <div class="nav-item"><span class="dot"></span>Notificaciones</div>
+      <div class="nav-item"><span class="dot"></span>Configuración</div>
+    </div>
+    <div class="side-foot">
+      <div class="avatar"></div>
+      <div>
+        <div style="font-size:13px;font-weight:600;">Santiago Duque</div>
+        <div style="font-size:11px;color:#94A3B8;">Organizador</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1 class="h1">Panel del organizador</h1>
+        <div class="sub">Barrio La Floresta · septiembre 2026</div>
+      </div>
+      <button class="btn btn-primary">+ Crear evento</button>
+    </div>
+
+    <div class="content">
+      <div class="content-main">
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-label">Eventos activos</div>
+          <div class="stat-value">6</div>
+          <div class="stat-tag" style="background:rgba(20,184,166,0.15);color:#5EEAD4;">3 esta semana</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Cupos confirmados</div>
+          <div class="stat-value">184</div>
+          <div class="stat-tag" style="background:rgba(16,185,129,0.15);color:#6EE7B7;">+22 hoy</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Cupos disponibles</div>
+          <div class="stat-value">57</div>
+          <div class="stat-tag" style="background:rgba(250,204,21,0.15);color:#FDE68A;">2 eventos casi llenos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Cancelaciones</div>
+          <div class="stat-value">9</div>
+          <div class="stat-tag" style="background:rgba(249,115,22,0.15);color:#FDBA74;">últimos 7 días</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Mis eventos</div>
+          <div style="font-size:12px;color:#94A3B8;">Ver todos</div>
+        </div>
+        <table>
+          <thead>
+            <tr><th>Evento</th><th>Fecha</th><th>Cupo</th><th>Estado</th><th></th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <div class="cat-icon" style="background:rgba(249,115,22,0.15);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FB923C" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg>
+                  </div>
+                  <div>
+                    <div class="ev-name">Torneo barrial de fútbol</div>
+                    <div class="ev-meta">Cancha La Floresta</div>
+                  </div>
+                </div>
+              </td>
+              <td>Sáb, 12 oct · 8:00 a.m.</td>
+              <td>
+                <div class="bar-track"><div class="bar-fill" style="width:60%;background:#F97316;"></div></div>
+                <div class="cupo-text">24 / 40</div>
+              </td>
+              <td><span class="badge" style="background:rgba(16,185,129,0.15);color:#6EE7B7;">Activo</span></td>
+              <td style="color:#64748B;">Editar</td>
+            </tr>
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <div class="cat-icon" style="background:rgba(250,204,21,0.15);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FACC15" stroke-width="2"><path d="M4 20l4-9 4 9M14 20l3-13 3 13"/></svg>
+                  </div>
+                  <div>
+                    <div class="ev-name">Noche de teatro comunitario</div>
+                    <div class="ev-meta">Casa de la Cultura</div>
+                  </div>
+                </div>
+              </td>
+              <td>Vie, 18 oct · 6:30 p.m.</td>
+              <td>
+                <div class="bar-track"><div class="bar-fill" style="width:92%;background:#FACC15;"></div></div>
+                <div class="cupo-text">46 / 50</div>
+              </td>
+              <td><span class="badge" style="background:rgba(250,204,21,0.15);color:#FDE68A;">Casi lleno</span></td>
+              <td style="color:#64748B;">Editar</td>
+            </tr>
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <div class="cat-icon" style="background:rgba(20,184,166,0.15);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2DD4BF" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+                  </div>
+                  <div>
+                    <div class="ev-name">Cine al aire libre</div>
+                    <div class="ev-meta">Parque La Presita</div>
+                  </div>
+                </div>
+              </td>
+              <td>Dom, 27 oct · 7:00 p.m.</td>
+              <td>
+                <div class="bar-track"><div class="bar-fill" style="width:35%;background:#14B8A6;"></div></div>
+                <div class="cupo-text">28 / 80</div>
+              </td>
+              <td><span class="badge" style="background:rgba(16,185,129,0.15);color:#6EE7B7;">Activo</span></td>
+              <td style="color:#64748B;">Editar</td>
+            </tr>
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:12px;">
+                  <div class="cat-icon" style="background:rgba(148,163,184,0.15);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg>
+                  </div>
+                  <div>
+                    <div class="ev-name">Clase abierta de zumba</div>
+                    <div class="ev-meta">Polideportivo El Roble</div>
+                  </div>
+                </div>
+              </td>
+              <td>Mié, 2 sep · 5:00 p.m.</td>
+              <td>
+                <div class="bar-track"><div class="bar-fill" style="width:100%;background:#64748B;"></div></div>
+                <div class="cupo-text">30 / 30</div>
+              </td>
+              <td><span class="badge" style="background:rgba(148,163,184,0.15);color:#CBD5E1;">Finalizado</span></td>
+              <td style="color:#64748B;">Ver</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      </div>
+
+      <div class="content-side">
+        <div class="activity-panel">
+          <div class="activity-head"><span class="live-dot"></span>Actividad en vivo</div>
+          <div class="activity-item">
+            <div class="activity-dot" style="background:#14B8A6;"></div>
+            <div>
+              <div class="activity-text"><b>María G.</b> confirmó su asistencia al torneo de fútbol</div>
+              <div class="activity-time">hace 2 min</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot" style="background:#FACC15;"></div>
+            <div>
+              <div class="activity-text">Noche de teatro llegó a <b>46/50</b> cupos</div>
+              <div class="activity-time">hace 9 min</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot" style="background:#F97316;"></div>
+            <div>
+              <div class="activity-text"><b>Julián P.</b> canceló su asistencia a cine al aire libre</div>
+              <div class="activity-time">hace 14 min</div>
+            </div>
+          </div>
+          <div class="activity-item">
+            <div class="activity-dot" style="background:#14B8A6;"></div>
+            <div>
+              <div class="activity-text">9 personas van en camino al torneo, según el mapa</div>
+              <div class="activity-time">hace 20 min</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="map-teaser">
+          <div class="mt-park" style="width:90px;height:90px;top:-20px;left:-20px;"></div>
+          <div class="mt-park" style="width:60px;height:60px;bottom:-15px;right:-10px;"></div>
+          <div class="mt-road" style="width:260px;height:7px;top:60px;left:-30px;transform:rotate(-6deg);"></div>
+          <div class="mt-road" style="width:260px;height:6px;top:110px;left:-30px;transform:rotate(4deg);"></div>
+          <div class="mt-pin" style="top:50px;left:70px;">
+            <svg width="20" height="26" viewBox="0 0 34 44" fill="none"><path d="M17 0C7.6 0 0 7.6 0 17c0 12.7 17 27 17 27s17-14.3 17-27C34 7.6 26.4 0 17 0z" fill="#F97316"/></svg>
+          </div>
+          <div class="mt-pin" style="top:85px;left:170px;">
+            <svg width="20" height="26" viewBox="0 0 34 44" fill="none"><path d="M17 0C7.6 0 0 7.6 0 17c0 12.7 17 27 17 27s17-14.3 17-27C34 7.6 26.4 0 17 0z" fill="#FACC15"/></svg>
+          </div>
+          <div class="mt-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5EEAD4" stroke-width="2"><path d="M12 21s7-6.5 7-12a7 7 0 10-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+            6 eventos activos en el mapa
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

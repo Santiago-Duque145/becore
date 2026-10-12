@@ -1,57 +1,70 @@
 import { useState } from 'react';
-import { toast } from 'sonner';
-import { CalendarClock, MapPin, Users } from 'lucide-react';
+import { CalendarIcon, UsersIcon } from '../components/icons/index.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { useAppointments, useCancelAppointment } from '../hooks/useAppointments.js';
 import { formatDate } from '../lib/format.js';
-import { Button, LinkButton } from '../components/ui/Button.jsx';
-import { EmptyState, ErrorState, Skeleton } from '../components/ui/Feedback.jsx';
-import { Modal } from '../components/ui/Modal.jsx';
+import {
+  Badge,
+  Button,
+  Chip,
+  EmptyState,
+  ErrorState,
+  LinkButton,
+  Modal,
+  Skeleton,
+  useToast,
+} from '../components/ui/index.js';
 
 const TABS = [
   ['upcoming', 'Próximas'],
   ['past', 'Pasadas'],
 ];
 
+const dayFormatter = new Intl.DateTimeFormat('es-CO', { day: 'numeric', timeZone: 'America/Bogota' });
+const monthFormatter = new Intl.DateTimeFormat('es-CO', { month: 'short', timeZone: 'America/Bogota' });
+
+// Misma fila que Mis eventos: fecha destacada, título, hora · lugar y estado
 function AppointmentCard({ appointment, isOwner, onCancel }) {
   const cancelled = appointment.status === 'cancelled';
+  const start = new Date(appointment.startsAt);
   return (
-    <li className="flex flex-col gap-2 rounded-2xl bg-white p-4 shadow-sm">
-      <div className="flex flex-wrap items-center gap-2">
-        <h2 className="font-display text-lg font-semibold text-navy-900">{appointment.title}</h2>
-        {cancelled && (
-          <span className="rounded-full bg-orange-500 px-2.5 py-0.5 text-xs font-semibold text-white">Cancelada</span>
+    <li className="flex items-start gap-3 rounded-[14px] border border-white/[0.06] bg-panel px-3.5 py-[13px]">
+      <span className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-[10px] bg-accent/12 text-[11px] leading-[1.2] font-bold text-accent-soft uppercase" aria-hidden="true">
+        <span>{dayFormatter.format(start)}</span>
+        <span>{monthFormatter.format(start).replace('.', '')}</span>
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <div className="flex items-start justify-between gap-2">
+          <h2 className="text-[13.5px] font-semibold text-ink">{appointment.title}</h2>
+          {cancelled && <Badge tone="action" className="shrink-0">Cancelada</Badge>}
+        </div>
+        <p className="flex items-center gap-1.5 text-[11.5px] text-ink-muted">
+          <CalendarIcon size={12} className="shrink-0" />
+          <span className="first-letter:uppercase">{formatDate(appointment.startsAt)}</span>
+          {appointment.location && <span className="truncate">· {appointment.location}</span>}
+        </p>
+        <p className="flex items-start gap-1.5 text-[11.5px] text-ink-muted">
+          <UsersIcon size={12} className="mt-0.5 shrink-0" />
+          <span>
+            {isOwner
+              ? appointment.participants.map((p) => p.fullName).join(', ')
+              : `Organiza ${appointment.organizer.fullName}`}
+          </span>
+        </p>
+        {appointment.notes && <p className="text-xs whitespace-pre-line text-ink/80">{appointment.notes}</p>}
+        {isOwner && !cancelled && (
+          <Button variant="danger" size="sm" className="mt-1 self-start" onClick={() => onCancel(appointment)}>
+            Cancelar cita
+          </Button>
         )}
       </div>
-      <p className="flex items-center gap-2 text-navy-900">
-        <CalendarClock size={16} className="text-teal-600" aria-hidden="true" />
-        <span className="capitalize">{formatDate(appointment.startsAt)}</span>
-      </p>
-      {appointment.location && (
-        <p className="flex items-center gap-2 text-gray-500">
-          <MapPin size={16} aria-hidden="true" /> {appointment.location}
-        </p>
-      )}
-      <p className="flex items-start gap-2 text-gray-500">
-        <Users size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
-        <span>
-          {isOwner
-            ? appointment.participants.map((p) => p.fullName).join(', ')
-            : `Organiza ${appointment.organizer.fullName}`}
-        </span>
-      </p>
-      {appointment.notes && <p className="whitespace-pre-line text-sm text-gray-500">{appointment.notes}</p>}
-      {isOwner && !cancelled && (
-        <Button variant="danger" className="self-start" onClick={() => onCancel(appointment)}>
-          Cancelar cita
-        </Button>
-      )}
     </li>
   );
 }
 
 export default function CitasPage() {
   const { profile } = useAuth();
+  const toast = useToast();
   const [scope, setScope] = useState('upcoming');
   const { data, isPending, isError, error, refetch } = useAppointments(scope);
   const cancelAppointment = useCancelAppointment();
@@ -69,29 +82,24 @@ export default function CitasPage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-2xl font-bold text-navy-900">Mis citas</h1>
+        <h1 className="font-display text-[21px] font-semibold text-ink md:text-[22px]">Mis citas</h1>
         {isOrganizer && (
           <div className="flex flex-wrap gap-2">
-            <LinkButton to="/disponibilidad" variant="secondary">
+            <LinkButton to="/disponibilidad" variant="secondary" size="sm">
               Mi disponibilidad
             </LinkButton>
-            <LinkButton to="/citas/nueva">Nueva cita</LinkButton>
+            <LinkButton to="/citas/nueva" size="sm">
+              Nueva cita
+            </LinkButton>
           </div>
         )}
       </div>
 
       <div role="tablist" aria-label="Citas" className="flex gap-2">
         {TABS.map(([value, label]) => (
-          <button
-            key={value}
-            type="button"
-            role="tab"
-            aria-selected={scope === value}
-            onClick={() => setScope(value)}
-            className={`min-h-[44px] rounded-xl px-4 font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 ${scope === value ? 'bg-navy-900 text-white' : 'bg-white text-navy-900'}`}
-          >
+          <Chip key={value} role="tab" selected={scope === value} onClick={() => setScope(value)}>
             {label}
-          </button>
+          </Chip>
         ))}
       </div>
 
@@ -105,7 +113,13 @@ export default function CitasPage() {
       {data?.length === 0 && (
         <EmptyState
           title={scope === 'upcoming' ? 'No tienes citas próximas.' : 'Aún no tienes citas pasadas.'}
-          action={isOrganizer && scope === 'upcoming' ? <LinkButton to="/citas/nueva">Crear una cita</LinkButton> : undefined}
+          action={
+            isOrganizer && scope === 'upcoming' ? (
+              <LinkButton to="/citas/nueva" size="sm">
+                Crear una cita
+              </LinkButton>
+            ) : undefined
+          }
         />
       )}
       {data?.length > 0 && (
@@ -122,13 +136,13 @@ export default function CitasPage() {
       )}
 
       <Modal open={Boolean(toCancel)} title="¿Cancelar esta cita?" onClose={() => setToCancel(null)}>
-        <p className="mb-5 text-gray-500">Avisaremos por correo a los invitados.</p>
+        <p className="mb-5 text-sm text-ink-muted">Avisaremos por correo a los invitados.</p>
         <div className="flex flex-col-reverse gap-2 md:flex-row md:justify-end">
           <Button variant="secondary" onClick={() => setToCancel(null)}>
             Mantener cita
           </Button>
-          <Button variant="danger" onClick={handleCancel} disabled={cancelAppointment.isPending}>
-            {cancelAppointment.isPending ? 'Cancelando…' : 'Sí, cancelar cita'}
+          <Button variant="danger" onClick={handleCancel} loading={cancelAppointment.isPending}>
+            Sí, cancelar cita
           </Button>
         </div>
       </Modal>

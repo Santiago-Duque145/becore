@@ -1,13 +1,21 @@
-import { Link } from 'react-router';
+import { SearchIcon } from '../components/icons/index.js';
+import { EmptyState, LinkButton } from '../components/ui/index.js';
 
 export default function NotFoundPage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[70vh] gap-4 px-6 text-center">
-      <p className="text-6xl font-display font-bold text-teal-500">404</p>
-      <p className="text-gray-200 text-lg">No encontramos esta página.</p>
-      <Link to="/eventos" className="text-teal-500 underline">
-        Volver a eventos
-      </Link>
-    </div>
+    <main className="flex min-h-dvh items-center justify-center px-6">
+      <h1 className="sr-only">Página no encontrada</h1>
+      <EmptyState
+        icon={SearchIcon}
+        title="No encontramos esta página."
+        description="Puede que el enlace esté mal escrito o que la página ya no exista."
+        action={
+          <LinkButton to="/descubre" variant="secondary" size="sm">
+            Volver a Descubre
+          </LinkButton>
+        }
+        className="w-full max-w-md"
+      />
+    </main>
   );
 }

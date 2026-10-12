@@ -10,7 +10,7 @@ const DAY_MS = 24 * 3600 * 1000;
 
 const notFound = () => new AppError(404, 'EVENT_NOT_FOUND', 'El evento no existe');
 
-function toEvent(event, myAttendance) {
+export function toEvent(event, myAttendance) {
   const rest = { ...event };
   delete rest.organizerId;
   const availableSpots = Math.max(event.capacity - event.confirmedCount, 0);
@@ -23,7 +23,8 @@ function toEvent(event, myAttendance) {
   };
 }
 
-async function toEventsWithAttendance(user, events) {
+// También lo usa services/recommendations para devolver el mismo formato de Event
+export async function toEventsWithAttendance(user, events) {
   const attendances = await findUserAttendances(
     user.id,
     events.map((e) => e.id),

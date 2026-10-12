@@ -72,3 +72,24 @@ async function callAttendanceRpc(fn, eventId, userId) {
 export const confirmAttendance = (eventId, userId) => callAttendanceRpc('confirm_attendance', eventId, userId);
 
 export const cancelAttendance = (eventId, userId) => callAttendanceRpc('cancel_attendance', eventId, userId);
+
+// Todas las asistencias del usuario (confirmadas y canceladas), para "Mis eventos"
+export async function listUserAttendances(userId) {
+  const { data, error } = await supabaseAdmin
+    .from('attendances')
+    .select('event_id, status, checked_in')
+    .eq('user_id', userId);
+  if (error) throw translateDbError(error) ?? error;
+  return data.map((row) => ({ eventId: row.event_id, status: row.status, checkedIn: row.checked_in }));
+}
+
+// Estado de las asistencias de varios eventos (conteos del panel del organizador)
+export async function listAttendanceStatuses(eventIds) {
+  if (!eventIds.length) return [];
+  const { data, error } = await supabaseAdmin
+    .from('attendances')
+    .select('event_id, status, checked_in')
+    .in('event_id', eventIds);
+  if (error) throw translateDbError(error) ?? error;
+  return data.map((row) => ({ eventId: row.event_id, status: row.status, checkedIn: row.checked_in }));
+}

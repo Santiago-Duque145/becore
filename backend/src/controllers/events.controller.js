@@ -1,8 +1,13 @@
 import * as eventsService from '../services/events.service.js';
+import { getRecommendations } from '../services/recommendations/index.js';
 
 export async function listEvents(req, res) {
   const { data, meta } = await eventsService.listEvents(req.user, req.validatedQuery);
   res.json({ data, meta });
+}
+
+export async function listRecommended(req, res) {
+  res.json({ data: await getRecommendations(req.user, req.validatedQuery.limit) });
 }
 
 export async function createEvent(req, res) {

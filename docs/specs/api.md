@@ -10,8 +10,17 @@ Registro, inicio y cierre de sesión **no** pasan por esta API: el frontend los 
 
 ### Profile
 ```json
-{ "id": "uuid", "email": "ana@correo.com", "fullName": "Ana Gómez", "role": "organizer", "createdAt": "ISO" }
+{
+  "id": "uuid", "email": "ana@correo.com", "fullName": "Ana Gómez", "role": "organizer", "createdAt": "ISO",
+  "onboardingCompleted": true,
+  "preferences": {
+    "categories": ["sport", "culture"], "interests": ["football", "cinema"], "days": ["weekends"],
+    "timeSlots": ["evening"], "motivations": ["fun"], "zone": "Belén", "updatedAt": "ISO"
+  }
+}
 ```
+`preferences` es `null` si el usuario nunca respondió el cuestionario. `categories` lo calcula el backend a partir de
+`interests` (`backend/src/constants/preferences.js`); el cliente no lo envía. Listas cerradas: `auth-onboarding.md` §6.
 
 ### Event
 ```json
@@ -70,6 +79,7 @@ Formato: `{ "error": { "code": "EVENT_FULL", "message": "El evento ya no tiene c
 | `CAPACITY_BELOW_CONFIRMED` | 409 | El cupo no puede ser menor que los confirmados actuales |
 | `CHECKIN_NOT_OPEN` | 409 | El check-in se habilita 2 horas antes del evento |
 | `APPOINTMENT_NOT_ACTIVE` | 409 | La cita fue cancelada |
+| `ONBOARDING_ALREADY_COMPLETED` | 409 | Ya completaste tu bienvenida; tu rol ya no se puede cambiar |
 | `DUPLICATE`, `CONSTRAINT_VIOLATION` | 409 | Ese registro ya existe / Los datos no cumplen las reglas |
 | `INTERNAL_ERROR` | 500 | Algo salió mal, intenta de nuevo |
 
@@ -85,12 +95,20 @@ Leyenda de acceso: **todos** = cualquier usuario autenticado; **org** = rol `org
 | GET | `/health` | público | — | `{ data: { status: "ok" } }` |
 | GET | `/me` | todos | — | `Profile` |
 | PATCH | `/me` | todos | `{ fullName }` 2–80 | `Profile` |
+| PUT | `/me/onboarding` | todos | `{ role, interests[], days[], timeSlots[], motivations[] (≤ 2), zone? (≤ 80) }`; listas opcionales (vacías por defecto) | `Profile` |
+| PUT | `/me/preferences` | todos | lo mismo sin `role` (si llega, se ignora) | `Profile` |
+
+`PUT /me/onboarding`: guarda las respuestas (upsert en `user_preferences`) y, si el onboarding estaba pendiente, fija
+`role` y `onboarding_completed_at = now()`. Si ya estaba completo: mismo rol → solo actualiza los gustos; otro rol →
+409 `ONBOARDING_ALREADY_COMPLETED` sin escribir nada. `PUT /me/preferences` nunca cambia `role` ni
+`onboarding_completed_at` (edición desde Perfil).
 
 ### Eventos (RF-04 a RF-09)
 
 | Método | Ruta | Acceso | Body / Query | Respuesta |
 |---|---|---|---|---|
 | GET | `/events` | todos | ver "Filtros" | `{ data: Event[], meta: { total, page, pageSize } }` |
+| GET | `/events/recommended` | todos | query `limit` 1–20 (defecto 6) | `(Event & { reason })[]` "Para ti", ver abajo |
 | POST | `/events` | org | ver "Crear" | 201 `Event` |
 | GET | `/events/:id` | todos | — | `Event` |
 | PATCH | `/events/:id` | dueño | mismos campos de crear, todos opcionales (mínimo uno) | `Event` |
@@ -104,6 +122,12 @@ Leyenda de acceso: **todos** = cualquier usuario autenticado; **org** = rol `org
 - `organizer`: solo acepta `me` → eventos del usuario actual (incluye cancelados).
 - `page` (defecto 1), `pageSize` (defecto 12, máximo 50).
 - Sin `organizer=me`, los eventos cancelados **no** aparecen.
+
+**"Para ti" — `GET /events/recommended`** (`auth-onboarding.md` §8, `services/recommendations/`):
+sin preferencias guardadas devuelve `[]`. Candidatos: `published`, `starts_at > now()`, con cupo, que el usuario no organiza
+ni tiene confirmados. Puntaje por reglas en hora de Bogotá (categoría +3; día, franja y zona +1 cada uno); se
+excluyen los de puntaje 0 y se ordena por puntaje desc y luego `startsAt` asc. `reason` es la señal más fuerte
+("Porque te gusta el deporte", "Es en tu zona", "Encaja con tus fines de semana"…). Va antes de `/events/:id` en el router.
 
 **Crear evento — body:**
 | Campo | Regla |
@@ -152,12 +176,29 @@ Leyenda de acceso: **todos** = cualquier usuario autenticado; **org** = rol `org
 }
 ```
 `occupancyRate` = suma de `confirmedCount` ÷ suma de `capacity` de los eventos próximos no cancelados (0 si no hay).
+Implementado en R8: cada fila trae además `category` y `location` (los usa la tabla del panel). `upcomingEvents` cuenta
+los próximos o en curso sin cancelados ni borradores; `confirmed` suma los no cancelados; `cancelled` y `checkedIn` suman todos.
 
 **`GET /dashboard/participant`** (todos) →
 ```json
 { "upcomingEvents": [Event], "pastEvents": [Event], "upcomingAppointments": [Appointment] }
 ```
-Solo eventos con asistencia `confirmed` del usuario. `pastEvents`: últimos 10.
+Eventos donde el usuario tiene asistencia, **confirmada o cancelada** (R7: "Mis eventos" muestra el estado
+"Cancelado"); cada uno con su `myAttendance`. Sin borradores. Próximos: `startsAt` futuro o `in_progress`, orden
+ascendente. `pastEvents`: los 10 más recientes. `upcomingAppointments`: igual que `GET /appointments?scope=upcoming`.
+
+### Avisos de la app (campana, RF-16/RF-17)
+
+Leen la tabla `notifications` (`message`, `read_at`) del usuario. El envío por correo no cambia (§4).
+
+| Método | Ruta | Acceso | Body / Query | Respuesta |
+|---|---|---|---|---|
+| GET | `/notifications` | todos | query `limit` 1–50 (defecto 30) | `{ data: Notification[], meta: { unread } }` más reciente primero |
+| GET | `/notifications/unread-count` | todos | — | `{ count }` |
+| POST | `/notifications/:id/read` | dueño | — | `Notification`; si es de otro o no existe → 404 `NOT_FOUND`; si ya estaba leída conserva `readAt` |
+| POST | `/notifications/read-all` | todos | — | `{ updated }` |
+
+`Notification`: `{ id, type, subject, message, eventId, appointmentId, readAt, createdAt }` (`type` = `notification_type`).
 
 ### Disponibilidad (RF-15)
 
