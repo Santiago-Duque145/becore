@@ -23,7 +23,8 @@ function toEvent(event, myAttendance) {
   };
 }
 
-async function toEventsWithAttendance(user, events) {
+// También lo usa services/recommendations para devolver el mismo formato de Event
+export async function toEventsWithAttendance(user, events) {
   const attendances = await findUserAttendances(
     user.id,
     events.map((e) => e.id),

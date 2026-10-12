@@ -89,6 +89,22 @@ export async function listEvents(filters) {
   return { rows: data.map(toCamel), total: count ?? 0 };
 }
 
+// Candidatos de "Para ti": publicados y futuros, sin los del organizador indicado.
+// El filtro confirmed_count < capacity se hace en el servicio (PostgREST no compara dos columnas).
+export async function listRecommendationCandidates({ excludeOrganizerId, max = 200 }) {
+  const data = unwrap(
+    await supabaseAdmin
+      .from('events')
+      .select(COLUMNS)
+      .eq('status', 'published')
+      .gt('starts_at', new Date().toISOString())
+      .neq('organizer_id', excludeOrganizerId)
+      .order('starts_at', { ascending: true })
+      .limit(max),
+  );
+  return data.map(toCamel);
+}
+
 // Eventos publicados que empiezan en la ventana [fromIso, toIso] (recordatorios)
 export async function listPublishedStartingBetween(fromIso, toIso) {
   const data = unwrap(
