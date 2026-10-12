@@ -37,7 +37,7 @@ export const BrandMark = forwardRef(function BrandMark(
         </defs>
       </svg>
       {wordmark && (
-        <span className={cn('font-display font-bold text-white', large ? 'text-2xl' : 'text-lg')}>
+        <span className={cn('font-display font-bold text-white', large ? 'text-2xl leading-[normal]' : 'text-lg')}>
           Be <span className="text-accent">Core</span>
         </span>
       )}

@@ -10,9 +10,9 @@ const VARIANTS = {
   danger: 'border border-danger/40 text-danger font-semibold hover:bg-danger/10',
 };
 
-// md: botón de pantalla (≥ 48 px). sm: acción dentro de una tarjeta (≥ 44 px de área táctil).
+// md: botón de pantalla (≥ 48 px; 49 px como en los mockups con leading 17 px). sm: acción dentro de una tarjeta (≥ 44 px de área táctil).
 const SIZES = {
-  md: 'min-h-12 rounded-field px-5 py-4 text-[14.5px]',
+  md: 'min-h-12 rounded-field px-5 py-4 text-[14.5px] leading-[17px]',
   sm: 'min-h-11 rounded-lg px-3.5 py-2 text-xs',
 };
 

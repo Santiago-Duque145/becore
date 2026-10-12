@@ -60,6 +60,12 @@
   textarea {
     font-size: 16px;
   }
+
+  /* Edge agrega su propio ojo a los campos de contraseña; PasswordInput ya trae el suyo */
+  input::-ms-reveal,
+  input::-ms-clear {
+    display: none;
+  }
 }
 
 /* Márgenes de zona segura para barras fijas (muesca y barra de gestos) */

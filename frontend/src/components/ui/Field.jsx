@@ -18,7 +18,7 @@ export const Field = forwardRef(function Field({ label, hint, error, id, flush =
   return (
     <FieldContext.Provider value={context}>
       <div ref={ref} className={cn(!flush && 'mb-4', className)}>
-        <label htmlFor={controlId} className="mb-[7px] block text-xs font-semibold text-ink-muted">
+        <label htmlFor={controlId} className="mb-[7px] block text-xs leading-[normal] font-semibold text-ink-muted">
           {label}
         </label>
         {children}

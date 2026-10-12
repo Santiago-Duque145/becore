@@ -17,6 +17,7 @@ export const Input = forwardRef(function Input({ label, hint, error, ...props },
   return <InputControl ref={ref} invalid={Boolean(error)} {...props} />;
 });
 
+// leading 17 px: el campo mide 47 px como en los mockups (14 + 17 + 14 + bordes), aunque el texto sea de 16 px en móvil
 export const InputControl = forwardRef(function InputControl(
   { icon: Icon, invalid, className, 'aria-describedby': ownDescribedBy, ...props },
   ref,
@@ -29,7 +30,7 @@ export const InputControl = forwardRef(function InputControl(
       id={field?.id}
       aria-invalid={isInvalid || undefined}
       aria-describedby={describedBy(field, ownDescribedBy)}
-      className={controlClass({ invalid: isInvalid, className: cn(Icon && 'pl-11', className) })}
+      className={controlClass({ invalid: isInvalid, className: cn('leading-[17px]', Icon && 'pl-11', className) })}
       {...props}
     />
   );

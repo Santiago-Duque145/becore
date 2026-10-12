@@ -15,7 +15,7 @@ export const GoogleButton = forwardRef(function GoogleButton(
       disabled={disabled || loading}
       aria-busy={loading || undefined}
       className={cn(
-        'focus-ring inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-field bg-[#FFFFFF] px-5 py-4',
+        'focus-ring inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-field bg-[#FFFFFF] px-5 py-4 leading-[17px]',
         'text-[14.5px] font-semibold text-[#1F1F1F] transition duration-200 hover:bg-[#F2F2F2] active:scale-[0.98]',
         'disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none motion-reduce:active:scale-100',
         className,
