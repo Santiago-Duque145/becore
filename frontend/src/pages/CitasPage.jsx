@@ -29,7 +29,7 @@ function AppointmentCard({ appointment, isOwner, onCancel }) {
   const start = new Date(appointment.startsAt);
   return (
     <li className="flex items-start gap-3 rounded-[14px] border border-white/[0.06] bg-panel px-3.5 py-[13px]">
-      <span className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-[10px] bg-accent/12 text-[10.5px] leading-[1.2] font-bold text-accent-soft uppercase" aria-hidden="true">
+      <span className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-[10px] bg-accent/12 text-[11px] leading-[1.2] font-bold text-accent-soft uppercase" aria-hidden="true">
         <span>{dayFormatter.format(start)}</span>
         <span>{monthFormatter.format(start).replace('.', '')}</span>
       </span>

@@ -71,7 +71,7 @@ export default function LoginPage() {
         <div className="-mt-1.5 mb-5 flex justify-end">
           <Link
             to="/recuperar"
-            className="focus-ring rounded text-xs leading-[normal] font-semibold text-accent transition-colors hover:text-accent-soft"
+            className="focus-ring hit-area rounded text-xs leading-[normal] font-semibold text-accent transition-colors hover:text-accent-soft"
           >
             ¿Olvidaste tu contraseña?
           </Link>

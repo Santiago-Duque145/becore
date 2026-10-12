@@ -45,7 +45,7 @@ export function DesktopTopBar({ profile, hasUnread = false }) {
   return (
     <header className="pt-safe sticky top-0 z-40 border-b border-line bg-bg/95 backdrop-blur-md">
       <div className="flex items-center justify-between px-10 py-5">
-        <Link to="/" aria-label="Be Core, inicio" className="focus-ring rounded-field">
+        <Link to="/" aria-label="Be Core, inicio" className="focus-ring inline-flex min-h-11 items-center rounded-field">
           <BrandMark size={28} />
         </Link>
         <nav aria-label="Principal">
@@ -56,7 +56,7 @@ export function DesktopTopBar({ profile, hasUnread = false }) {
                   to={to}
                   className={({ isActive }) =>
                     cn(
-                      'focus-ring inline-flex items-center gap-1.5 rounded-md px-1 py-2 text-[13.5px] font-medium transition-colors',
+                      'focus-ring inline-flex items-center gap-1.5 rounded-md px-1 py-3 text-[13.5px] font-medium transition-colors',
                       isActive ? 'text-ink' : 'text-ink-muted hover:text-ink',
                     )
                   }
@@ -78,7 +78,7 @@ export function DesktopTopBar({ profile, hasUnread = false }) {
         </nav>
         <div className="flex items-center gap-[18px]">
           <TopBarSearch />
-          <Link to="/perfil" aria-label="Mi perfil" className="focus-ring rounded-full">
+          <Link to="/perfil" aria-label="Mi perfil" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full">
             <Avatar name={profile?.fullName} decorative />
           </Link>
         </div>

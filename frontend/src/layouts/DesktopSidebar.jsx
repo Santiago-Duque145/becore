@@ -9,7 +9,7 @@ const ROLE_LABELS = { organizer: 'Organizador', participant: 'Participante' };
 export function DesktopSidebar({ profile, hasUnread = false }) {
   return (
     <aside className="sticky top-0 flex h-dvh w-60 shrink-0 flex-col gap-8 border-r border-line bg-bg-deep px-5 pt-[max(1.75rem,env(safe-area-inset-top))] pb-7">
-      <Link to="/" aria-label="Be Core, inicio" className="focus-ring self-start rounded-field">
+      <Link to="/" aria-label="Be Core, inicio" className="focus-ring inline-flex min-h-11 items-center self-start rounded-field">
         <BrandMark size={30} />
       </Link>
       <nav aria-label="Principal">
@@ -20,7 +20,7 @@ export function DesktopSidebar({ profile, hasUnread = false }) {
                 to={to}
                 className={({ isActive }) =>
                   cn(
-                    'focus-ring group flex items-center gap-3 rounded-[10px] px-3 py-[11px] text-sm font-medium transition-colors',
+                    'focus-ring group flex items-center gap-3 rounded-[10px] px-3 py-3 text-sm font-medium transition-colors',
                     isActive
                       ? 'bg-panel text-ink'
                       : 'text-ink-muted hover:bg-panel/60 hover:text-ink',

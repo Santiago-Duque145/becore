@@ -38,7 +38,7 @@ function MyEventItem({ event }) {
         to={`/eventos/${event.id}`}
         className="focus-ring flex items-start gap-3 rounded-[14px] border border-white/[0.06] bg-panel px-3.5 py-[13px] transition-colors hover:border-line"
       >
-        <span className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-[10px] bg-accent/12 text-[10.5px] leading-[1.2] font-bold text-accent-soft uppercase">
+        <span className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-[10px] bg-accent/12 text-[11px] leading-[1.2] font-bold text-accent-soft uppercase">
           <span>{dayFormatter.format(start)}</span>
           <span>{monthFormatter.format(start).replace('.', '')}</span>
         </span>

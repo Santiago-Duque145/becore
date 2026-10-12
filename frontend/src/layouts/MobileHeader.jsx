@@ -9,7 +9,7 @@ export function MobileHeader({ role }) {
   return (
     <header className="pt-safe sticky top-0 z-40 bg-bg/95 backdrop-blur-md">
       <div className="flex h-14 items-center justify-between px-[22px]">
-        <Link to="/" aria-label="Be Core, inicio" className="focus-ring rounded-field">
+        <Link to="/" aria-label="Be Core, inicio" className="focus-ring inline-flex min-h-11 items-center rounded-field">
           <BrandMark size={28} />
         </Link>
         <div className="flex items-center gap-2">

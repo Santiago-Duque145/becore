@@ -56,7 +56,7 @@ function RowAction({ event }) {
   return (
     <Link
       to={editable ? `/eventos/${event.id}/editar` : `/eventos/${event.id}`}
-      className="focus-ring rounded px-1 py-2 text-[13px] font-semibold text-ink-muted hover:text-accent-soft"
+      className="focus-ring inline-flex min-h-11 items-center rounded px-2 text-[13px] font-semibold text-ink-muted hover:text-accent-soft"
       aria-label={`${editable ? 'Editar' : 'Ver'} ${event.title}`}
     >
       {editable ? 'Editar' : 'Ver'}
@@ -99,7 +99,7 @@ export function OrganizerEventsTable({ events }) {
                     <div className="min-w-0">
                       <Link
                         to={`/eventos/${event.id}`}
-                        className="focus-ring rounded font-semibold text-ink hover:text-accent-soft"
+                        className="focus-ring hit-area rounded font-semibold text-ink hover:text-accent-soft"
                       >
                         {event.title}
                       </Link>
@@ -141,7 +141,7 @@ export function OrganizerEventsCards({ events }) {
               <div className="min-w-0 flex-1">
                 <Link
                   to={`/eventos/${event.id}`}
-                  className="focus-ring rounded text-[13.5px] font-semibold text-ink"
+                  className="focus-ring hit-area rounded text-[13.5px] font-semibold text-ink"
                 >
                   {event.title}
                 </Link>

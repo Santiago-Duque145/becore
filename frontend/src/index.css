@@ -118,6 +118,16 @@
   }
 }
 
+/* Área táctil de 44 px para enlaces dentro de texto sin mover el layout (skill §4, objetivos ≥ 44 × 44) */
+@utility hit-area {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: -15px -4px;
+  }
+}
+
 /* Enfoque visible común a todos los controles (skill §4, Accesibilidad) */
 @utility focus-ring {
   outline: none;

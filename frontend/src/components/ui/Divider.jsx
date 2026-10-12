@@ -8,7 +8,7 @@ export const Divider = forwardRef(function Divider({ children, className, ...pro
       ref={ref}
       role="separator"
       className={cn(
-        'flex items-center gap-3 text-[11.5px] leading-[normal] text-ink-faint before:h-px before:flex-1 before:bg-line after:h-px after:flex-1 after:bg-line',
+        'flex items-center gap-3 text-[11.5px] leading-[normal] text-ink-muted before:h-px before:flex-1 before:bg-line after:h-px after:flex-1 after:bg-line',
         className,
       )}
       {...props}

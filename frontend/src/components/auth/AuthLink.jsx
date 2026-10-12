@@ -5,7 +5,7 @@ import { cn } from '../../lib/cn.js';
 export function AuthLink({ className, ...props }) {
   return (
     <Link
-      className={cn('focus-ring rounded font-semibold text-accent transition-colors hover:text-accent-soft', className)}
+      className={cn('focus-ring hit-area rounded font-semibold text-accent transition-colors hover:text-accent-soft', className)}
       {...props}
     />
   );
