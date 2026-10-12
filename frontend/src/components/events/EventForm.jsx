@@ -1,10 +1,8 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { toast } from 'sonner';
 import { eventFormSchema, formValuesToPayload } from '../../lib/event-schema.js';
 import { CATEGORY_OPTIONS } from '../../lib/format.js';
-import { Input, Select, Textarea } from '../ui/Field.jsx';
-import { Button } from '../ui/Button.jsx';
+import { Button, Input, Select, Textarea, useToast } from '../ui/index.js';
 
 const FIELDS = ['title', 'description', 'category', 'location', 'startsAt', 'endsAt', 'capacity'];
 
@@ -21,6 +19,7 @@ export const EMPTY_EVENT_VALUES = {
 // onSubmit(payload) debe devolver una promesa; si rechaza con un error de la API,
 // se muestra bajo el campo correspondiente (details) o como aviso.
 export function EventForm({ initialValues = EMPTY_EVENT_VALUES, submitLabel, onSubmit, onCancel }) {
+  const toast = useToast();
   const {
     register,
     handleSubmit,
@@ -77,8 +76,8 @@ export function EventForm({ initialValues = EMPTY_EVENT_VALUES, submitLabel, onS
             Cancelar
           </Button>
         )}
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Guardando…' : submitLabel}
+        <Button type="submit" loading={isSubmitting}>
+          {submitLabel}
         </Button>
       </div>
     </form>

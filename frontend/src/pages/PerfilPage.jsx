@@ -2,19 +2,18 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
-import { toast } from 'sonner';
+import { LogOutIcon } from '../components/icons/index.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { updateMe } from '../services/profile.api.js';
 import { profileSchema } from '../lib/auth-schemas.js';
-import { Input } from '../components/ui/Field.jsx';
-import { Button } from '../components/ui/Button.jsx';
-import { Spinner } from '../components/ui/Feedback.jsx';
+import { Button, Input, Spinner, useToast } from '../components/ui/index.js';
 
 const ROLE_LABELS = { organizer: 'Organizador', participant: 'Participante' };
 
 export default function PerfilPage() {
   const { profile, setProfile, signOut } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const {
     register,
     handleSubmit,
@@ -44,23 +43,23 @@ export default function PerfilPage() {
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-6">
-      <h1 className="font-display text-2xl font-bold text-navy-900">Mi perfil</h1>
+      <h1 className="font-display text-xl font-semibold text-ink md:text-[22px]">Mi perfil</h1>
 
       <form
         onSubmit={handleSubmit((values) => mutation.mutate(values))}
-        className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm"
+        className="flex flex-col gap-4 rounded-card border border-line bg-panel p-5"
         noValidate
       >
         <Input label="Nombre" autoComplete="name" error={errors.fullName?.message} {...register('fullName')} />
         <Input label="Correo" value={profile.email} readOnly disabled />
         <Input label="Rol" value={ROLE_LABELS[profile.role]} readOnly disabled />
-        <Button type="submit" disabled={!isDirty || mutation.isPending}>
-          {mutation.isPending ? 'Guardando…' : 'Guardar cambios'}
+        <Button type="submit" disabled={!isDirty} loading={mutation.isPending}>
+          Guardar cambios
         </Button>
       </form>
 
       <Button variant="danger" onClick={handleSignOut}>
-        Cerrar sesión
+        <LogOutIcon size={18} /> Cerrar sesión
       </Button>
     </div>
   );

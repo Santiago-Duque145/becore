@@ -36,7 +36,3 @@ export const Field = forwardRef(function Field({ label, hint, error, id, classNa
   );
 });
 
-// Compatibilidad temporal: las páginas aún importan los controles desde aquí (se retira en la migración).
-export { Input } from './Input.jsx';
-export { Textarea } from './Textarea.jsx';
-export { Select } from './Select.jsx';

@@ -1,17 +1,14 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { toast } from 'sonner';
-import { Trash2 } from 'lucide-react';
+import { TrashIcon } from '../components/icons/index.js';
 import { availabilityFormSchema, toSlotPayload } from '../lib/appointment-schemas.js';
 import { formatDate } from '../lib/format.js';
 import { useAvailability, useCreateAvailability, useDeleteAvailability } from '../hooks/useAppointments.js';
-import { Input } from '../components/ui/Field.jsx';
-import { Button } from '../components/ui/Button.jsx';
-import { EmptyState, ErrorState, Skeleton } from '../components/ui/Feedback.jsx';
-import { Modal } from '../components/ui/Modal.jsx';
+import { Button, EmptyState, ErrorState, Input, Modal, Skeleton, useToast } from '../components/ui/index.js';
 
 function SlotForm() {
+  const toast = useToast();
   const createSlot = useCreateAvailability();
   const {
     register,
@@ -35,20 +32,25 @@ function SlotForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(submit)} noValidate className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm">
-      <h2 className="font-display text-lg font-semibold text-navy-900">Agregar bloque</h2>
+    <form
+      onSubmit={handleSubmit(submit)}
+      noValidate
+      className="flex flex-col gap-4 rounded-card border border-line bg-panel p-5"
+    >
+      <h2 className="font-display text-base font-semibold text-ink">Agregar bloque</h2>
       <div className="grid gap-4 md:grid-cols-2">
         <Input label="Desde" type="datetime-local" hint="Hora de Colombia" error={errors.startsAt?.message} {...register('startsAt')} />
         <Input label="Hasta" type="datetime-local" hint="Máximo 8 horas" error={errors.endsAt?.message} {...register('endsAt')} />
       </div>
-      <Button type="submit" disabled={createSlot.isPending} className="md:self-end">
-        {createSlot.isPending ? 'Guardando…' : 'Agregar bloque'}
+      <Button type="submit" loading={createSlot.isPending} className="md:self-end">
+        Agregar bloque
       </Button>
     </form>
   );
 }
 
 export default function DisponibilidadPage() {
+  const toast = useToast();
   const { data: slots, isPending, isError, error, refetch } = useAvailability();
   const deleteSlot = useDeleteAvailability();
   const [toDelete, setToDelete] = useState(null);
@@ -63,8 +65,8 @@ export default function DisponibilidadPage() {
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-5">
-      <h1 className="font-display text-2xl font-bold text-navy-900">Mi disponibilidad</h1>
-      <p className="text-gray-500">Marca los momentos en que puedes reunirte. Úsalos como guía al crear una cita.</p>
+      <h1 className="font-display text-xl font-semibold text-ink md:text-[22px]">Mi disponibilidad</h1>
+      <p className="text-sm text-ink-muted">Marca los momentos en que puedes reunirte. Úsalos como guía al crear una cita.</p>
 
       <SlotForm />
 
@@ -79,15 +81,15 @@ export default function DisponibilidadPage() {
         <EmptyState title="Aún no tienes bloques próximos." description="Agrega el primero con el formulario de arriba." />
       )}
       {slots?.length > 0 && (
-        <ul className="flex flex-col divide-y divide-gray-200 rounded-2xl bg-white shadow-sm">
+        <ul className="flex flex-col divide-y divide-line rounded-card border border-line bg-panel">
           {slots.map((slot) => (
             <li key={slot.id} className="flex items-center justify-between gap-3 px-4 py-2">
-              <p className="text-navy-900">
+              <p className="text-sm text-ink">
                 <span className="capitalize">{formatDate(slot.startsAt)}</span>
-                <span className="text-gray-500"> → {formatDate(slot.endsAt)}</span>
+                <span className="text-ink-muted"> → {formatDate(slot.endsAt)}</span>
               </p>
-              <Button variant="danger" aria-label="Eliminar bloque" onClick={() => setToDelete(slot)}>
-                <Trash2 size={18} aria-hidden="true" />
+              <Button variant="danger" size="sm" aria-label="Eliminar bloque" onClick={() => setToDelete(slot)}>
+                <TrashIcon size={18} />
               </Button>
             </li>
           ))}
@@ -95,13 +97,13 @@ export default function DisponibilidadPage() {
       )}
 
       <Modal open={Boolean(toDelete)} title="¿Eliminar este bloque?" onClose={() => setToDelete(null)}>
-        <p className="mb-5 text-gray-500">Dejará de aparecer en tu lista de disponibilidad.</p>
+        <p className="mb-5 text-sm text-ink-muted">Dejará de aparecer en tu lista de disponibilidad.</p>
         <div className="flex flex-col-reverse gap-2 md:flex-row md:justify-end">
           <Button variant="secondary" onClick={() => setToDelete(null)}>
             Conservar
           </Button>
-          <Button variant="danger" onClick={handleDelete} disabled={deleteSlot.isPending}>
-            {deleteSlot.isPending ? 'Eliminando…' : 'Sí, eliminar'}
+          <Button variant="danger" onClick={handleDelete} loading={deleteSlot.isPending}>
+            Sí, eliminar
           </Button>
         </div>
       </Modal>

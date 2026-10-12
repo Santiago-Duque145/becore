@@ -1,10 +1,11 @@
 import { useNavigate } from 'react-router';
-import { toast } from 'sonner';
 import { useCreateEvent } from '../../hooks/useEvent.js';
 import { EventForm } from '../../components/events/EventForm.jsx';
+import { useToast } from '../../components/ui/index.js';
 
 export default function NuevoEventoPage() {
   const navigate = useNavigate();
+  const toast = useToast();
   const createEvent = useCreateEvent();
 
   async function handleSubmit(payload) {
@@ -15,8 +16,8 @@ export default function NuevoEventoPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="mb-5 font-display text-2xl font-bold text-navy-900">Crear evento</h1>
-      <div className="rounded-2xl bg-white p-5 shadow-sm">
+      <h1 className="mb-5 font-display text-xl font-semibold text-ink md:text-[22px]">Crear evento</h1>
+      <div className="rounded-card border border-line bg-panel p-5">
         <EventForm submitLabel="Publicar evento" onSubmit={handleSubmit} onCancel={() => navigate('/eventos')} />
       </div>
     </div>

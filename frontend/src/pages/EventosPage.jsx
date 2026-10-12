@@ -3,19 +3,12 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 import { useEvents } from '../hooks/useEvents.js';
 import { CATEGORY_OPTIONS } from '../lib/format.js';
 import { EventCard, EventCardSkeleton } from '../components/events/EventCard.jsx';
-import { EmptyState, ErrorState } from '../components/ui/Feedback.jsx';
-import { Button, LinkButton } from '../components/ui/Button.jsx';
-import { Input } from '../components/ui/Field.jsx';
+import { Button, Chip, EmptyState, ErrorState, Input, LinkButton } from '../components/ui/index.js';
 
 const SCOPES = [
   { value: 'upcoming', label: 'Próximos' },
   { value: 'past', label: 'Pasados' },
 ];
-
-const chipClass = (active) =>
-  `min-h-[44px] rounded-full px-4 text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:outline-teal-500 ${
-    active ? 'bg-navy-900 text-white' : 'bg-white text-navy-900 hover:bg-gray-200'
-  }`;
 
 export default function EventosPage() {
   const { profile } = useAuth();
@@ -37,7 +30,7 @@ export default function EventosPage() {
   return (
     <div className="flex flex-col gap-5">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="font-display text-2xl font-bold text-navy-900">Descubre eventos</h1>
+        <h1 className="font-display text-xl font-semibold text-ink md:text-[22px]">Descubre eventos</h1>
         {profile?.role === 'organizer' && (
           <LinkButton to="/eventos/nuevo" className="hidden md:inline-flex">
             Crear evento
@@ -47,31 +40,20 @@ export default function EventosPage() {
 
       <div role="tablist" aria-label="Periodo" className="flex gap-2">
         {SCOPES.map(({ value, label }) => (
-          <button
-            key={value}
-            role="tab"
-            aria-selected={scope === value}
-            onClick={() => setScope(value)}
-            className={chipClass(scope === value)}
-          >
+          <Chip key={value} role="tab" selected={scope === value} onClick={() => setScope(value)}>
             {label}
-          </button>
+          </Chip>
         ))}
       </div>
 
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1" role="group" aria-label="Categoría">
-        <button className={chipClass(category === '')} aria-pressed={category === ''} onClick={() => setCategory('')}>
+      <div className="-mx-[22px] flex gap-2 overflow-x-auto px-[22px] py-1.5 md:mx-0 md:px-0" role="group" aria-label="Categoría">
+        <Chip selected={category === ''} onClick={() => setCategory('')}>
           Todos
-        </button>
+        </Chip>
         {CATEGORY_OPTIONS.map(({ value, label }) => (
-          <button
-            key={value}
-            className={chipClass(category === value)}
-            aria-pressed={category === value}
-            onClick={() => setCategory(value)}
-          >
+          <Chip key={value} selected={category === value} onClick={() => setCategory(value)}>
             {label}
-          </button>
+          </Chip>
         ))}
       </div>
 
@@ -104,6 +86,7 @@ export default function EventosPage() {
             hasFilters ? (
               <Button
                 variant="secondary"
+                size="sm"
                 onClick={() => {
                   setCategory('');
                   setFrom('');
@@ -114,7 +97,11 @@ export default function EventosPage() {
               </Button>
             ) : (
               scope === 'upcoming' &&
-              profile?.role === 'organizer' && <LinkButton to="/eventos/nuevo">Crear el primero</LinkButton>
+              profile?.role === 'organizer' && (
+                <LinkButton to="/eventos/nuevo" size="sm">
+                  Crear el primero
+                </LinkButton>
+              )
             )
           }
         />
@@ -128,8 +115,13 @@ export default function EventosPage() {
             ))}
           </div>
           {hasNextPage && (
-            <Button variant="secondary" className="self-center" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
-              {isFetchingNextPage ? 'Cargando…' : 'Ver más'}
+            <Button
+              variant="secondary"
+              className="self-center"
+              onClick={() => fetchNextPage()}
+              loading={isFetchingNextPage}
+            >
+              Ver más
             </Button>
           )}
         </>

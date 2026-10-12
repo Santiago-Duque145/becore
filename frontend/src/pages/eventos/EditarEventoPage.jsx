@@ -1,14 +1,14 @@
 import { useNavigate, useParams } from 'react-router';
-import { toast } from 'sonner';
 import { useEvent, useUpdateEvent } from '../../hooks/useEvent.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { EventForm } from '../../components/events/EventForm.jsx';
-import { ErrorState, Skeleton } from '../../components/ui/Feedback.jsx';
+import { ErrorState, Skeleton, useToast } from '../../components/ui/index.js';
 import { isoToBogotaInput } from '../../lib/format.js';
 
 export default function EditarEventoPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
   const { profile } = useAuth();
   const { data: event, isPending, isError, error, refetch } = useEvent(id);
   const updateEvent = useUpdateEvent(id);
@@ -37,8 +37,8 @@ export default function EditarEventoPage() {
 
   return (
     <div className="mx-auto max-w-2xl">
-      <h1 className="mb-5 font-display text-2xl font-bold text-navy-900">Editar evento</h1>
-      <div className="rounded-2xl bg-white p-5 shadow-sm">
+      <h1 className="mb-5 font-display text-xl font-semibold text-ink md:text-[22px]">Editar evento</h1>
+      <div className="rounded-card border border-line bg-panel p-5">
         <EventForm
           initialValues={initialValues}
           submitLabel="Guardar cambios"
