@@ -83,7 +83,7 @@ npm create vite@latest frontend-tmp -- --template react
 # conservar "name": "frontend", "type": "module" y agregar scripts "lint": "eslint ." y "test": "vitest run --passWithNoTests"
 # borrar frontend-tmp/
 npm i react@18.3.1 react-dom@18.3.1 -w frontend
-npm i react-router @tanstack/react-query axios @supabase/supabase-js react-hook-form @hookform/resolvers zod lucide-react sonner -w frontend
+npm i react-router @tanstack/react-query axios @supabase/supabase-js react-hook-form @hookform/resolvers zod -w frontend
 npm i -D tailwindcss @tailwindcss/vite vitest -w frontend
 ```
 
@@ -206,54 +206,16 @@ fijos que la skill no define. Las contradicciones ya detectadas y su resolución
 Se instala desde Safari → Compartir → "Agregar a pantalla de inicio". No se usa service worker, modo
 offline, push ni ninguna librería adicional (`vite-plugin-pwa` u otra).
 
-### Manifiesto — `frontend/public/manifest.webmanifest`
+### Manifiesto e íconos (R9)
 
-```json
-{
-  "name": "Be Core",
-  "short_name": "Be Core",
-  "description": "Tu comunidad en movimiento",
-  "start_url": "/",
-  "scope": "/",
-  "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#0D1B2A",
-  "theme_color": "#0D1B2A",
-  "lang": "es-CO",
-  "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
-  ]
-}
-```
-
-### `<head>` de `index.html`
-
-```html
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="theme-color" content="#0D1B2A" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-title" content="Be Core" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <link rel="manifest" href="/manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-  <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
-  <title>Be Core</title>
-</head>
-```
-
-### Íconos — `frontend/public/icons/`
-
-- `favicon.svg`: letra "B" blanca en Poppins sobre cuadrado `#0D1B2A` con esquinas redondeadas y una
-  barra diagonal `#14B8A6` (crea el SVG directamente).
-- `icon-192.png`, `icon-512.png`, `icon-512-maskable.png`, `apple-touch-icon.png`: los exporta el
-  equipo desde el logo oficial; mientras no existan, los `<link>` ya apuntan a ellos y Safari los
-  pedirá cuando el usuario intente instalar la app.
+- `frontend/public/manifest.webmanifest`: "Be Core", `display: standalone`, `theme_color` y `background_color` `#0B1420`,
+  íconos `icon-192.png` e `icon-512.png` (este también como `maskable`).
+- `frontend/public/icons/`: `favicon.svg`, `icon-192.png`, `icon-512.png` y `apple-touch-icon.png` (180). Los PNG se
+  generaron desde el `BrandMark` (fondo `#0B1420`, isotipo en el 62 % central) con Edge headless; para regenerarlos,
+  renderiza el SVG del `BrandMark` a 512, 192 y 180 px.
+- `index.html`: `theme-color` `#0B1420`, `apple-touch-icon` y las metas `apple-mobile-web-app-*`.
+- Sin service worker. Por HTTP en la red local el celular lo agrega como acceso directo a pantalla completa (no como PWA
+  instalada); en `localhost` Edge la reconoce como instalable.
 
 ### CSS obligatorio — agregar en `src/index.css`
 

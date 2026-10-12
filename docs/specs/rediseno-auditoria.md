@@ -344,3 +344,47 @@ Las rutas solo para organizador se envuelven en `RoleRoute role="organizer"`.
 **Diferencias con el mockup a 1440 px:** sin "Mapa en vivo", "Participantes" ni "Configuración" en la barra lateral; subtítulo con el mes (sin barrio); fechas en formato es-CO (más largas, pueden ocupar dos líneas); "Actividad en vivo" vacía hasta que haya movimientos.
 
 **Verificación:** lint, 194 pruebas del backend y 47 del frontend, build. En Edge headless con `santiago`: panel a 1440 (la tabla cabe completa) y 390 (sin scroll horizontal); evento de punta a punta: validación onBlur, stepper, contador, vista previa, "Guardar borrador" → editar (duración precargada) → "Publicar" → editar título y cupo → "Cancelar evento" → el panel lo muestra "Cancelado". Asistentes con datos reales ("0 de 8 llegaron", búsqueda, switch deshabilitado antes de abrir el check-in). Quedaron **dos eventos de prueba cancelados** "[Prueba R8] Partido de verificación (editado)" de `santiago` (uno por corrida).
+
+---
+
+## l) Notas de R9 (pulido final, accesibilidad y PWA) · 2026-10-12
+
+**Checklist §7 por ruta** (Edge headless, 390 y 1440 px, participante `jugador1` y organizador `santiago`; un solo `h1`, sin scroll horizontal, controles con nombre accesible, campos con label, grupos/pestañas/diálogos con etiqueta, sin `tabindex` positivo, objetivos ≥ 44 px, consola sin errores; foco visible comprobado con Tab real):
+
+| Ruta | Rol | 390 px | 1440 px | Corregido en R9 |
+|---|---|---|---|---|
+| `/login` | público | ✅ | ✅ | Área táctil de "¿Olvidaste tu contraseña?" y "Crear cuenta" (`hit-area`, sin mover el layout del mockup); divisor en `ink-muted` |
+| `/registro` | público | ✅ | ✅ | Área táctil de "Inicia sesión" |
+| `/recuperar` | público | ✅ | ✅ | Ídem |
+| `/nueva-contrasena` | público | ✅ | ✅ | — |
+| `/descubre` | ambos | ✅ | ✅ | Logo y enlaces de la barra superior a 44 px; avatar de perfil 44 × 44 |
+| `/eventos/:id` | ambos | ✅ | ✅ | — |
+| `/mis-eventos` (ambas pestañas) | participante | ✅ | ✅ | Fecha destacada de 10.5 → 11 px |
+| `/avisos` | ambos | ✅ | ✅ | — |
+| `/perfil` | ambos | ✅ | ✅ | — |
+| `/citas` | ambos | ✅ | ✅ | Fecha destacada de 10.5 → 11 px |
+| `/panel` | organizador | ✅ | ✅ | Títulos de la tabla con `hit-area`; "Editar/Ver" a 44 px; barra lateral a 44 px |
+| `/eventos/nuevo`, `/eventos/:id/editar` | organizador | ✅ | ✅ | — |
+| `/eventos/:id/asistentes` | organizador | ✅ | ✅ | — |
+| `/citas/nueva`, `/disponibilidad` | organizador | ✅ | ✅ | — |
+| `*` (404) | — | ✅ | ✅ | Tenía 0 `h1`: se agrega uno (solo lectores de pantalla) |
+
+Antes de las correcciones, casi todas las rutas con barra de navegación tenían algún objetivo de menos de 44 px y la 404 no tenía `h1`. Después, las 46 combinaciones revisadas (ruta × rol × ancho) pasan (el enlace "Saltar al contenido" solo se ve al enfocarlo y no cuenta).
+
+**Contraste (WCAG, calculado sobre los tokens):** `ink` y `ink-muted` ≥ 6.1:1 sobre todas las superficies; `accent` 7.4:1; texto de `Badge` sobre su tinte ≥ 4.8:1; texto sobre `accent` 6.6:1. `ink-faint` (#64748B) da 3.9:1 sobre `bg` y 3.3:1 sobre `field`: ya no se usa como texto (el divisor "o continúa con" pasó a `ink-muted`); queda en placeholders e íconos decorativos (decisión de la skill; los campos siempre tienen label).
+
+**prefers-reduced-motion:** todas las animaciones (`animate-*`, entrada de pasos, check, punto en vivo, pulso de skeleton, `active:scale`) llevan `motion-reduce`; con la preferencia activa no queda ninguna animación. Quedan transiciones de color (no son movimiento).
+
+**Consistencia:** el único hex fuera de `index.css` es `GoogleButton` (guías de marca de Google, excepción documentada en la skill). Sin texto < 11 px. Los controles "crudos" que quedan son patrones propios justificados (switch de check-in, filas de Avisos, stepper de cupo, botón Volver de la portada, cabecera del onboarding, campo oculto para el gestor de contraseñas).
+
+**PWA:** `manifest.webmanifest` (Be Core, standalone, `#0B1420`), íconos `icon-192.png`, `icon-512.png` (también `maskable`, el isotipo ocupa el 62 % central) y `apple-touch-icon.png` (180) generados desde el `BrandMark` con Edge headless; `theme-color` `#0B1420`. Sin service worker. Edge: manifiesto sin errores e instalable en `localhost`; por la IP de la Wi-Fi solo falla "origen no seguro" (HTTP), así que en el celular queda como acceso directo a pantalla completa.
+
+**Rendimiento:** carga diferida por ruta (`React.lazy` + `Suspense` con skeleton, `components/layout/PageFallback.jsx`). Antes: un chunk de 789.9 kB (232.6 kB gzip) y el aviso de > 500 kB. Después: 40 archivos, el mayor de 265.4 kB, sin aviso; carga inicial 565.9 kB (170.2 kB gzip). `/dev/ui` no entra al build (`import.meta.env.DEV`).
+
+**Lighthouse móvil (build de producción con `vite preview`):**
+| Ruta | Rendimiento | Accesibilidad | Buenas prácticas |
+|---|---|---|---|
+| `/login` | 86 | **100** | 100 |
+| `/descubre` (con sesión) | 100 | **100** | 96 (65 % del texto < 12 px: metadatos de tarjetas en 11.5 px, como el mockup) |
+
+**Limpieza:** se desinstalaron `lucide-react` y `sonner`; se borraron `CategoryChip`, `CATEGORY_BORDERS` y `CATEGORY_OPTIONS` (sin uso desde el diseño nuevo).
