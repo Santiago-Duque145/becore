@@ -67,6 +67,10 @@ export const router = createBrowserRouter([
       { path: '/avisos', element: <ProximamentePage title="Avisos" /> },
     ],
   },
+  // Verificación del sistema de diseño: solo en desarrollo y fuera del bundle de producción
+  ...(import.meta.env.DEV
+    ? [{ path: '/dev/ui', lazy: () => import('./pages/dev/DevUiPage.jsx').then((m) => ({ Component: m.default })) }]
+    : []),
   {
     path: '*',
     element: <NotFoundPage />,
