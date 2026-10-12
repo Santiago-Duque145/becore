@@ -40,7 +40,6 @@ export function isoToBogotaInput(iso) {
   return new Date(new Date(iso).getTime() - 5 * 3600 * 1000).toISOString().slice(0, 16);
 }
 
-export const CATEGORY_OPTIONS = Object.entries(CATEGORY_LABELS).map(([value, label]) => ({ value, label }));
 
 // Detalle de evento (mobile-detalle-evento): "Sábado, 12 de octubre" y "8:00 a. m."
 const longDayFormatter = new Intl.DateTimeFormat('es-CO', {

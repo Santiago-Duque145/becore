@@ -1,17 +1,5 @@
 import { Badge } from '../ui/index.js';
 
-// Borde lateral de la tarjeta según la categoría (mismos colores que Badge)
-export const CATEGORY_BORDERS = {
-  sport: 'border-l-accent',
-  culture: 'border-l-culture',
-  recreation: 'border-l-success',
-  other: 'border-l-ink-faint',
-};
-
-export function CategoryChip({ category }) {
-  return <Badge category={category} />;
-}
-
 // Estados propios del evento: borrador, cancelado, en curso, finalizado, pasado y lleno
 export function StatusBadges({ event }) {
   const statuses = [];

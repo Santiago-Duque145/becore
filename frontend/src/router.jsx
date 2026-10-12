@@ -1,28 +1,33 @@
+import { lazy } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router';
 import { AppShell } from './layouts/AppShell.jsx';
 import { ProtectedRoute } from './components/layout/ProtectedRoute.jsx';
 import { RequireOnboarding } from './components/layout/RequireOnboarding.jsx';
 import { RoleRoute } from './components/layout/RoleRoute.jsx';
+import { page } from './components/layout/PageFallback.jsx';
 
-import LoginPage from './pages/auth/LoginPage.jsx';
-import RegistroPage from './pages/auth/RegistroPage.jsx';
-import RecuperarPage from './pages/auth/RecuperarPage.jsx';
-import NuevaContrasenaPage from './pages/auth/NuevaContrasenaPage.jsx';
-import AuthCallbackPage from './pages/auth/AuthCallbackPage.jsx';
-import BienvenidaPage from './pages/onboarding/BienvenidaPage.jsx';
-import DescubrePage from './pages/descubre/DescubrePage.jsx';
-import NuevoEventoPage from './pages/eventos/NuevoEventoPage.jsx';
-import DetalleEventoPage from './pages/eventos/DetalleEventoPage.jsx';
-import EditarEventoPage from './pages/eventos/EditarEventoPage.jsx';
-import AsistentesPage from './pages/eventos/AsistentesPage.jsx';
-import PanelPage from './pages/PanelPage.jsx';
-import CitasPage from './pages/CitasPage.jsx';
-import NuevaCitaPage from './pages/NuevaCitaPage.jsx';
-import DisponibilidadPage from './pages/DisponibilidadPage.jsx';
-import PerfilPage from './pages/PerfilPage.jsx';
-import NotFoundPage from './pages/NotFoundPage.jsx';
-import MisEventosPage from './pages/MisEventosPage.jsx';
-import AvisosPage from './pages/AvisosPage.jsx';
+// Cada página se descarga al visitarla (R9): el bundle inicial solo trae el shell, Auth y la API
+const LoginPage = lazy(() => import('./pages/auth/LoginPage.jsx'));
+const RegistroPage = lazy(() => import('./pages/auth/RegistroPage.jsx'));
+const RecuperarPage = lazy(() => import('./pages/auth/RecuperarPage.jsx'));
+const NuevaContrasenaPage = lazy(() => import('./pages/auth/NuevaContrasenaPage.jsx'));
+const AuthCallbackPage = lazy(() => import('./pages/auth/AuthCallbackPage.jsx'));
+const BienvenidaPage = lazy(() => import('./pages/onboarding/BienvenidaPage.jsx'));
+const DescubrePage = lazy(() => import('./pages/descubre/DescubrePage.jsx'));
+const NuevoEventoPage = lazy(() => import('./pages/eventos/NuevoEventoPage.jsx'));
+const DetalleEventoPage = lazy(() => import('./pages/eventos/DetalleEventoPage.jsx'));
+const EditarEventoPage = lazy(() => import('./pages/eventos/EditarEventoPage.jsx'));
+const AsistentesPage = lazy(() => import('./pages/eventos/AsistentesPage.jsx'));
+const PanelPage = lazy(() => import('./pages/PanelPage.jsx'));
+const CitasPage = lazy(() => import('./pages/CitasPage.jsx'));
+const NuevaCitaPage = lazy(() => import('./pages/NuevaCitaPage.jsx'));
+const DisponibilidadPage = lazy(() => import('./pages/DisponibilidadPage.jsx'));
+const PerfilPage = lazy(() => import('./pages/PerfilPage.jsx'));
+const MisEventosPage = lazy(() => import('./pages/MisEventosPage.jsx'));
+const AvisosPage = lazy(() => import('./pages/AvisosPage.jsx'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage.jsx'));
+
+const organizerOnly = (element) => <RoleRoute role="organizer">{element}</RoleRoute>;
 
 export const router = createBrowserRouter([
   {
@@ -30,20 +35,18 @@ export const router = createBrowserRouter([
     element: <Navigate to="/descubre" replace />,
   },
   // Auth (auth-onboarding §4 y §5). /ingresar queda como alias para enlaces viejos.
-  { path: '/login', element: <LoginPage /> },
+  { path: '/login', element: page(LoginPage, 'screen') },
   { path: '/ingresar', element: <Navigate to="/login" replace /> },
-  { path: '/registro', element: <RegistroPage /> },
-  { path: '/recuperar', element: <RecuperarPage /> },
+  { path: '/registro', element: page(RegistroPage, 'screen') },
+  { path: '/recuperar', element: page(RecuperarPage, 'screen') },
   // Públicas a propósito: la sesión llega en la URL (Google, confirmación de correo, recuperación)
-  { path: '/auth/callback', element: <AuthCallbackPage /> },
-  { path: '/nueva-contrasena', element: <NuevaContrasenaPage /> },
+  { path: '/auth/callback', element: page(AuthCallbackPage, 'screen') },
+  { path: '/nueva-contrasena', element: page(NuevaContrasenaPage, 'screen') },
   {
     path: '/bienvenida',
     element: (
       <ProtectedRoute>
-        <RequireOnboarding>
-          <BienvenidaPage />
-        </RequireOnboarding>
+        <RequireOnboarding>{page(BienvenidaPage, 'screen')}</RequireOnboarding>
       </ProtectedRoute>
     ),
   },
@@ -56,34 +59,20 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      { path: '/descubre', element: <DescubrePage /> },
+      { path: '/descubre', element: page(DescubrePage) },
       // Ruta vieja del listado (ui.md §2): se conserva como alias
       { path: '/eventos', element: <Navigate to="/descubre" replace /> },
-      {
-        path: '/eventos/nuevo',
-        element: (
-          <RoleRoute role="organizer">
-            <NuevoEventoPage />
-          </RoleRoute>
-        ),
-      },
-      { path: '/eventos/:id', element: <DetalleEventoPage />, handle: { immersive: true } },
-      { path: '/eventos/:id/editar', element: <RoleRoute role="organizer"><EditarEventoPage /></RoleRoute> },
-      { path: '/eventos/:id/asistentes', element: <RoleRoute role="organizer"><AsistentesPage /></RoleRoute> },
-      { path: '/panel', element: <PanelPage /> },
-      { path: '/citas', element: <CitasPage /> },
-      {
-        path: '/citas/nueva',
-        element: (
-          <RoleRoute role="organizer">
-            <NuevaCitaPage />
-          </RoleRoute>
-        ),
-      },
-      { path: '/disponibilidad', element: <RoleRoute role="organizer"><DisponibilidadPage /></RoleRoute> },
-      { path: '/perfil', element: <PerfilPage /> },
-      { path: '/mis-eventos', element: <MisEventosPage /> },
-      { path: '/avisos', element: <AvisosPage /> },
+      { path: '/eventos/nuevo', element: organizerOnly(page(NuevoEventoPage)) },
+      { path: '/eventos/:id', element: page(DetalleEventoPage), handle: { immersive: true } },
+      { path: '/eventos/:id/editar', element: organizerOnly(page(EditarEventoPage)) },
+      { path: '/eventos/:id/asistentes', element: organizerOnly(page(AsistentesPage)) },
+      { path: '/panel', element: page(PanelPage) },
+      { path: '/citas', element: page(CitasPage) },
+      { path: '/citas/nueva', element: organizerOnly(page(NuevaCitaPage)) },
+      { path: '/disponibilidad', element: organizerOnly(page(DisponibilidadPage)) },
+      { path: '/perfil', element: page(PerfilPage) },
+      { path: '/mis-eventos', element: page(MisEventosPage) },
+      { path: '/avisos', element: page(AvisosPage) },
     ],
   },
   // Verificación del sistema de diseño: solo en desarrollo y fuera del bundle de producción
@@ -92,6 +81,6 @@ export const router = createBrowserRouter([
     : []),
   {
     path: '*',
-    element: <NotFoundPage />,
+    element: page(NotFoundPage, 'screen'),
   },
 ]);
