@@ -17,11 +17,15 @@ export function EventCover({ event, className }) {
   const cover = COVERS[event.category] ?? COVERS.other;
   return (
     <div className={cn('relative h-[84px] shrink-0 overflow-hidden md:h-[108px]', cover.bg, className)}>
-      <cover.Icon
-        size={36}
-        className={cn('absolute right-3 bottom-2.5 opacity-40 md:size-11', cover.text)}
-        strokeWidth={1.5}
-      />
+      {event.coverUrl ? (
+        <img src={event.coverUrl} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+      ) : (
+        <cover.Icon
+          size={36}
+          className={cn('absolute right-3 bottom-2.5 opacity-40 md:size-11', cover.text)}
+          strokeWidth={1.5}
+        />
+      )}
       <span className={cn(pill, 'left-2.5', cover.text)}>{CATEGORY_LABELS[event.category]}</span>
       <span className={cn(pill, 'right-2.5 text-ink tabular-nums')} aria-hidden="true">
         {event.confirmedCount}/{event.capacity}

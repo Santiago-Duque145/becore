@@ -203,7 +203,7 @@ export default function DevUiPage() {
 
       <Section title="CapacityBar">
         <div className="grid gap-5 md:grid-cols-2">
-          <CapacityBar confirmedCount={24} capacity={40} label="Cupos disponibles" live />
+          <CapacityBar confirmedCount={24} capacity={40} live />
           <CapacityBar confirmedCount={46} capacity={50} />
           <CapacityBar confirmedCount={30} capacity={30} />
           <CapacityBar confirmedCount={0} capacity={12} />

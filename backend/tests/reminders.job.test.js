@@ -3,9 +3,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('../src/repositories/events.repository.js', () => ({
   listPublishedStartingBetween: vi.fn(),
   refreshEventStatuses: vi.fn(),
+  listFinishedSince: vi.fn(),
 }));
 vi.mock('../src/repositories/attendance.repository.js', () => ({
   listConfirmedUserIds: vi.fn(),
+  listCheckedInUserIds: vi.fn(),
 }));
 vi.mock('../src/repositories/appointments.repository.js', () => ({
   listScheduledStartingBetween: vi.fn(),
@@ -23,13 +25,13 @@ vi.mock('../src/mail/mailer.js', () => ({
 }));
 
 import * as eventsRepo from '../src/repositories/events.repository.js';
-import { listConfirmedUserIds } from '../src/repositories/attendance.repository.js';
+import { listConfirmedUserIds, listCheckedInUserIds } from '../src/repositories/attendance.repository.js';
 import { listScheduledStartingBetween } from '../src/repositories/appointments.repository.js';
 import * as notificationsRepo from '../src/repositories/notifications.repository.js';
 import { findProfilesByIds } from '../src/repositories/profiles.repository.js';
 import { sendMail } from '../src/mail/mailer.js';
 import { runRemindersOnce } from '../src/jobs/reminders.job.js';
-import { runStatusRefreshOnce } from '../src/jobs/event-status.job.js';
+import { runStatusRefreshOnce, requestRatings } from '../src/jobs/event-status.job.js';
 import { AppError } from '../src/utils/app-error.js';
 
 const event = { id: 'ev-1', title: 'Partido', location: 'Cancha', startsAt: new Date(Date.now() + 3 * 3600 * 1000).toISOString() };
@@ -46,6 +48,7 @@ beforeEach(() => {
   eventsRepo.listPublishedStartingBetween.mockResolvedValue([event]);
   listConfirmedUserIds.mockResolvedValue(['u1', 'u2', 'u3']);
   listScheduledStartingBetween.mockResolvedValue([]);
+  eventsRepo.listFinishedSince.mockResolvedValue([]);
   findProfilesByIds.mockImplementation(async (ids) => users.filter((u) => ids.includes(u.id)));
   let n = 0;
   notificationsRepo.insertNotification.mockImplementation(async () => ({ id: `n${++n}` }));
@@ -108,5 +111,25 @@ describe('runStatusRefreshOnce', () => {
     await expect(runStatusRefreshOnce()).resolves.toBe(0);
     expect(console.info).not.toHaveBeenCalled();
     expect(eventsRepo.refreshEventStatuses).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('requestRatings', () => {
+  it('pide la calificación solo a quienes hicieron check-in', async () => {
+    eventsRepo.listFinishedSince.mockResolvedValue([{ ...event, id: 'ev-9' }]);
+    listCheckedInUserIds.mockResolvedValue(['u1', 'u2']);
+    await expect(requestRatings()).resolves.toBe(2);
+    expect(notificationsRepo.insertNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'event_rating_request', eventId: 'ev-9' }),
+    );
+    expect(notificationsRepo.insertNotification).toHaveBeenCalledTimes(2);
+  });
+
+  it('un aviso repetido se omite (idempotente)', async () => {
+    eventsRepo.listFinishedSince.mockResolvedValue([{ ...event, id: 'ev-9' }]);
+    listCheckedInUserIds.mockResolvedValue(['u1']);
+    notificationsRepo.insertNotification.mockRejectedValue(new AppError(409, 'DUPLICATE', 'dup'));
+    await expect(requestRatings()).resolves.toBe(0);
+    expect(sendMail).not.toHaveBeenCalled();
   });
 });

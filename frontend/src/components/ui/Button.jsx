@@ -52,3 +52,11 @@ export const LinkButton = forwardRef(function LinkButton(
 ) {
   return <Link ref={ref} className={buttonClass({ variant, size, className })} {...props} />;
 });
+
+// Enlace externo (WhatsApp, Google Calendar…) con el aspecto de un botón; se abre en otra pestaña
+export const ExternalLinkButton = forwardRef(function ExternalLinkButton(
+  { variant = 'primary', size = 'md', className, ...props },
+  ref,
+) {
+  return <a ref={ref} target="_blank" rel="noopener noreferrer" className={buttonClass({ variant, size, className })} {...props} />;
+});

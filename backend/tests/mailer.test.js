@@ -26,9 +26,9 @@ describe('plantillas', () => {
   const event = { title: 'Partido <5v5>', startsAt: '2026-10-31T20:00:00.000Z', location: 'Cancha' };
   const appointment = { title: 'Reunión', startsAt: '2026-10-31T20:00:00.000Z', location: '', notes: '' };
 
-  it('cubren los 6 tipos con asunto, mensaje corto, html y texto', () => {
+  it('cubren los 7 tipos con asunto, mensaje corto, html y texto', () => {
     expect(Object.keys(TEMPLATES).sort()).toEqual(
-      ['appointment_cancelled', 'appointment_created', 'appointment_reminder', 'event_cancelled', 'event_reminder', 'event_updated'],
+      ['appointment_cancelled', 'appointment_created', 'appointment_reminder', 'event_cancelled', 'event_rating_request', 'event_reminder', 'event_updated'],
     );
     for (const [type, build] of Object.entries(TEMPLATES)) {
       const out = build(type.startsWith('event') ? event : appointment);

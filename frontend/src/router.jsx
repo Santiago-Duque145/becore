@@ -10,14 +10,16 @@ import { page } from './components/layout/PageFallback.jsx';
 const LoginPage = lazy(() => import('./pages/auth/LoginPage.jsx'));
 const RegistroPage = lazy(() => import('./pages/auth/RegistroPage.jsx'));
 const RecuperarPage = lazy(() => import('./pages/auth/RecuperarPage.jsx'));
-const NuevaContrasenaPage = lazy(() => import('./pages/auth/NuevaContrasenaPage.jsx'));
+const VerificarPage = lazy(() => import('./pages/auth/VerificarPage.jsx'));
 const AuthCallbackPage = lazy(() => import('./pages/auth/AuthCallbackPage.jsx'));
 const BienvenidaPage = lazy(() => import('./pages/onboarding/BienvenidaPage.jsx'));
 const DescubrePage = lazy(() => import('./pages/descubre/DescubrePage.jsx'));
 const NuevoEventoPage = lazy(() => import('./pages/eventos/NuevoEventoPage.jsx'));
 const DetalleEventoPage = lazy(() => import('./pages/eventos/DetalleEventoPage.jsx'));
 const EditarEventoPage = lazy(() => import('./pages/eventos/EditarEventoPage.jsx'));
+const MapaEnVivoPage = lazy(() => import('./pages/MapaEnVivoPage.jsx'));
 const AsistentesPage = lazy(() => import('./pages/eventos/AsistentesPage.jsx'));
+const CalificarEventoPage = lazy(() => import('./pages/eventos/CalificarEventoPage.jsx'));
 const PanelPage = lazy(() => import('./pages/PanelPage.jsx'));
 const CitasPage = lazy(() => import('./pages/CitasPage.jsx'));
 const NuevaCitaPage = lazy(() => import('./pages/NuevaCitaPage.jsx'));
@@ -45,7 +47,10 @@ export const router = createBrowserRouter([
   { path: '/privacidad', element: page(PrivacidadPage, 'screen') },
   // Públicas a propósito: la sesión llega en la URL (Google, confirmación de correo, recuperación)
   { path: '/auth/callback', element: page(AuthCallbackPage, 'screen') },
-  { path: '/nueva-contrasena', element: page(NuevaContrasenaPage, 'screen') },
+  // Código de 6 dígitos para confirmar la cuenta (P5)
+  { path: '/verificar', element: page(VerificarPage, 'screen') },
+  // Alias de enlaces viejos: la recuperación ahora es un solo flujo con código en /recuperar
+  { path: '/nueva-contrasena', element: <Navigate to="/recuperar" replace /> },
   {
     path: '/bienvenida',
     element: (
@@ -68,6 +73,7 @@ export const router = createBrowserRouter([
       { path: '/eventos', element: <Navigate to="/descubre" replace /> },
       { path: '/eventos/nuevo', element: organizerOnly(page(NuevoEventoPage)) },
       { path: '/eventos/:id', element: page(DetalleEventoPage), handle: { immersive: true } },
+      { path: '/eventos/:id/calificar', element: page(CalificarEventoPage) },
       { path: '/eventos/:id/editar', element: organizerOnly(page(EditarEventoPage)) },
       { path: '/eventos/:id/asistentes', element: organizerOnly(page(AsistentesPage)) },
       { path: '/panel', element: page(PanelPage) },
@@ -76,6 +82,7 @@ export const router = createBrowserRouter([
       { path: '/disponibilidad', element: organizerOnly(page(DisponibilidadPage)) },
       { path: '/perfil', element: page(PerfilPage) },
       { path: '/mis-eventos', element: page(MisEventosPage) },
+      { path: '/mapa', element: organizerOnly(page(MapaEnVivoPage)) },
       { path: '/avisos', element: page(AvisosPage) },
       // M1: QR con la dirección de la app para que los participantes entren escaneando
       { path: '/compartir', element: organizerOnly(page(CompartirPage)) },

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { AGE_RANGES, GENDERS } from '../constants/demographics.js';
 import { DAYS, INTEREST_SLUGS, MAX_MOTIVATIONS, MAX_ZONE_LENGTH, MOTIVATIONS, TIME_SLOTS } from '../constants/preferences.js';
+import { AVATAR_PRESETS, IMAGE_TYPES } from '../constants/avatars.js';
 
 // Opcionales: ausente = no cambia; null = borra el dato
 const gender = z.enum(GENDERS, { error: 'Esa opción no está en la lista' }).nullish();
@@ -53,4 +54,14 @@ export const onboardingSchema = preferencesSchema.extend({
   gender,
   ageRange,
   role: z.enum(['organizer', 'participant'], { error: 'Elige si quieres organizar o participar' }),
+});
+
+// ---- Avatar (P3) ----
+const imageType = z.enum(IMAGE_TYPES, { error: 'Sube una imagen WebP, JPEG o PNG' });
+const storagePath = z.string().trim().min(3).max(200);
+
+export const uploadUrlSchema = z.object({ contentType: imageType });
+export const avatarPathSchema = z.object({ path: storagePath });
+export const avatarPresetSchema = z.object({
+  preset: z.enum(AVATAR_PRESETS, { error: 'Ese avatar no está en la lista' }),
 });

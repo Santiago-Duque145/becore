@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { AlertCircleIcon, CalendarIcon } from '../components/icons/index.js';
+import { RateBanner } from '../components/events/RateBanner.jsx';
 import { AppointmentList } from '../components/appointments/AppointmentList.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { Badge, Chip, EmptyState, ErrorState, LinkButton, Skeleton } from '../components/ui/index.js';
@@ -62,6 +63,7 @@ function MyEventItem({ event }) {
           {status.label}
         </Badge>
       </Link>
+      <RateBanner event={event} className="mt-2" />
     </li>
   );
 }

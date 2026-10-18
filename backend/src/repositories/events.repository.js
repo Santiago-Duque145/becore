@@ -2,7 +2,7 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { translateDbError } from '../utils/db-errors.js';
 
 const COLUMNS =
-  'id, title, description, category, location, starts_at, ends_at, capacity, confirmed_count, status, cancelled_at, created_at, updated_at, organizer_id, organizer:profiles!organizer_id(id, full_name)';
+  'id, title, description, category, location, starts_at, ends_at, capacity, confirmed_count, status, cancelled_at, finished_at, cover_url, latitude, longitude, created_at, updated_at, organizer_id, organizer:profiles!organizer_id(id, full_name, avatar_url, avatar_preset)';
 
 const COLUMN_MAP = {
   title: 'title',
@@ -13,6 +13,9 @@ const COLUMN_MAP = {
   endsAt: 'ends_at',
   capacity: 'capacity',
   status: 'status',
+  coverUrl: 'cover_url',
+  latitude: 'latitude',
+  longitude: 'longitude',
 };
 
 function toCamel(row) {
@@ -23,13 +26,24 @@ function toCamel(row) {
     category: row.category,
     location: row.location,
     startsAt: row.starts_at,
+    finishedAt: row.finished_at,
+    coverUrl: row.cover_url,
+    latitude: row.latitude === null ? null : Number(row.latitude),
+    longitude: row.longitude === null ? null : Number(row.longitude),
     endsAt: row.ends_at,
     capacity: row.capacity,
     confirmedCount: row.confirmed_count,
     status: row.status,
     cancelledAt: row.cancelled_at,
     organizerId: row.organizer_id,
-    organizer: row.organizer ? { id: row.organizer.id, fullName: row.organizer.full_name } : null,
+    organizer: row.organizer
+      ? {
+          id: row.organizer.id,
+          fullName: row.organizer.full_name,
+          avatarUrl: row.organizer.avatar_url,
+          avatarPreset: row.organizer.avatar_preset,
+        }
+      : null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -130,6 +144,14 @@ export async function refreshEventStatuses() {
   return unwrap(await supabaseAdmin.rpc('refresh_event_statuses'));
 }
 
+// Eventos que pasaron a finished desde sinceIso (para pedir la calificación)
+export async function listFinishedSince(sinceIso) {
+  const data = unwrap(
+    await supabaseAdmin.from('events').select(COLUMNS).eq('status', 'finished').gte('finished_at', sinceIso),
+  );
+  return data.map(toCamel);
+}
+
 // Panel del organizador: sus eventos (todos los estados) que empiezan desde fromIso, orden ascendente
 export async function listOrganizerEventsSince(organizerId, fromIso) {
   const data = unwrap(
@@ -141,4 +163,20 @@ export async function listOrganizerEventsSince(organizerId, fromIso) {
       .order('starts_at', { ascending: true }),
   );
   return data.map(toCamel);
+}
+
+// Estados visibles al público (sin borradores ni cancelados), para el conteo de GET /public/stats
+const PUBLIC_STATUSES = ['published', 'in_progress', 'finished'];
+
+// Solo los ids de los eventos públicos que empiezan en [fromIso, toIso): el endpoint público no expone nada más
+export async function listPublicEventIdsBetween(fromIso, toIso) {
+  const data = unwrap(
+    await supabaseAdmin
+      .from('events')
+      .select('id')
+      .in('status', PUBLIC_STATUSES)
+      .gte('starts_at', fromIso)
+      .lt('starts_at', toIso),
+  );
+  return data.map((row) => row.id);
 }

@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useEvent } from '../../hooks/useEvent.js';
 import { useAttendees, useSetCheckIn } from '../../hooks/useAttendees.js';
 import { formatDate } from '../../lib/format.js';
-import { Avatar, EmptyState, ErrorState, Field, Input, Skeleton, useToast } from '../../components/ui/index.js';
+import { EmptyState, PreviewableAvatar, ErrorState, Field, Input, Skeleton, useToast } from '../../components/ui/index.js';
 
 // Sin tildes ni mayúsculas, para buscar "maria" y encontrar a "María"
 const normalize = (text) => text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
@@ -117,7 +117,7 @@ export default function AsistentesPage() {
           {visible.map((a) => (
             <li key={a.userId} className="flex items-center justify-between gap-3 px-4 py-2">
               <div className="flex min-w-0 items-center gap-3">
-                <Avatar name={a.fullName} decorative />
+                <PreviewableAvatar name={a.fullName} role="participant" src={a.avatarUrl} preset={a.avatarPreset} />
                 <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-ink">{a.fullName}</p>
                 <p className="truncate text-xs text-ink-muted">{a.email}</p>

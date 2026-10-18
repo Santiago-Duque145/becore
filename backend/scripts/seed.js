@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { PLACES } from './seed-places.js';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SECRET_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
@@ -142,6 +143,7 @@ async function main() {
         description: def.description,
         category: def.category,
         location: def.location,
+        ...PLACES[def.title],
         starts_at: startsAt.toISOString(),
         ends_at: endsAt.toISOString(),
         capacity: def.capacity,

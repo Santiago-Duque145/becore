@@ -1,8 +1,24 @@
 import { z } from 'zod';
+import { IMAGE_TYPES } from '../constants/avatars.js';
 
 const CATEGORIES = ['sport', 'culture', 'recreation', 'other'];
 const isoWithZone = z.iso.datetime({ offset: true, error: 'Fecha y hora inválidas (ISO 8601 con zona)' });
 const futureDate = isoWithZone.refine((v) => new Date(v).getTime() > Date.now(), 'La fecha debe estar en el futuro');
+
+// Ruta del archivo que el organizador ya subió a Storage con la URL firmada (null = quitar la portada)
+const coverPath = z.string().trim().min(3).max(200).nullable();
+
+// Ubicación en el mapa (P6), opcional: las dos coordenadas juntas o ninguna (null en PATCH las quita)
+const latitude = z.number({ error: 'La latitud debe ser un número' }).min(-90, 'Latitud fuera de rango').max(90, 'Latitud fuera de rango');
+const longitude = z.number({ error: 'La longitud debe ser un número' }).min(-180, 'Longitud fuera de rango').max(180, 'Longitud fuera de rango');
+
+export function coordinatesTogether(d) {
+  const hasLat = d.latitude !== undefined;
+  const hasLng = d.longitude !== undefined;
+  if (hasLat !== hasLng) return false;
+  return !hasLat || (d.latitude === null) === (d.longitude === null);
+}
+const coordinatesMessage = { message: 'Envía la latitud y la longitud juntas', path: ['latitude'] };
 
 const fields = {
   title: z.string().trim().min(3, 'El título debe tener al menos 3 caracteres').max(100, 'El título no puede superar 100 caracteres'),
@@ -30,9 +46,13 @@ export const createEventSchema = z
     startsAt: fields.startsAt,
     endsAt: fields.endsAt.optional(),
     capacity: fields.capacity,
+    coverPath: coverPath.optional(),
+    latitude: latitude.nullable().optional(),
+    longitude: longitude.nullable().optional(),
     status: z.enum(['draft', 'published'], { error: 'Estado inválido' }).optional(),
   })
-  .refine(endsAfterStarts, endsAfterMessage);
+  .refine(endsAfterStarts, endsAfterMessage)
+  .refine(coordinatesTogether, coordinatesMessage);
 
 export const updateEventSchema = z
   .object({
@@ -43,10 +63,14 @@ export const updateEventSchema = z
     startsAt: fields.startsAt,
     endsAt: fields.endsAt,
     capacity: fields.capacity,
+    coverPath,
+    latitude: latitude.nullable(),
+    longitude: longitude.nullable(),
   })
   .partial()
   .refine((d) => Object.keys(d).length > 0, 'Envía al menos un campo para actualizar')
-  .refine(endsAfterStarts, endsAfterMessage);
+  .refine(endsAfterStarts, endsAfterMessage)
+  .refine(coordinatesTogether, coordinatesMessage);
 
 const dateOnly = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Usa el formato AAAA-MM-DD');
 
@@ -66,4 +90,8 @@ export const recommendedQuerySchema = z.object({
 
 export const eventIdParamsSchema = z.object({
   id: z.uuid({ error: 'Identificador de evento inválido' }),
+});
+
+export const coverUploadSchema = z.object({
+  contentType: z.enum(IMAGE_TYPES, { error: 'Sube una imagen WebP, JPEG o PNG' }),
 });

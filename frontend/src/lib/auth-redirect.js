@@ -4,7 +4,7 @@ import { homePathFor } from '../layouts/navigation.js';
 // onboarding pendiente → /bienvenida; si no, la ruta de la que venía o el inicio de su rol.
 
 const FROM_KEY = 'becore:auth-from';
-const AUTH_PATHS = ['/login', '/ingresar', '/registro', '/recuperar', '/nueva-contrasena', '/auth/callback', '/bienvenida'];
+const AUTH_PATHS = ['/login', '/ingresar', '/registro', '/recuperar', '/nueva-contrasena', '/verificar', '/auth/callback', '/bienvenida'];
 
 // Solo rutas internas de la app: evita redirecciones abiertas (?from=https://…) y volver a una pantalla de auth
 export function safeFromPath(path) {

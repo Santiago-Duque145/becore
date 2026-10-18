@@ -118,7 +118,12 @@ export const SparklesIcon = createIcon('SparklesIcon', [
   ['path', { d: 'M19 17v4M17 19h4' }],
 ]);
 
-export const MinusIcon = createIcon('MinusIcon', [['path', { d: 'M5 12h14' }]]);
+// Estrella de calificación (P2); se rellena con fill="currentColor" cuando está activa
+export const StarIcon = createIcon('StarIcon', [
+  ['path', { d: 'M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9L12 2.5z' }],
+]);
+
+export const MinusIcon =createIcon('MinusIcon', [['path', { d: 'M5 12h14' }]]);
 
 // M1: compartir la app con QR y ubicación del dispositivo
 export const QrCodeIcon = createIcon('QrCodeIcon', [
@@ -134,3 +139,10 @@ export const CopyIcon = createIcon('CopyIcon', [
 ]);
 
 export const NavigationIcon = createIcon('NavigationIcon', [['path', { d: 'M3 11l19-9-9 19-2-8-8-2z' }]]);
+
+export const ShareIcon = createIcon('ShareIcon', [
+  ['circle', { cx: 18, cy: 5, r: 3 }],
+  ['circle', { cx: 6, cy: 12, r: 3 }],
+  ['circle', { cx: 18, cy: 19, r: 3 }],
+  ['path', { d: 'M8.6 13.5l6.8 4M15.4 6.5l-6.8 4' }],
+]);

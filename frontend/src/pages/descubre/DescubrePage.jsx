@@ -1,17 +1,25 @@
-import { useId } from 'react';
+import { lazy, Suspense, useEffect, useId, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useEvents } from '../../hooks/useEvents.js';
+import { useGeolocation } from '../../hooks/useGeolocation.js';
 import { useMediaQuery } from '../../hooks/useMediaQuery.js';
+import { hasCoordinates, sortByDistance, withDistance } from '../../lib/map.js';
 import { SearchIcon } from '../../components/icons/index.js';
 import { EventCard, EventCardSkeleton } from '../../components/events/EventCard.jsx';
-import { Button, Chip, EmptyState, ErrorState, Input, LinkButton } from '../../components/ui/index.js';
+import { NearMeButton } from '../../components/events/NearMeButton.jsx';
+import { Button, Chip, EmptyState, ErrorState, Input, LinkButton, Skeleton } from '../../components/ui/index.js';
 import { CATEGORY_FILTERS, emptyTitle, matchesSearch } from './descubre-filters.js';
 import { LiveTicker } from './LiveTicker.jsx';
+import { MapEventList } from './MapEventList.jsx';
 import { ParaTiCarousel } from './ParaTiCarousel.jsx';
 import { UpcomingAppointmentsPanel } from './UpcomingAppointmentsPanel.jsx';
 
-// /descubre (mobile-descubre.html y desktop-descubre.html, sin distancia, mapa ni "Cerca de ti").
+// Leaflet pesa: el mapa se descarga solo al entrar en la vista de mapa
+const EventsMap = lazy(() => import('../../components/map/EventsMap.jsx').then((m) => ({ default: m.EventsMap })));
+
+// /descubre (mobile-descubre.html y desktop-descubre.html) con lista o mapa (?vista=mapa), "Cerca de mí" (P6)
+// y orden por cercanía (?orden=cerca). La ubicación solo vive en el navegador: nunca se envía ni se guarda.
 // Categoría (?cat=) y búsqueda (?q=) viven en la URL: el buscador de la barra superior de escritorio
 // escribe el mismo ?q= y al recargar se conserva el filtro.
 export default function DescubrePage() {
@@ -19,6 +27,10 @@ export default function DescubrePage() {
   const [params, setParams] = useSearchParams();
   const category = params.get('cat') ?? '';
   const query = params.get('q') ?? '';
+  const view = params.get('vista') === 'mapa' ? 'mapa' : 'lista';
+  const byDistance = params.get('orden') === 'cerca';
+  const geo = useGeolocation();
+  const [selectedId, setSelectedId] = useState(null); // pin resaltado en el mapa
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const showSidePanel = useMediaQuery('(min-width: 1024px)');
   const searchId = useId();
@@ -26,11 +38,22 @@ export default function DescubrePage() {
   // En escritorio el participante busca desde la barra superior; el organizador (barra lateral) aquí
   const showInlineSearch = !isDesktop || isOrganizer;
 
+  const mapView = view === 'mapa';
   const { data, isPending, isError, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useEvents({
     scope: 'upcoming',
     ...(category && { category }),
+    ...(mapView && { pageSize: 50 }),
   });
-  const events = (data?.pages.flatMap((page) => page.data) ?? []).filter((e) => matchesSearch(e, query));
+  // En el mapa se cargan todos los eventos de una vez (sin "Ver más")
+  useEffect(() => {
+    if (mapView && hasNextPage && !isFetchingNextPage) fetchNextPage();
+  }, [mapView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const matching = (data?.pages.flatMap((page) => page.data) ?? []).filter((e) => matchesSearch(e, query));
+  // Distancia calculada aquí, en el navegador; sin ubicación todo funciona igual sin distancias
+  const withKm = withDistance(matching, geo.position);
+  const events = byDistance && geo.position ? sortByDistance(withKm) : withKm;
+  const unlocated = events.filter((e) => !hasCoordinates(e)).length;
 
   function setParam(key, value) {
     const next = new URLSearchParams(params);
@@ -96,7 +119,24 @@ export default function DescubrePage() {
           ))}
         </div>
 
-        {!category && !query && <ParaTiCarousel />}
+        <div className="mb-4 flex flex-wrap items-center gap-2.5">
+          <div role="group" aria-label="Vista" className="flex gap-2">
+            <Chip selected={!mapView} onClick={() => setParam('vista', '')}>
+              Lista
+            </Chip>
+            <Chip selected={mapView} onClick={() => setParam('vista', 'mapa')}>
+              Mapa
+            </Chip>
+          </div>
+          {geo.position && (
+            <Chip selected={byDistance} onClick={() => setParam('orden', byDistance ? '' : 'cerca')}>
+              Más cerca primero
+            </Chip>
+          )}
+          <NearMeButton geo={geo} />
+        </div>
+
+        {!category && !query && !mapView && <ParaTiCarousel />}
 
         {isPending && (
           <div className="grid gap-3.5 md:grid-cols-2 md:gap-[18px] xl:grid-cols-3" aria-busy="true" aria-label="Cargando eventos">
@@ -129,7 +169,21 @@ export default function DescubrePage() {
           />
         )}
 
-        {events.length > 0 && (
+        {mapView && !isPending && !isError && (
+          <section aria-label="Eventos en el mapa">
+            <Suspense fallback={<Skeleton className="h-[60dvh] min-h-[320px] md:h-[520px]" />}>
+              <EventsMap events={events} userPosition={geo.position} selectedId={selectedId} onSelect={setSelectedId} className="h-[60dvh] min-h-[320px] md:h-[520px]" />
+            </Suspense>
+            {unlocated > 0 && (
+              <p className="mt-2 text-xs text-ink-muted">
+                {unlocated === 1 ? '1 evento no tiene' : `${unlocated} eventos no tienen`} ubicación en el mapa; aparecen en la lista de abajo.
+              </p>
+            )}
+            {events.length > 0 && <MapEventList events={events} selectedId={selectedId} onSelect={setSelectedId} />}
+          </section>
+        )}
+
+        {!mapView && events.length > 0 && (
           <>
             <h2 className="sr-only">Próximos eventos</h2>
             <ul className="grid gap-3.5 md:grid-cols-2 md:gap-[18px] xl:grid-cols-3">
@@ -142,7 +196,7 @@ export default function DescubrePage() {
           </>
         )}
 
-        {hasNextPage && !isError && (
+        {!mapView && hasNextPage && !isError && (
           <div className="mt-5 flex justify-center">
             <Button variant="secondary" onClick={() => fetchNextPage()} loading={isFetchingNextPage}>
               Ver más

@@ -1,5 +1,6 @@
 import { Link, NavLink } from 'react-router';
-import { Avatar, BrandMark } from '../components/ui/index.js';
+import { useMyAvatar } from '../hooks/useMyAvatar.js';
+import { BrandMark, PreviewableAvatar } from '../components/ui/index.js';
 import { cn } from '../lib/cn.js';
 import { SIDEBAR_LINKS } from './navigation.js';
 
@@ -7,6 +8,7 @@ const ROLE_LABELS = { organizer: 'Organizador', participant: 'Participante' };
 
 // Barra lateral del organizador (desktop-panel-organizador.html: 240 px, fondo bg-deep, padding 28×20)
 export function DesktopSidebar({ profile, hasUnread = false }) {
+  const avatar = useMyAvatar();
   return (
     <aside className="sticky top-0 flex h-dvh w-60 shrink-0 flex-col gap-8 border-r border-line bg-bg-deep px-5 pt-[max(1.75rem,env(safe-area-inset-top))] pb-7">
       <Link to="/" aria-label="Be Core, inicio" className="focus-ring inline-flex min-h-11 items-center self-start rounded-field">
@@ -44,7 +46,7 @@ export function DesktopSidebar({ profile, hasUnread = false }) {
         </ul>
       </nav>
       <div className="mt-auto flex items-center gap-2.5 rounded-field bg-panel p-3">
-        <Avatar name={profile?.fullName} decorative />
+        <PreviewableAvatar name={profile?.fullName} role={profile?.role} {...avatar} />
         <div className="min-w-0">
           <p className="truncate text-[13px] font-semibold text-ink">{profile?.fullName}</p>
           <p className="text-[11px] text-ink-muted">{ROLE_LABELS[profile?.role]}</p>

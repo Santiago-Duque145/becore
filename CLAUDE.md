@@ -135,9 +135,9 @@ contradigan; `ui.md` sigue mandando en lo que la skill no cubre (rutas ↔ RF, f
 
 ## 9. Fuera de alcance
 
-Pagos, IA/chatbot, geolocalización real o mapas con API, chat interno, gamificación, apps nativas,
-despliegue en la nube. Los mockups de mapa y chat son solo diseño para la sustentación. Si una tarea
-parece requerir algo de esta lista, detente y pregunta.
+Pagos, IA/chatbot, Google Maps API, chat interno, gamificación, apps nativas, despliegue en la nube y la
+"estela convergente" del mapa. El mockup del chat es solo diseño para la sustentación. Si una tarea parece
+requerir algo de esta lista, detente y pregunta.
 
 > **Nota 2026-10-17 — ampliación pedida por el director (Víctor Daniel Gil Vera):** agregar (1) sexo y rango de
 > edad opcionales en el onboarding, (2) calificación de eventos finalizados, (3) imagen del evento (subida o
@@ -145,6 +145,12 @@ parece requerir algo de esta lista, detente y pregunta.
 > especifique en `docs/specs/`; el punto 3 (imagen generada con IA) requiere además cerrar la decisión sobre
 > "IA/chatbot" de esta sección. Lo demás del alcance no cambia. Primer punto implementado: sexo, rango de edad y
 > consentimiento de datos (`docs/progreso/05_*`).
+
+> **Nota 2026-10-17 — mapa de eventos, pedido por el director:** el mapa de eventos entra al alcance con **Leaflet +
+> teselas libres** (sin Google Maps API; la ruta se abre en Google Maps o Waze con un enlace). La ubicación del
+> dispositivo se usa **solo para calcular distancias en el navegador**: nunca se envía al backend ni se guarda.
+> La búsqueda de direcciones usa Nominatim (OpenStreetMap) llamada desde el backend. Siguen fuera: Google Maps API
+> y la "estela convergente". Detalle en `docs/PLAN.md` (P6).
 
 ## 10. Estado actual
 

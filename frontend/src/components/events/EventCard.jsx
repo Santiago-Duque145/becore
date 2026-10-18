@@ -1,9 +1,13 @@
 import { Link } from 'react-router';
-import { CalendarIcon, CheckIcon, MapPinIcon } from '../icons/index.js';
+import { CalendarIcon, CheckIcon, ClockIcon, MapPinIcon } from '../icons/index.js';
+import { endLabel } from '../../lib/event-time.js';
 import { Badge, CapacityBar, Skeleton } from '../ui/index.js';
 import { cn } from '../../lib/cn.js';
 import { formatDate } from '../../lib/format.js';
+import { formatDistance } from '../../lib/geo.js';
 import { AttendanceButton } from './AttendanceButton.jsx';
+import { AvatarStack } from './AvatarStack.jsx';
+import { RatingBadge } from './RatingBadge.jsx';
 import { EventCover } from './EventCover.jsx';
 import { StatusBadges } from './EventBadges.jsx';
 
@@ -31,22 +35,37 @@ export function EventCard({ event, reason, className, preview = false }) {
             <CalendarIcon size={12} className="shrink-0 text-ink-faint" />
             <span className="first-letter:uppercase">{formatDate(event.startsAt)}</span>
           </p>
+          {endLabel(event) && (
+            <p className="flex items-center gap-1.5 text-[11.5px] text-ink-muted md:text-xs">
+              <ClockIcon size={12} className="shrink-0 text-ink-faint" />
+              <span>{endLabel(event)}</span>
+            </p>
+          )}
           <p className="flex items-center gap-1.5 text-[11.5px] text-ink-muted md:text-xs">
             <MapPinIcon size={12} className="shrink-0 text-ink-faint" />
             <span className="truncate">{event.location}</span>
+            {Number.isFinite(event.distanceKm) && (
+              <span className="shrink-0 font-semibold text-accent-soft">· {formatDistance(event.distanceKm)}</span>
+            )}
           </p>
           {(going || event.status !== 'published' || event.isFull) && (
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5">
               <StatusBadges event={event} />
               {going && (
                 <Badge tone="success" icon={CheckIcon}>
                   Vas a ir
                 </Badge>
               )}
+              {!preview && <RatingBadge event={event} />}
             </div>
           )}
         </div>
       </Body>
+      {!preview && event.confirmedPreview?.length > 0 && (
+        <div className="px-3.5 pt-2.5 md:px-4">
+          <AvatarStack people={event.confirmedPreview} total={event.confirmedCount} eventId={event.id} />
+        </div>
+      )}
       <div className="flex items-end gap-3 px-3.5 pt-2.5 pb-3.5 md:px-4 md:pb-4">
         <CapacityBar confirmedCount={event.confirmedCount} capacity={event.capacity} className="min-w-0 flex-1" />
         {preview ? (

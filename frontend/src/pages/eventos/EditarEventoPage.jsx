@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 import { EventForm } from '../../components/events/EventForm.jsx';
 import { ErrorState, Skeleton, useToast } from '../../components/ui/index.js';
 import { eventToFormValues } from '../../lib/event-schema.js';
+import { eventPoint, hasCoordinates } from '../../lib/map.js';
 
 const DRAFT_ACTIONS = [
   { intent: 'draft', label: 'Guardar borrador', variant: 'secondary' },
@@ -49,6 +50,8 @@ export default function EditarEventoPage() {
         initialValues={eventToFormValues(event)}
         actions={isDraft ? DRAFT_ACTIONS : PUBLISHED_ACTIONS}
         keepDuration={Boolean(event.endsAt)}
+        initialCoverUrl={event.coverUrl}
+        initialPlace={hasCoordinates(event) ? eventPoint(event) : null}
         onSubmit={handleSubmit}
         onCancel={() => navigate(`/eventos/${id}`)}
       />

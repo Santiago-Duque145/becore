@@ -274,6 +274,28 @@ Verificación a 390 y 1440 px.
 
 > Para el partido: el mapa necesita internet en los celulares para cargar las teselas. Si la red local de la cancha no tiene salida a internet, el mapa no carga, pero el resto de la app sí funciona.
 
+### P7 · Pantallas de carga entretenidas (Opus 5.5)
+
+```
+Lee la skill becore-ui (§3 Skeleton, §4 Carga y feedback, Movimiento) y el BrandMark actual.
+
+Objetivo: que esperar en Be Core sea parte de la marca, sin hacer la app más lenta ni romper la accesibilidad.
+
+1. Componente BrandLoader (components/ui/): animación propia en SVG + CSS (sin librerías ni Lottie) del isotipo: la "B" se dibuja con trazo, las líneas de movimiento de colores (turquesa, verde, naranja, amarillo) pasan detrás y los puntos se conectan como comunidad. Bucle de 1,6–2 s, suave. Tamaños sm/md/lg.
+2. Frases rotativas debajo (cada 1,8 s, con fundido), en el tono de la skill y alternando deporte y cultura: "Calentando motores…", "Inflando el balón…", "Afinando la guitarra…", "Reuniendo a la comunidad…", "Marcando la cancha…", "Preparando el escenario…", "Contando los cupos…". Lista en un archivo de constantes. El lector de pantalla solo anuncia una vez "Cargando" (aria-live polite, role="status"), no cada frase.
+3. Variantes por contexto: en detalle y tarjetas de un evento, el loader usa el ícono de su categoría (balón que rebota para deporte, nota musical que vibra para cultura, hoja/brújula para recreación).
+4. Dónde se usa:
+   - pantalla completa: arranque de la app, /auth/callback, carga diferida de rutas (Suspense) y guardado del onboarding;
+   - las listas y tarjetas SIGUEN usando Skeleton (se perciben más rápidas), pero con brillo de marca: un barrido diagonal turquesa muy suave en lugar del pulso gris;
+   - botones en loading: tres puntos que rebotan en lugar del spinner.
+5. Reglas para no estorbar:
+   - el loader de pantalla completa solo aparece si la espera supera 300 ms (evita parpadeos) y, una vez visible, se queda mínimo 500 ms;
+   - si una carga pasa de 8 s, cambia a "Esto está tardando más de lo normal…" con botón Reintentar;
+   - con prefers-reduced-motion: logo estático, frases sin fundido y skeleton sin barrido.
+6. Pantalla "Sin conexión" (si M1 ya existe) con el mismo estilo: el balón quieto y "Parece que se fue la señal. Revisa tu conexión."
+7. Añade BrandLoader y las variantes a /dev/ui. Verifica en móvil (390 px) que la animación no se vea entrecortada (solo transform y opacity) y que Lighthouse no baje.
+```
+
 ### P5 · Correos con la marca y verificación por código
 
 Pedido del 17 oct: todos los correos en HTML con la identidad de Be Core, y confirmación de cuenta y recuperación de contraseña con **código de 6 dígitos** en vez de enlace.
@@ -445,7 +467,7 @@ Con las calificaciones de P2: en el panel del organizador, por evento con ≥ 3 
 - [ ] Fase 1: informe `05_…` y `develop` al día
 - [ ] Fase 2: sprints cerrados, cobertura ≥ 70 %, citas probadas
 - [ ] Visto bueno del director para la IA (antes del 24)
-- [ ] P0 consentimiento y demografía · P1 login interactivo · P2 calificación · P3 avatares y portadas · P4 compartir · P5 correos con marca y código · P6 mapa
+- [ ] P0 consentimiento y demografía · P1 login interactivo · P2 calificación · P3 avatares y portadas · P4 compartir · P5 correos con marca y código · P6 mapa · P7 pantallas de carga
 - [ ] M1 HTTPS en el celular: probado por datos móviles, app instalable, QR de acceso
 - [ ] IA0 → IA4 (IA5 e IA6 si hay tiempo y facturación)
 - [ ] `v1.0` el 29 de octubre
