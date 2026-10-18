@@ -83,6 +83,7 @@ Formato: `{ "error": { "code": "EVENT_FULL", "message": "El evento ya no tiene c
 | `NOT_ATTENDED` | 403 | Solo califican quienes hicieron check-in en el evento |
 | `RATING_WINDOW_CLOSED` | 409 | El plazo para calificar (7 días) ya terminó |
 | `RATING_NOT_FOUND` | 404 | Aún no calificaste este evento |
+| `EVENT_NOT_IN_PROGRESS` | 409 | Solo puedes finalizar un evento que está en curso |
 | `APPOINTMENT_NOT_ACTIVE` | 409 | La cita fue cancelada |
 | `SLOT_OVERLAP` | 409 | Ese horario se cruza con otra de tus franjas. Elige otro o borra primero la que se cruza |
 | `APPOINTMENT_OUTSIDE_SLOT` | 409 | La cita debe quedar dentro de una de tus franjas de disponibilidad |
@@ -170,6 +171,9 @@ excluyen los de puntaje 0 y se ordena por puntaje desc y luego `startsAt` asc. `
 
 **Cancelar:** mismas reglas 1–4, luego `status = 'cancelled'`, `cancelled_at = now()` y correo
 `event_cancelled` a los confirmados (RF-06, RF-17).
+
+- `POST /events/:id/finish` (organizador dueño) → 200 `{ data: Event }` con `status: 'finished'`. Solo desde `in_progress`
+  (409 `EVENT_NOT_IN_PROGRESS`); otro organizador → 403. Fija `finished_at` y pide la calificación a quienes hicieron check-in.
 
 ### Asistencia (RF-10 a RF-13)
 

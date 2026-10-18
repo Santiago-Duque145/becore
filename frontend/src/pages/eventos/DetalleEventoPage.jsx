@@ -3,6 +3,7 @@ import { AlertCircleIcon, CalendarIcon, MapPinIcon } from '../../components/icon
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useEvent } from '../../hooks/useEvent.js';
 import { useRealtimeEvent } from '../../hooks/useRealtimeEvent.js';
+import { endLabel } from '../../lib/event-time.js';
 import { formatLongDay, formatTime } from '../../lib/format.js';
 import { AttendanceButton } from '../../components/events/AttendanceButton.jsx';
 import { DetailCover, DetailSkeleton, InfoRow } from '../../components/events/EventDetailParts.jsx';
@@ -45,9 +46,13 @@ export default function DetalleEventoPage() {
   const isOwner = event.organizer?.id === profile?.id;
   const showAttendance = !isOwner && profile?.role === 'participant' && event.status !== 'draft';
   const hasActionBar = isOwner || showAttendance;
-  const timeRange = event.endsAt
-    ? `${formatTime(event.startsAt)} — ${formatTime(event.endsAt)}`
-    : formatTime(event.startsAt);
+  // Activo: "7:00 p. m. · Termina aprox. 9:00 p. m. (2 h por defecto)"; finalizado/cancelado: solo el rango
+  const finishLabel = endLabel(event);
+  const timeRange = finishLabel
+    ? `${formatTime(event.startsAt)} · ${finishLabel}`
+    : event.endsAt
+      ? `${formatTime(event.startsAt)} — ${formatTime(event.endsAt)}`
+      : formatTime(event.startsAt);
 
   return (
     <article className="mx-auto w-full max-w-[720px]">
@@ -73,7 +78,6 @@ export default function DetalleEventoPage() {
           <CapacityBar
             confirmedCount={event.confirmedCount}
             capacity={event.capacity}
-            label="Cupos disponibles"
             live={event.status === 'published' || event.status === 'in_progress'}
           />
         </div>

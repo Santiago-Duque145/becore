@@ -24,6 +24,7 @@ router.post('/events/cover-upload-url', ...organizerOnly, validate({ body: cover
 router.get('/events/:id', requireAuth, validate(byId), controller.getEvent);
 router.patch('/events/:id', ...organizerOnly, validate({ ...byId, body: updateEventSchema }), controller.updateEvent);
 router.post('/events/:id/cancel', ...organizerOnly, validate(byId), controller.cancelEvent);
+router.post('/events/:id/finish', ...organizerOnly, validate(byId), controller.finishEvent);
 router.post('/events/:id/publish', ...organizerOnly, validate(byId), controller.publishEvent);
 
 export default router;

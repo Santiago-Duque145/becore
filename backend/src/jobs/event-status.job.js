@@ -1,25 +1,13 @@
 import { refreshEventStatuses, listFinishedSince } from '../repositories/events.repository.js';
-import { listCheckedInUserIds } from '../repositories/attendance.repository.js';
-import { notify } from '../services/notifications.service.js';
-import { buildContent } from '../mail/templates.js';
+import { requestRatingsForEvent } from '../services/rating-requests.service.js';
 
 const LOOKBACK_MS = 60 * 60 * 1000;
 
-// Pide la calificación a quienes hicieron check-in en eventos que acaban de finalizar.
-// Idempotente: el índice único de notifications evita repetir el aviso en cada pasada.
+// Pide la calificación en los eventos que acaban de finalizar (por el cron o a mano).
 export async function requestRatings(now = Date.now()) {
   const events = await listFinishedSince(new Date(now - LOOKBACK_MS).toISOString());
   let sent = 0;
-  for (const event of events) {
-    const userIds = await listCheckedInUserIds(event.id);
-    const summary = await notify({
-      userIds,
-      type: 'event_rating_request',
-      eventId: event.id,
-      buildContent: () => buildContent('event_rating_request', event),
-    });
-    sent += summary.sent;
-  }
+  for (const event of events) sent += await requestRatingsForEvent(event);
   return sent;
 }
 

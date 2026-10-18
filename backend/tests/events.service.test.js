@@ -15,8 +15,13 @@ vi.mock('../src/services/notifications.service.js', () => ({
   notify: vi.fn(),
 }));
 
+vi.mock('../src/services/rating-requests.service.js', () => ({
+  requestRatingsForEvent: vi.fn(),
+}));
+
 import * as repo from '../src/repositories/events.repository.js';
 import { findUserAttendances } from '../src/repositories/attendance.repository.js';
+import { requestRatingsForEvent } from '../src/services/rating-requests.service.js';
 import * as service from '../src/services/events.service.js';
 
 const owner = { id: 'owner-1', role: 'organizer' };
@@ -200,5 +205,44 @@ describe('listEvents', () => {
     repo.listEvents.mockResolvedValue({ rows: [], total: 0 });
     await service.listEvents(owner, { ...query, scope: 'past' });
     expect(repo.listEvents.mock.calls[0][0].statuses).toContain('finished');
+  });
+});
+
+describe('finishEvent', () => {
+  const live = { id: 'e1', organizerId: 'owner-1', status: 'in_progress', capacity: 10, confirmedCount: 2, startsAt: '2026-10-01T10:00:00Z' };
+
+  beforeEach(() => {
+    repo.findEventById.mockResolvedValue(live);
+    repo.updateEvent.mockImplementation(async (_id, patch) => ({ ...live, ...patch, finishedAt: '2026-10-01T11:00:00Z' }));
+    requestRatingsForEvent.mockResolvedValue(2);
+  });
+
+  it('el organizador finaliza un evento en curso y se pide la calificación', async () => {
+    const result = await service.finishEvent(owner, 'e1');
+    expect(repo.updateEvent).toHaveBeenCalledWith('e1', { status: 'finished' });
+    expect(requestRatingsForEvent).toHaveBeenCalledWith(expect.objectContaining({ id: 'e1', status: 'finished' }));
+    expect(result.status).toBe('finished');
+  });
+
+  it('otro organizador → 403 y no cambia nada', async () => {
+    await expect(service.finishEvent({ id: 'otro', role: 'organizer' }, 'e1')).rejects.toMatchObject({ status: 403 });
+    expect(repo.updateEvent).not.toHaveBeenCalled();
+  });
+
+  it.each(['draft', 'published', 'finished', 'cancelled'])('estado %s → 409 EVENT_NOT_IN_PROGRESS', async (status) => {
+    repo.findEventById.mockResolvedValue({ ...live, status });
+    await expect(service.finishEvent(owner, 'e1')).rejects.toMatchObject({ status: 409 });
+    expect(repo.updateEvent).not.toHaveBeenCalled();
+  });
+
+  it('evento inexistente → 404', async () => {
+    repo.findEventById.mockResolvedValue(null);
+    await expect(service.finishEvent(owner, 'e1')).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('si falla el aviso de calificación, el evento igual queda finalizado', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    requestRatingsForEvent.mockRejectedValue(new Error('smtp'));
+    await expect(service.finishEvent(owner, 'e1')).resolves.toMatchObject({ status: 'finished' });
   });
 });

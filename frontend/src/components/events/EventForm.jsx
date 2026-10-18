@@ -142,7 +142,11 @@ export function EventForm({
           <Field label="Fecha y hora" hint="Hora de Colombia" error={errors.startsAt?.message}>
             <Input type="datetime-local" {...register('startsAt')} />
           </Field>
-          <Field label="Duración (opcional)" error={errors.durationMinutes?.message}>
+          <Field
+            label="Duración (opcional)"
+            hint="Si no la defines, el evento termina 2 horas después de empezar. Igual puedes finalizarlo cuando quieras."
+            error={errors.durationMinutes?.message}
+          >
             <Select {...register('durationMinutes')}>
               {!keepDuration && <option value="">Sin definir</option>}
               {extraDuration && (

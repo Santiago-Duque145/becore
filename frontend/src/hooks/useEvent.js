@@ -27,3 +27,4 @@ export const useCreateEvent = () => useEventMutation(async (body) => (await even
 export const useUpdateEvent = (id) => useEventMutation(async (body) => (await eventsApi.updateEvent(id, body)).data);
 export const useCancelEvent = (id) => useEventMutation(async () => (await eventsApi.cancelEvent(id)).data);
 export const usePublishEvent = (id) => useEventMutation(async () => (await eventsApi.publishEvent(id)).data);
+export const useFinishEvent = (id) => useEventMutation(async () => (await eventsApi.finishEvent(id)).data);

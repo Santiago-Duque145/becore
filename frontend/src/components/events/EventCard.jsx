@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
-import { CalendarIcon, CheckIcon, MapPinIcon } from '../icons/index.js';
+import { CalendarIcon, CheckIcon, ClockIcon, MapPinIcon } from '../icons/index.js';
+import { endLabel } from '../../lib/event-time.js';
 import { Badge, CapacityBar, Skeleton } from '../ui/index.js';
 import { cn } from '../../lib/cn.js';
 import { formatDate } from '../../lib/format.js';
@@ -33,6 +34,12 @@ export function EventCard({ event, reason, className, preview = false }) {
             <CalendarIcon size={12} className="shrink-0 text-ink-faint" />
             <span className="first-letter:uppercase">{formatDate(event.startsAt)}</span>
           </p>
+          {endLabel(event) && (
+            <p className="flex items-center gap-1.5 text-[11.5px] text-ink-muted md:text-xs">
+              <ClockIcon size={12} className="shrink-0 text-ink-faint" />
+              <span>{endLabel(event)}</span>
+            </p>
+          )}
           <p className="flex items-center gap-1.5 text-[11.5px] text-ink-muted md:text-xs">
             <MapPinIcon size={12} className="shrink-0 text-ink-faint" />
             <span className="truncate">{event.location}</span>

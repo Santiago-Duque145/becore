@@ -3,6 +3,7 @@ import { findUserAttendances, listConfirmedPreviewIds, listConfirmedUserIds } fr
 import { findAvatarsByIds } from '../repositories/profiles.repository.js';
 import { COVER_BUCKET } from '../constants/avatars.js';
 import * as storage from './storage.service.js';
+import { requestRatingsForEvent } from './rating-requests.service.js';
 import { notify } from './notifications.service.js';
 import { buildContent } from '../mail/templates.js';
 import { AppError } from '../utils/app-error.js';
@@ -182,4 +183,24 @@ export async function publishEvent(user, id) {
   }
   const published = await eventsRepo.updateEvent(id, { status: 'published' });
   return toEvent(published, null);
+}
+
+// Finalizar a mano (solo el organizador y solo si está en curso). Usa la misma transición in_progress → finished
+// de la máquina de estados (el trigger fija finished_at = now()); luego pide la calificación a quienes hicieron check-in.
+export async function finishEvent(user, id) {
+  const event = await findVisibleEvent(user, id);
+  if (event.organizerId !== user.id) {
+    throw new AppError(403, 'FORBIDDEN', 'No tienes permiso para esta acción');
+  }
+  if (event.status !== 'in_progress') {
+    throw new AppError(409, 'EVENT_NOT_IN_PROGRESS', 'Solo puedes finalizar un evento que está en curso');
+  }
+  const finished = await eventsRepo.updateEvent(id, { status: 'finished' });
+  try {
+    await requestRatingsForEvent(finished);
+  } catch (err) {
+    // El evento ya quedó finalizado: si falla el aviso, el cron de estados lo reintenta durante la siguiente hora
+    console.error('[calificaciones] No se pudo pedir la calificación:', err.message);
+  }
+  return toEvent(finished, null);
 }
