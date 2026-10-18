@@ -281,3 +281,37 @@ describe('PATCH /api/v1/me con sexo y edad', () => {
     expect(res.status).toBe(400);
   });
 });
+
+describe('consentimiento en el onboarding (primer paso para quien entró por Google)', () => {
+  it('consent: true guarda data_consent_at junto con el rol', async () => {
+    loginAs(pendingUser);
+    completeOnboarding.mockResolvedValue({ ...pendingUser, onboardingCompletedAt: 'ahora', dataConsentAt: 'ahora' });
+    const res = await put('/me/onboarding', { ...answers, role: 'participant', consent: true });
+    expect(res.status).toBe(200);
+    const [, , fields] = completeOnboarding.mock.calls[0];
+    expect(typeof fields.dataConsentAt).toBe('string');
+    expect(res.body.data.dataConsentAccepted).toBe(true);
+  });
+
+  it('sin consent no toca data_consent_at (quien ya aceptó en el registro por correo)', async () => {
+    loginAs({ ...pendingUser, dataConsentAt: '2026-10-17T00:00:00.000Z' });
+    completeOnboarding.mockResolvedValue({ ...pendingUser, onboardingCompletedAt: 'ahora', dataConsentAt: '2026-10-17T00:00:00.000Z' });
+    await put('/me/onboarding', { ...answers, role: 'participant' });
+    const [, , fields] = completeOnboarding.mock.calls[0];
+    expect(fields.dataConsentAt).toBeUndefined();
+  });
+
+  it('no mueve la fecha de la primera aceptación', async () => {
+    loginAs({ ...pendingUser, dataConsentAt: '2026-10-17T00:00:00.000Z' });
+    completeOnboarding.mockResolvedValue({ ...pendingUser, onboardingCompletedAt: 'ahora' });
+    await put('/me/onboarding', { ...answers, role: 'participant', consent: true });
+    expect(completeOnboarding.mock.calls[0][2].dataConsentAt).toBe('2026-10-17T00:00:00.000Z');
+  });
+
+  it('consent: false → 400 (solo vale true)', async () => {
+    loginAs(pendingUser);
+    const res = await put('/me/onboarding', { ...answers, consent: false });
+    expect(res.status).toBe(400);
+    expect(res.body.error.details.map((d) => d.field)).toContain('consent');
+  });
+});

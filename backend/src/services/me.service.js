@@ -58,8 +58,12 @@ export async function acceptDataConsent(user, answers) {
 }
 
 // PUT /me/onboarding (auth-onboarding.md §7). El rol solo cambia mientras el onboarding esté pendiente.
-export async function completeOnboarding(user, { role, gender, ageRange, ...answers }) {
-  const demographics = pickDemographics({ gender, ageRange });
+export async function completeOnboarding(user, { role, gender, ageRange, consent, ...answers }) {
+  // consent: la política se acepta en el primer paso de /bienvenida; la fecha de la primera aceptación no se mueve
+  const demographics = {
+    ...pickDemographics({ gender, ageRange }),
+    ...(consent ? { dataConsentAt: user.dataConsentAt ?? new Date().toISOString() } : {}),
+  };
   if (user.onboardingCompletedAt) {
     if (role !== user.role) throw onboardingAlreadyCompleted();
     // Reenvío con el mismo rol: solo se actualizan los gustos (y sexo/edad si llegan)

@@ -26,10 +26,5 @@ export function RequireOnboarding({ children }) {
   if (profile.onboardingCompleted === false && !EXEMPT_PATHS.includes(pathname)) {
     return <Navigate to="/bienvenida" replace />;
   }
-  return (
-    <>
-      {children}
-      <ConsentGate />
-    </>
-  );
+  return <ConsentGate>{children}</ConsentGate>;
 }

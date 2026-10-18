@@ -96,14 +96,14 @@ Leyenda de acceso: **todos** = cualquier usuario autenticado; **org** = rol `org
 | GET | `/health` | público | — | `{ data: { status: "ok" } }` |
 | GET | `/me` | todos | — | `Profile` |
 | PATCH | `/me` | todos | `{ fullName? (2–80), gender?, ageRange? }`; al menos un campo. `null` borra sexo o edad | `Profile` |
-| PUT | `/me/onboarding` | todos | `{ role, gender?, ageRange?, interests[], days[], timeSlots[], motivations[] (≤ 2), zone? (≤ 80) }`; listas opcionales (vacías por defecto) | `Profile` |
+| PUT | `/me/onboarding` | todos | `{ role, consent? (solo `true`), gender?, ageRange?, interests[], days[], timeSlots[], motivations[] (≤ 2), zone? (≤ 80) }`; listas opcionales (vacías por defecto) | `Profile` |
 | PUT | `/me/preferences` | todos | lo mismo sin `role`, `gender` ni `ageRange` (si llegan, se ignoran) | `Profile` |
 | PUT | `/me/consent` | todos | `{ gender?, ageRange? }` (ambos opcionales) | `Profile` |
 
 `gender`: `female` · `male` · `other` · `prefer_not_to_say`. `ageRange`: `18-24` · `25-34` · `35-44` · `45-54` · `55+`
 (`backend/src/constants/demographics.js`). Son opcionales y **solo para estadísticas agregadas**: no se usan en
 recomendaciones ni se envían a ninguna IA. `PUT /me/consent` guarda `profiles.data_consent_at = now()` la primera vez
-(reenviar no la mueve) y, si vienen, sexo y edad. El perfil expone `dataConsentAccepted` (boolean), nunca la fecha.
+(reenviar no la mueve) y, si vienen, sexo y edad. `consent: true` en `PUT /me/onboarding` hace lo mismo desde el primer paso de /bienvenida. El perfil expone `dataConsentAccepted` (boolean), nunca la fecha.
 
 `PUT /me/onboarding`: guarda las respuestas (upsert en `user_preferences`) y, si el onboarding estaba pendiente, fija
 `role` y `onboarding_completed_at = now()`. Si ya estaba completo: mismo rol → solo actualiza los gustos; otro rol →

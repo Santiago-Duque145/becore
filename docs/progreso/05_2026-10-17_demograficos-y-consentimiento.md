@@ -30,9 +30,8 @@ Archivos nuevos: `backend/src/constants/demographics.js`, `frontend/src/componen
 1. **La API guarda `data_consent_at`, no el trigger.** El registro con Supabase Auth no pasa por la API, así que la casilla se
    recuerda en `sessionStorage` (10 min) y la app llama a `PUT /me/consent` al abrir sesión. Si la pestaña cambia (enlace de
    confirmación de correo) se pierde y aparece el diálogo. Se limpia si el registro falla.
-2. **Google desde `/login`** (primera entrada) no tiene casilla previa: ve el diálogo, que se puede cerrar con "Ahora no".
-   El pedido pedía casilla obligatoria; con Google desde `/login` no es posible antes de salir a Google. Si el director quiere
-   bloquear hasta aceptar, hay que quitar "Ahora no".
+2. **Consentimiento obligatorio para todos (decisión posterior, 2026-10-17):** sin "Ahora no". Google → primer paso de
+   /bienvenida; cuentas viejas → diálogo modal con "Acepto" o "Salir". Ver commit de corrección del consentimiento.
 3. **Reenviar el consentimiento no mueve la fecha** de la primera aceptación.
 
 ## 4. Verificación

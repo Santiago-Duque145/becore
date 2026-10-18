@@ -1,6 +1,6 @@
 import { forwardRef, useId } from 'react';
 import { CalendarIcon, UsersIcon } from '../../components/icons/index.js';
-import { Chip, Field, Input, OptionCard } from '../../components/ui/index.js';
+import { Checkbox, Chip, Field, Input, OptionCard } from '../../components/ui/index.js';
 import { DemographicsFields } from '../../components/preferences/DemographicsFields.jsx';
 import {
   DAY_OPTIONS,
@@ -72,6 +72,33 @@ export function RoleStep({ state, dispatch, titleRef, firstName }) {
           />
         ))}
       </div>
+    </>
+  );
+}
+
+// Primer paso para quien aún no aceptó la política (p. ej. entró por Google). Sin aceptar no se avanza ni se omite.
+export function ConsentStep({ state, dispatch, titleRef }) {
+  const titleId = useId();
+  return (
+    <>
+      <StepHeading
+        ref={titleRef}
+        id={titleId}
+        title="Antes de empezar"
+        subtitle="Be Core es un proyecto académico de la Universidad Católica Luis Amigó. Necesitamos tu aceptación para guardar tus datos."
+      />
+      <Checkbox
+        checked={state.consentAccepted}
+        onChange={(e) => dispatch({ type: 'setConsent', accepted: e.target.checked })}
+        label={
+          <>
+            Acepto la{' '}
+            <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="font-semibold text-accent underline">
+              política de tratamiento de datos personales
+            </a>
+          </>
+        }
+      />
     </>
   );
 }
@@ -199,3 +226,6 @@ export function ZoneStep({ state, dispatch, titleRef }) {
 }
 
 export const STEPS = [RoleStep, DemographicsStep, InterestsStep, AvailabilityStep, MotivationStep, ZoneStep];
+
+// Con el paso de consentimiento por delante cuando todavía falta aceptar la política
+export const stepsFor = (needsConsent) => (needsConsent ? [ConsentStep, ...STEPS] : STEPS);

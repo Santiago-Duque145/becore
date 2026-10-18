@@ -48,6 +48,8 @@ export const preferencesSchema = z.object({
 
 // Cuerpo de PUT /me/onboarding: lo mismo más el rol elegido en el paso 1
 export const onboardingSchema = preferencesSchema.extend({
+  // true = acepta la política en el primer paso de /bienvenida (quien entró por Google); solo guarda la fecha
+  consent: z.literal(true).optional(),
   gender,
   ageRange,
   role: z.enum(['organizer', 'participant'], { error: 'Elige si quieres organizar o participar' }),

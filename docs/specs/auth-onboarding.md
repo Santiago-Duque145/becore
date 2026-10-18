@@ -73,8 +73,10 @@ Si Supabase pide confirmación de correo: pantalla "Revisa tu correo para activa
 > "Cuéntanos un poco de ti" (sexo y rango de edad, opcionales, elección única; tocar la elegida la quita). Los pasos de
 > abajo se numeran desde el 3 (gustos = 3, disponibilidad = 4, motivación = 5, zona = 6). Sexo y edad solo alimentan
 > estadísticas agregadas: **no** entran en `scoreEvent` ni se envían a IA. Además, `/registro` exige la casilla
-> "Acepto la política de tratamiento de datos personales" (enlace a `/privacidad`); quien no tiene `data_consent_at`
-> (usuarios previos, Google desde `/login`) ve un diálogo de una vez por sesión, sin bloquear el login.
+> "Acepto la política de tratamiento de datos personales" (enlace a `/privacidad`); el consentimiento es **obligatorio para todos**, sin "Ahora no": quien entra por Google (onboarding pendiente, sin
+> `data_consent_at`) lo acepta en el **primer paso de /bienvenida** (7 pasos); una cuenta vieja (onboarding completo) ve un
+> **diálogo modal** cuya única salida es aceptar o "Salir" (cierra sesión); el diálogo nunca aparece con el onboarding
+> pendiente. El paso "Cuéntanos un poco de ti" se precarga con `gender` y `age_range` si ya existen.
 > Detalle en `docs/progreso/05_*`.
 
 ## 6. Onboarding (`/bienvenida`) — 6 pasos (los 5 originales + datos opcionales)
