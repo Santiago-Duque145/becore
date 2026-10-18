@@ -106,7 +106,7 @@ fun "Divertirme" · compete "Competir" · learn "Aprender algo nuevo" · meet_pe
 **Paso 5 — "¿Por dónde te mueves?"** · sub "Así te mostramos planes cerca. Es opcional."
 Input de texto "Barrio o zona" (placeholder "Ej.: Belén, Laureles, Envigado"), máx. 80. Sin GPS.
 
-**Final:** pantalla breve "¡Listo, {nombre}! Ya tenemos planes para ti" con check animado (respeta `motion-reduce`), y a los 1.2 s → `/descubre`.
+**Final:** pantalla breve "¡Listo, {nombre}! Ya tenemos planes para ti" con check animado y confeti en CSS (24 piezas con los colores de la marca, 1.5 s; P1), y a los 1.6 s → `/descubre` (1.2 s y sin confeti con `prefers-reduced-motion`).
 **Omitir** (en cualquier paso): guarda lo que haya + rol, y marca el onboarding como completado.
 
 ## 7. API (Express, validación Zod, errores con el formato de `docs/specs/api.md`)

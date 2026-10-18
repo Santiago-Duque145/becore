@@ -143,6 +143,37 @@
       stroke-dashoffset: -1;
     }
   }
+
+  /* P1 · Onboarding: rebote corto del chip al elegirlo */
+  --animate-chip-pop: chip-pop 320ms var(--ease-out-soft);
+
+  @keyframes chip-pop {
+    40% {
+      transform: scale(1.08);
+    }
+    70% {
+      transform: scale(0.97);
+    }
+  }
+
+  /* P1 · Final del onboarding: cada pieza sale del check hacia su destino (--cx, --cy) y cae mientras se desvanece.
+     1.4 s + hasta 100 ms de retraso = 1.5 s en total. */
+  --animate-confetti: confetti 1.4s cubic-bezier(0.2, 0.7, 0.4, 1) both;
+
+  @keyframes confetti {
+    0% {
+      opacity: 1;
+      transform: translate(0, 0) rotate(0deg) scale(0.6);
+    }
+    35% {
+      opacity: 1;
+      transform: translate(var(--cx), var(--cy)) rotate(calc(var(--cr) / 3)) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(calc(var(--cx) * 1.15), calc(var(--cy) + 120px)) rotate(var(--cr)) scale(1);
+    }
+  }
 }
 
 /* Área táctil de 44 px para enlaces dentro de texto sin mover el layout (skill §4, objetivos ≥ 44 × 44) */
