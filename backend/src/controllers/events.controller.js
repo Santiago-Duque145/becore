@@ -38,3 +38,7 @@ export async function createCoverUpload(req, res) {
 export async function finishEvent(req, res) {
   res.json({ data: await eventsService.finishEvent(req.user, req.params.id) });
 }
+
+export async function listConfirmedPeople(req, res) {
+  res.json({ data: await eventsService.listConfirmedPeople(req.user, req.params.id) });
+}

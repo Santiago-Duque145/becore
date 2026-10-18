@@ -1,6 +1,6 @@
 import { Link, NavLink } from 'react-router';
 import { useMyAvatar } from '../hooks/useMyAvatar.js';
-import { Avatar, BrandMark } from '../components/ui/index.js';
+import { BrandMark, PreviewableAvatar } from '../components/ui/index.js';
 import { cn } from '../lib/cn.js';
 import { SIDEBAR_LINKS } from './navigation.js';
 
@@ -46,7 +46,7 @@ export function DesktopSidebar({ profile, hasUnread = false }) {
         </ul>
       </nav>
       <div className="mt-auto flex items-center gap-2.5 rounded-field bg-panel p-3">
-        <Avatar name={profile?.fullName} {...avatar} decorative />
+        <PreviewableAvatar name={profile?.fullName} role={profile?.role} {...avatar} />
         <div className="min-w-0">
           <p className="truncate text-[13px] font-semibold text-ink">{profile?.fullName}</p>
           <p className="text-[11px] text-ink-muted">{ROLE_LABELS[profile?.role]}</p>

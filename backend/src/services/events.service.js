@@ -204,3 +204,22 @@ export async function finishEvent(user, id) {
   }
   return toEvent(finished, null);
 }
+
+const CONFIRMED_LIST_LIMIT = 200;
+
+// Lista completa de "quiénes van": solo nombre de pila y foto, y solo de eventos que el usuario puede ver
+// (los borradores ajenos "no existen"). Nada de correo, apellidos ni ids de usuario.
+export async function listConfirmedPeople(user, id) {
+  const event = await findVisibleEvent(user, id);
+  const idsByEvent = (await listConfirmedPreviewIds([event.id], CONFIRMED_LIST_LIMIT)) ?? {};
+  const ids = idsByEvent[event.id] ?? [];
+  if (!ids.length) return [];
+  const byId = new Map((await findAvatarsByIds(ids)).map((p) => [p.id, p]));
+  return ids
+    .filter((userId) => byId.has(userId))
+    .map((userId) => ({
+      name: byId.get(userId).firstName,
+      avatarUrl: byId.get(userId).avatarUrl,
+      avatarPreset: byId.get(userId).avatarPreset,
+    }));
+}

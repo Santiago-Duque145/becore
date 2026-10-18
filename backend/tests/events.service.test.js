@@ -11,6 +11,9 @@ vi.mock('../src/repositories/attendance.repository.js', () => ({
   listConfirmedPreviewIds: vi.fn(),
   listConfirmedUserIds: vi.fn().mockResolvedValue([]),
 }));
+vi.mock('../src/repositories/profiles.repository.js', () => ({
+  findAvatarsByIds: vi.fn(),
+}));
 vi.mock('../src/services/notifications.service.js', () => ({
   notify: vi.fn(),
 }));
@@ -20,7 +23,8 @@ vi.mock('../src/services/rating-requests.service.js', () => ({
 }));
 
 import * as repo from '../src/repositories/events.repository.js';
-import { findUserAttendances } from '../src/repositories/attendance.repository.js';
+import { findUserAttendances, listConfirmedPreviewIds } from '../src/repositories/attendance.repository.js';
+import { findAvatarsByIds } from '../src/repositories/profiles.repository.js';
 import { requestRatingsForEvent } from '../src/services/rating-requests.service.js';
 import * as service from '../src/services/events.service.js';
 
@@ -244,5 +248,37 @@ describe('finishEvent', () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     requestRatingsForEvent.mockRejectedValue(new Error('smtp'));
     await expect(service.finishEvent(owner, 'e1')).resolves.toMatchObject({ status: 'finished' });
+  });
+});
+
+describe('listConfirmedPeople', () => {
+  const event = { id: 'e1', organizerId: 'owner-1', status: 'published', confirmedCount: 2 };
+
+  beforeEach(() => {
+    repo.findEventById.mockResolvedValue(event);
+    listConfirmedPreviewIds.mockResolvedValue({ e1: ['u1', 'u2'] });
+    findAvatarsByIds.mockResolvedValue([
+      { id: 'u1', firstName: 'Ana', avatarUrl: null, avatarPreset: 'goleador', email: 'ana@x.co', fullName: 'Ana Gómez' },
+      { id: 'u2', firstName: 'Luis', avatarUrl: 'https://cdn/x.webp', avatarPreset: null },
+    ]);
+  });
+
+  it('devuelve solo nombre de pila y avatar, en orden de confirmación', async () => {
+    const people = await service.listConfirmedPeople({ id: 'visitante', role: 'participant' }, 'e1');
+    expect(people).toEqual([
+      { name: 'Ana', avatarUrl: null, avatarPreset: 'goleador' },
+      { name: 'Luis', avatarUrl: 'https://cdn/x.webp', avatarPreset: null },
+    ]);
+    expect(JSON.stringify(people)).not.toMatch(/ana@x\.co|Gómez|u1/);
+  });
+
+  it('un borrador ajeno no existe → 404', async () => {
+    repo.findEventById.mockResolvedValue({ ...event, status: 'draft' });
+    await expect(service.listConfirmedPeople({ id: 'visitante', role: 'participant' }, 'e1')).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('sin confirmados → lista vacía', async () => {
+    listConfirmedPreviewIds.mockResolvedValue({});
+    expect(await service.listConfirmedPeople({ id: 'visitante' }, 'e1')).toEqual([]);
   });
 });

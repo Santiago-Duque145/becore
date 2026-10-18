@@ -1,6 +1,6 @@
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router';
 import { useMyAvatar } from '../hooks/useMyAvatar.js';
-import { Avatar, BrandMark, Input } from '../components/ui/index.js';
+import { BrandMark, PreviewableAvatar, Input } from '../components/ui/index.js';
 import { SearchIcon } from '../components/icons/index.js';
 import { cn } from '../lib/cn.js';
 import { TOP_BAR_LINKS } from './navigation.js';
@@ -81,7 +81,7 @@ export function DesktopTopBar({ profile, hasUnread = false }) {
         <div className="flex items-center gap-[18px]">
           <TopBarSearch />
           <Link to="/perfil" aria-label="Mi perfil" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full">
-            <Avatar name={profile?.fullName} {...avatar} decorative />
+            <PreviewableAvatar name={profile?.fullName} role={profile?.role} {...avatar} />
           </Link>
         </div>
       </div>

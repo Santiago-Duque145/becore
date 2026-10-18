@@ -13,13 +13,15 @@ export async function findUserAttendances(userId, eventIds) {
   return data.map((row) => ({ eventId: row.event_id, status: row.status, checkedIn: row.checked_in }));
 }
 
-const ATTENDEE_COLUMNS = 'user_id, status, checked_in, confirmed_at, user:profiles!user_id(full_name, email)';
+const ATTENDEE_COLUMNS = 'user_id, status, checked_in, confirmed_at, user:profiles!user_id(full_name, email, avatar_url, avatar_preset)';
 
 function toAttendee(row) {
   return {
     userId: row.user_id,
     fullName: row.user?.full_name ?? '',
     email: row.user?.email ?? '',
+    avatarUrl: row.user?.avatar_url ?? null,
+    avatarPreset: row.user?.avatar_preset ?? null,
     status: row.status,
     checkedIn: row.checked_in,
     confirmedAt: row.confirmed_at,

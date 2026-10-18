@@ -22,6 +22,7 @@ router.get('/events/recommended', requireAuth, validate({ query: recommendedQuer
 router.post('/events', ...organizerOnly, validate({ body: createEventSchema }), controller.createEvent);
 router.post('/events/cover-upload-url', ...organizerOnly, validate({ body: coverUploadSchema }), controller.createCoverUpload);
 router.get('/events/:id', requireAuth, validate(byId), controller.getEvent);
+router.get('/events/:id/confirmed', requireAuth, validate(byId), controller.listConfirmedPeople);
 router.patch('/events/:id', ...organizerOnly, validate({ ...byId, body: updateEventSchema }), controller.updateEvent);
 router.post('/events/:id/cancel', ...organizerOnly, validate(byId), controller.cancelEvent);
 router.post('/events/:id/finish', ...organizerOnly, validate(byId), controller.finishEvent);

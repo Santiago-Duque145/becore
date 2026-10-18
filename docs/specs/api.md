@@ -221,6 +221,10 @@ La carpeta de cada archivo es el id de quien lo sube; una ruta ajena responde 40
 - `POST/PATCH /events` aceptan `coverPath` (ruta subida por el propio organizador; `null` en PATCH quita la portada).
 - `Profile` suma `avatarUrl` y `avatarPreset`. `Event` suma `coverUrl` y `confirmedPreview: [{ name, avatarUrl, avatarPreset }]`
   (hasta 3 confirmados, solo nombre de pila) en listas, detalle y recomendados.
+- `GET /events/:id/confirmed` (autenticado) → `{ data: [{ name, avatarUrl, avatarPreset }] }`: todos los confirmados
+  (máx. 200, por orden de confirmación), solo nombre de pila y foto, y solo de eventos que el usuario puede ver
+  (un borrador ajeno responde 404). Alimenta la lista de "quiénes van". `Event.organizer` suma `avatarUrl` y
+  `avatarPreset`; `GET /events/:id/attendees` (organizador) suma los mismos dos campos por asistente.
 - Prioridad al mostrar: foto subida → avatar elegido → foto de Google (`user_metadata`) → iniciales.
 
 ### Paneles (RF-18, RF-19)

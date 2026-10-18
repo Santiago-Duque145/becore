@@ -44,9 +44,6 @@ export function EventCard({ event, reason, className, preview = false }) {
             <MapPinIcon size={12} className="shrink-0 text-ink-faint" />
             <span className="truncate">{event.location}</span>
           </p>
-          {event.confirmedPreview?.length > 0 && (
-            <AvatarStack people={event.confirmedPreview} total={event.confirmedCount} />
-          )}
           {(going || event.status !== 'published' || event.isFull) && (
             <div className="flex flex-wrap items-center gap-1.5">
               <StatusBadges event={event} />
@@ -60,6 +57,11 @@ export function EventCard({ event, reason, className, preview = false }) {
           )}
         </div>
       </Body>
+      {!preview && event.confirmedPreview?.length > 0 && (
+        <div className="px-3.5 pt-2.5 md:px-4">
+          <AvatarStack people={event.confirmedPreview} total={event.confirmedCount} eventId={event.id} />
+        </div>
+      )}
       <div className="flex items-end gap-3 px-3.5 pt-2.5 pb-3.5 md:px-4 md:pb-4">
         <CapacityBar confirmedCount={event.confirmedCount} capacity={event.capacity} className="min-w-0 flex-1" />
         {preview ? (

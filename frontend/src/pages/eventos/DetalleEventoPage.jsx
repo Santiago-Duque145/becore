@@ -3,6 +3,7 @@ import { AlertCircleIcon, CalendarIcon, MapPinIcon } from '../../components/icon
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useEvent } from '../../hooks/useEvent.js';
 import { useRealtimeEvent } from '../../hooks/useRealtimeEvent.js';
+import { resolveAvatar } from '../../lib/avatar.js';
 import { endLabel } from '../../lib/event-time.js';
 import { formatLongDay, formatTime } from '../../lib/format.js';
 import { AttendanceButton } from '../../components/events/AttendanceButton.jsx';
@@ -13,7 +14,7 @@ import { AvatarStack } from '../../components/events/AvatarStack.jsx';
 import { RateBanner } from '../../components/events/RateBanner.jsx';
 import { RatingBadge } from '../../components/events/RatingBadge.jsx';
 import { OwnerActions } from '../../components/events/OwnerActions.jsx';
-import { Avatar, CapacityBar, EmptyState, ErrorState, LinkButton } from '../../components/ui/index.js';
+import { CapacityBar, PreviewableAvatar, EmptyState, ErrorState, LinkButton } from '../../components/ui/index.js';
 
 // /eventos/:id según mobile-detalle-evento.html, sin distancia, "Ver ruta", chat ni mapa (CLAUDE.md §9).
 // Móvil: pantalla completa (AppShell inmersivo) con barra de acción fija abajo.
@@ -92,7 +93,7 @@ export default function DetalleEventoPage() {
         )}
 
         <p className="mb-[18px] flex items-center gap-3 text-[11.5px] text-ink-muted">
-          <AvatarStack people={event.confirmedPreview} total={event.confirmedCount} />
+          <AvatarStack people={event.confirmedPreview} total={event.confirmedCount} eventId={event.id} />
           {event.confirmedCount === 1 ? '1 persona confirmada' : `${event.confirmedCount} personas confirmadas`}
           <RatingBadge event={event} />
         </p>
@@ -107,7 +108,7 @@ export default function DetalleEventoPage() {
         )}
 
         <div className="flex items-center gap-2.5 pt-1">
-          <Avatar name={event.organizer?.fullName} decorative />
+          <PreviewableAvatar name={event.organizer?.fullName} role="organizer" {...resolveAvatar(event.organizer)} />
           <div>
             <p className="text-[12.5px] font-semibold text-ink">{event.organizer?.fullName}</p>
             <p className="text-[11px] text-ink-muted">Organizador</p>

@@ -6,6 +6,7 @@ const SIZES = {
   sm: 'h-6 w-6 text-[11px]',
   md: 'h-[34px] w-[34px] text-xs',
   lg: 'h-[52px] w-[52px] text-base',
+  fill: 'h-full w-full text-[min(22vw,88px)]', // llena su contenedor (vista previa grande)
 };
 
 export function initials(name = '') {
