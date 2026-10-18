@@ -72,7 +72,7 @@ Desfase de documentos: `CLAUDE.md` §10 sigue en "Sprint actual: S1" (se pidió 
 | RF-12 | Cancelar asistencia | Hecha y probada |
 | RF-13 | Check-in | Hecha y probada |
 | RF-14 | Citas | Hecha y probada (API 18/18 + flujo completo en el navegador con organizador y participante, §5.1) |
-| RF-15 | Disponibilidad | Hecha y probada (API + interfaz en el navegador, incluido el aviso de cruces, §5.1) |
+| RF-15 | Disponibilidad | Hecha y probada (API + interfaz en el navegador; cruces y franja de la cita validados en la base, §5.2) |
 | RF-16 | Recordatorios | Hecha y probada |
 | RF-17 | Avisos de cambio o cancelación | Hecha y probada |
 | RF-18 | Panel del organizador | Hecha y probada |
@@ -155,7 +155,21 @@ Sin scroll horizontal a 390 ni a 1440 px y sin errores en consola. Los avisos ap
 
 **Limpieza:** las citas de prueba se borraron con un script (en cascada caen invitados y avisos), la franja se borró desde la interfaz y el consentimiento que pidió el diálogo al entrar con `santiago` y `jugador1` se revirtió (`data_consent_at`, sexo y edad en `null`, como estaban). Quedan 0 citas, 0 franjas y 0 avisos de cita.
 
-**Diferencias que quedan:** `/citas`, `/citas/nueva` y `/disponibilidad` no tienen mockup; siguen el estilo de `mobile-mis-eventos` y de la columna "Próximas citas" de `desktop-descubre`. El cruce de franjas y "la cita dentro de una franja" se validan solo en la interfaz: la API no los valida (api.md §3, RF-15).
+**Diferencias que quedan:** `/citas`, `/citas/nueva` y `/disponibilidad` no tienen mockup; siguen el estilo de `mobile-mis-eventos` y de la columna "Próximas citas" de `desktop-descubre`.
+
+### 5.2 Reglas de franjas y citas en el backend (rama `feature/f2-1-citas`)
+
+Las reglas que antes solo revisaba la interfaz ahora las impone la base, también con dos peticiones simultáneas:
+
+| Regla | Cómo | Error (409) |
+|---|---|---|
+| Una franja no se cruza con otra del mismo organizador | Restricción de exclusión `availability_slots_no_overlap` (`btree_gist`, `tstzrange [inicio, fin)`) | `SLOT_OVERLAP` |
+| Una cita queda completa dentro de una franja del organizador | Trigger `appointments_within_slot` (bloquea la franja con `FOR SHARE`) | `APPOINTMENT_OUTSIDE_SLOT` |
+| Una cita no se cruza con otra cita programada del organizador (las canceladas no cuentan) | Exclusión parcial `appointments_no_overlap` (`where status = 'scheduled'`) | `APPOINTMENT_OVERLAP` |
+
+**Migración `20261021130000_appointment_overlap_rules.sql`: probada en una transacción revertida y aplicada con `npx supabase db push` el 2026-10-17.** Antes de aplicarla había 0 franjas y 0 citas, así que ningún dato la violaba. Los códigos están en `api.md` §2 y la traducción en `db-errors.js`. La interfaz sigue avisando antes de enviar y, si la API responde con uno de estos códigos, muestra su mensaje en el aviso de la franja o debajo del campo Inicio de la cita.
+
+Pruebas: `db-errors.test.js` y `appointments-rules.routes.test.js` (en `npm test`) y `tests/integration/appointment-rules.test.js` contra Supabase real (`npm run test:integration -w backend`): cruce de franjas, cita fuera de franja y entre dos franjas que se tocan, cita cruzada con otra activa, cancelada que ya no bloquea, y dos franjas o dos citas cruzadas enviadas a la vez (gana una, la otra 409). 5/5 en tres corridas seguidas; la tabla quedó en 0 franjas y 0 citas.
 
 ## 6. Para la IA (Fase 3)
 
