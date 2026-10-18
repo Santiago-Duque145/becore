@@ -3,6 +3,11 @@
 // un re-ranking con IA entraría como otra función entre scoreEvent y la respuesta (recibe los
 // candidatos ya puntuados y devuelve el mismo arreglo reordenado, con su reason), y si falla se
 // usa el orden por reglas. Hoy no hay IA: está fuera de alcance (CLAUDE.md §9).
+//
+// PRIVACIDAD: profiles.gender, profiles.age_range y data_consent_at NO se usan para recomendar ni se
+// envían a Gemini ni a ningún otro servicio externo: existen solo para estadísticas agregadas del proyecto
+// de grado. Aquí solo se leen los gustos (user_preferences). Si alguien agrega sexo o edad a scoreEvent
+// o a un prompt de IA, rompe lo que prometimos en /privacidad.
 import * as eventsRepo from '../../repositories/events.repository.js';
 import { findUserAttendances } from '../../repositories/attendance.repository.js';
 import { findPreferencesByUserId } from '../../repositories/preferences.repository.js';

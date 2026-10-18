@@ -38,7 +38,8 @@ export function PreferencesEditor() {
 
   const mutation = useMutation({
     mutationFn: async () => {
-      const { role: _role, ...body } = toOnboardingPayload(state);
+      // Sexo y edad se editan en su propia sección ("Sobre ti"); aquí solo van los gustos
+      const { role: _role, gender: _gender, ageRange: _ageRange, ...body } = toOnboardingPayload(state);
       return (await updatePreferences(body)).data;
     },
     onSuccess: (me) => {

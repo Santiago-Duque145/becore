@@ -5,16 +5,24 @@ import { useCompleteOnboarding } from '../../hooks/useCompleteOnboarding.js';
 import { homePathFor } from '../../layouts/navigation.js';
 import { ChevronLeftIcon } from '../../components/icons/index.js';
 import { Button, ProgressSteps, useToast } from '../../components/ui/index.js';
-import { TOTAL_STEPS, initialOnboardingState, onboardingReducer, toOnboardingPayload } from './onboarding-reducer.js';
-import { STEPS } from './OnboardingSteps.jsx';
+import { consentBlocks, initialOnboardingState, onboardingReducer, toOnboardingPayload, totalSteps } from './onboarding-reducer.js';
+import { stepsFor } from './OnboardingSteps.jsx';
 import { OnboardingDone } from './OnboardingDone.jsx';
 
-// Onboarding de 5 pasos (auth-onboarding §6). El estado vive en un solo useReducer: atrás no borra nada
+// Estado inicial desde el perfil: rol actual, consentimiento pendiente y sexo/edad ya guardados (precargados)
+const startState = (profile) =>
+  initialOnboardingState(profile?.role, {
+    needsConsent: profile?.dataConsentAccepted === false,
+    gender: profile?.gender ?? null,
+    ageRange: profile?.ageRange ?? null,
+  });
+
+// Onboarding de 6 pasos (7 si antes falta aceptar la política de datos; auth-onboarding §6). El estado vive en un solo useReducer: atrás no borra nada
 // y si el guardado falla, el usuario sigue en el mismo paso con lo que eligió.
 export default function BienvenidaPage() {
   const { profile } = useAuth();
   const toast = useToast();
-  const [state, dispatch] = useReducer(onboardingReducer, profile?.role, initialOnboardingState);
+  const [state, dispatch] = useReducer(onboardingReducer, profile, startState);
   const titleRef = useRef(null);
   const firstRender = useRef(true);
   const modeRef = useRef('finish'); // 'finish' (último paso) u 'skip' (Omitir)
@@ -50,13 +58,16 @@ export default function BienvenidaPage() {
   function handleSubmit(event) {
     event.preventDefault();
     if (mutation.isPending) return;
-    if (state.step < TOTAL_STEPS) dispatch({ type: 'next' });
+    if (consentBlocks(state)) return;
+    if (state.step < total) dispatch({ type: 'next' });
     else save('finish');
   }
 
-  const Step = STEPS[state.step - 1];
+  const total = totalSteps(state);
+  const Step = stepsFor(state.needsConsent)[state.step - 1];
   const saving = mutation.isPending;
-  const isLast = state.step === TOTAL_STEPS;
+  const isLast = state.step === total;
+  const blocked = consentBlocks(state); // sin aceptar la política no se avanza ni se omite
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex min-h-dvh flex-col bg-bg">
@@ -75,11 +86,11 @@ export default function BienvenidaPage() {
           ) : (
             <span className="-ml-2 h-11 w-11 shrink-0" aria-hidden="true" />
           )}
-          <ProgressSteps total={TOTAL_STEPS} current={state.step} className="flex-1" />
+          <ProgressSteps total={total} current={state.step} className="flex-1" />
           <button
             type="button"
             onClick={() => save('skip')}
-            disabled={saving}
+            disabled={saving || blocked}
             aria-busy={(saving && modeRef.current === 'skip') || undefined}
             className="focus-ring -mr-2 min-h-11 shrink-0 rounded-field px-2 text-xs font-semibold text-ink-muted transition-colors hover:text-ink disabled:opacity-50"
           >
@@ -96,7 +107,7 @@ export default function BienvenidaPage() {
 
       <div className="fixed inset-x-0 bottom-0 z-10 bg-gradient-to-t from-bg from-70% to-transparent">
         <div className="mx-auto w-full max-w-xl px-[22px] pt-6 pb-[max(20px,env(safe-area-inset-bottom))]">
-          <Button type="submit" loading={saving && modeRef.current === 'finish'} disabled={saving} className="w-full">
+          <Button type="submit" loading={saving && modeRef.current === 'finish'} disabled={saving || blocked} className="w-full">
             {isLast ? 'Ver mis eventos' : 'Continuar'}
           </Button>
         </div>

@@ -25,7 +25,7 @@ erDiagram
 
 | Tabla | Para qué | Columnas clave | RF |
 |---|---|---|---|
-| `profiles` | Datos y rol de cada usuario | `id` (= `auth.users.id`), `email`, `full_name`, `role` | RF-01, RF-03 |
+| `profiles` | Datos y rol de cada usuario | `id` (= `auth.users.id`), `email`, `full_name`, `role`, `gender` (enum `gender_identity`, NULL), `age_range` (NULL), `data_consent_at` (NULL = aún no aceptó la política). Sexo y edad: solo estadísticas, no recomendaciones ni IA (migración `20261021120000`) | RF-01, RF-03 |
 | `events` | Eventos | `organizer_id`, `title`, `description`, `category`, `location`, `starts_at`, `ends_at`, `capacity`, `confirmed_count`, `status`, `cancelled_at` | RF-04 a RF-10 |
 | `attendances` | Confirmaciones | `event_id`, `user_id`, `status`, `checked_in`, `confirmed_at`, `cancelled_at`. Única por (`event_id`, `user_id`) | RF-11 a RF-13 |
 | `availability_slots` | Bloques libres del organizador | `organizer_id`, `starts_at`, `ends_at` | RF-15 |

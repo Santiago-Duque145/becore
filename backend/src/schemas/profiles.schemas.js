@@ -1,9 +1,27 @@
 import { z } from 'zod';
+import { AGE_RANGES, GENDERS } from '../constants/demographics.js';
 import { DAYS, INTEREST_SLUGS, MAX_MOTIVATIONS, MAX_ZONE_LENGTH, MOTIVATIONS, TIME_SLOTS } from '../constants/preferences.js';
 
-export const patchMeSchema = z.object({
-  fullName: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(80, 'El nombre no puede superar 80 caracteres').trim(),
-});
+// Opcionales: ausente = no cambia; null = borra el dato
+const gender = z.enum(GENDERS, { error: 'Esa opción no está en la lista' }).nullish();
+const ageRange = z.enum(AGE_RANGES, { error: 'Ese rango no está en la lista' }).nullish();
+
+// PATCH /me: nombre y/o datos demográficos opcionales (Perfil)
+export const patchMeSchema = z
+  .object({
+    fullName: z
+      .string()
+      .min(2, 'El nombre debe tener al menos 2 caracteres')
+      .max(80, 'El nombre no puede superar 80 caracteres')
+      .trim()
+      .optional(),
+    gender,
+    ageRange,
+  })
+  .refine((body) => Object.values(body).some((value) => value !== undefined), { message: 'No hay nada que actualizar' });
+
+// PUT /me/consent: acepta la política de datos y, opcionalmente, completa sexo y edad
+export const consentSchema = z.object({ gender, ageRange });
 
 // Lista cerrada sin repetidos; vacía por defecto porque cualquier paso se puede omitir
 const closedList = (values, message) =>
@@ -30,5 +48,9 @@ export const preferencesSchema = z.object({
 
 // Cuerpo de PUT /me/onboarding: lo mismo más el rol elegido en el paso 1
 export const onboardingSchema = preferencesSchema.extend({
+  // true = acepta la política en el primer paso de /bienvenida (quien entró por Google); solo guarda la fecha
+  consent: z.literal(true).optional(),
+  gender,
+  ageRange,
   role: z.enum(['organizer', 'participant'], { error: 'Elige si quieres organizar o participar' }),
 });

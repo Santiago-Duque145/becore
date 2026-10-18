@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { supabase } from './supabase.js';
+import { shouldSignOut } from './session-errors.js';
 
 export const api = axios.create({ baseURL: import.meta.env.VITE_API_URL });
 
@@ -13,11 +14,11 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   (res) => res.data,
   async (error) => {
-    if (error.response?.status === 401) await supabase.auth.signOut();
     const apiError = error.response?.data?.error ?? {
       code: 'NETWORK_ERROR',
       message: 'No hay conexión con el servidor',
     };
+    if (shouldSignOut(error.response?.status, apiError.code)) await supabase.auth.signOut();
     return Promise.reject(apiError);
   },
 );

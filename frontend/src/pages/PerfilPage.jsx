@@ -8,6 +8,7 @@ import { updateMe } from '../services/profile.api.js';
 import { profileSchema } from '../lib/auth-schemas.js';
 import { Avatar, Button, Input, Spinner, useToast } from '../components/ui/index.js';
 import { PreferencesEditor } from '../components/preferences/PreferencesEditor.jsx';
+import { DemographicsEditor } from '../components/preferences/DemographicsEditor.jsx';
 
 const ROLE_LABELS = { organizer: 'Organizador', participant: 'Participante' };
 
@@ -64,6 +65,16 @@ export default function PerfilPage() {
             Guardar nombre
           </Button>
         </form>
+      </section>
+
+      <section aria-labelledby="perfil-sobre-ti" className="rounded-card border border-line bg-panel p-5">
+        <h2 id="perfil-sobre-ti" className="font-display text-base font-semibold text-ink">
+          Sobre ti
+        </h2>
+        <p className="mt-1 mb-5 text-[13px] text-ink-muted">
+          Opcional. Solo para estadísticas anónimas del proyecto; no cambia tus recomendaciones.
+        </p>
+        <DemographicsEditor />
       </section>
 
       <section aria-labelledby="perfil-gustos" className="rounded-card border border-line bg-panel p-5">

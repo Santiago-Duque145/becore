@@ -252,3 +252,17 @@ constraint sea `events_confirmed_within_capacity` → 409 `CAPACITY_BELOW_CONFIR
   `env: loadEnv('', process.cwd(), '')` importando `loadEnv` de `vite`) y se ejecuta con
   `"test:integration": "vitest run --config vitest.integration.config.js"`. Nunca corre en `npm test` ni en CI.
 - Cada service crítico (events, attendance) cubre: caso feliz, cada código de error de la spec y permisos.
+
+## 8. Migraciones (regla obligatoria)
+
+Toda migración se **aplica en Supabase antes de correr el backend que la necesita**. El proyecto de Supabase es uno
+solo y compartido: si el código nuevo pide una columna que aún no existe, `requireAuth` falla en cada petición y
+nadie puede entrar (pasó el 2026-10-17 con `profiles.gender`).
+
+1. Antes del push: `npx supabase migration list` (local y remoto con las mismas versiones) y `npx supabase db push --dry-run`
+   (solo debe aparecer la migración nueva).
+2. Prueba el SQL en una transacción revertida y luego aplica con `npx supabase db push`.
+3. **El PR que trae la migración lo dice en la descripción**: nombre del archivo y si ya se aplicó en Supabase.
+   Quien revisa no integra el PR hasta que figure como aplicada.
+4. Un error de base de datos nunca se disfraza de "no encontrado": los repositorios lo propagan y el manejador
+   central responde 500 (`INTERNAL_ERROR`). Solo el 401 `UNAUTHENTICATED` cierra la sesión en el frontend.
