@@ -1,7 +1,7 @@
 # Contrato de la API — Be Core
 
 Base: `http://localhost:3000/api/v1`. JSON en camelCase. Todas las rutas exigen
-`Authorization: Bearer <access_token de Supabase>` salvo `GET /health`.
+`Authorization: Bearer <access_token de Supabase>` salvo `GET /health` y `GET /public/stats`.
 
 Registro, inicio y cierre de sesión **no** pasan por esta API: el frontend los hace con Supabase Auth
 (ver `frontend/CLAUDE.md` §4.3). La API solo verifica el token.
@@ -97,6 +97,7 @@ Leyenda de acceso: **todos** = cualquier usuario autenticado; **org** = rol `org
 | Método | Ruta | Acceso | Body / Query | Respuesta |
 |---|---|---|---|---|
 | GET | `/health` | público | — | `{ data: { status: "ok" } }` |
+| GET | `/public/stats` | público | — | `{ data: { eventsThisWeek, confirmedPeople } }` |
 | GET | `/me` | todos | — | `Profile` |
 | PATCH | `/me` | todos | `{ fullName? (2–80), gender?, ageRange? }`; al menos un campo. `null` borra sexo o edad | `Profile` |
 | PUT | `/me/onboarding` | todos | `{ role, consent? (solo `true`), gender?, ageRange?, interests[], days[], timeSlots[], motivations[] (≤ 2), zone? (≤ 80) }`; listas opcionales (vacías por defecto) | `Profile` |
@@ -107,6 +108,13 @@ Leyenda de acceso: **todos** = cualquier usuario autenticado; **org** = rol `org
 (`backend/src/constants/demographics.js`). Son opcionales y **solo para estadísticas agregadas**: no se usan en
 recomendaciones ni se envían a ninguna IA. `PUT /me/consent` guarda `profiles.data_consent_at = now()` la primera vez
 (reenviar no la mueve) y, si vienen, sexo y edad. `consent: true` en `PUT /me/onboarding` hace lo mismo desde el primer paso de /bienvenida. El perfil expone `dataConsentAccepted` (boolean), nunca la fecha.
+
+`GET /public/stats` (P1, hero del login): solo dos conteos agregados, **sin datos personales**. `eventsThisWeek` = eventos
+`published`, `in_progress` o `finished` (sin borradores ni cancelados) que empiezan en la semana actual, de lunes 00:00 a
+lunes 00:00 en hora de Bogotá. `confirmedPeople` = personas distintas con asistencia `confirmed` en esos eventos. El
+resultado se guarda **5 minutos en memoria** (las peticiones simultáneas comparten una consulta) y la respuesta lleva
+`Cache-Control: public, max-age=300`. Un error de base responde 500 `INTERNAL_ERROR` y no se guarda. El frontend no
+muestra nada si falla o si algún conteo es 0.
 
 `PUT /me/onboarding`: guarda las respuestas (upsert en `user_preferences`) y, si el onboarding estaba pendiente, fija
 `role` y `onboarding_completed_at = now()`. Si ya estaba completo: mismo rol → solo actualiza los gustos; otro rol →

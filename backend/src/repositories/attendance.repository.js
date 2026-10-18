@@ -93,3 +93,15 @@ export async function listAttendanceStatuses(eventIds) {
   if (error) throw translateDbError(error) ?? error;
   return data.map((row) => ({ eventId: row.event_id, status: row.status, checkedIn: row.checked_in }));
 }
+
+// Cuántas personas distintas tienen asistencia confirmada en alguno de los eventos (GET /public/stats)
+export async function countConfirmedPeople(eventIds) {
+  if (!eventIds.length) return 0;
+  const { data, error } = await supabaseAdmin
+    .from('attendances')
+    .select('user_id')
+    .in('event_id', eventIds)
+    .eq('status', 'confirmed');
+  if (error) throw translateDbError(error) ?? error;
+  return new Set(data.map((row) => row.user_id)).size;
+}

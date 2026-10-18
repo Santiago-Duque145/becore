@@ -142,3 +142,19 @@ export async function listOrganizerEventsSince(organizerId, fromIso) {
   );
   return data.map(toCamel);
 }
+
+// Estados visibles al público (sin borradores ni cancelados), para el conteo de GET /public/stats
+const PUBLIC_STATUSES = ['published', 'in_progress', 'finished'];
+
+// Solo los ids de los eventos públicos que empiezan en [fromIso, toIso): el endpoint público no expone nada más
+export async function listPublicEventIdsBetween(fromIso, toIso) {
+  const data = unwrap(
+    await supabaseAdmin
+      .from('events')
+      .select('id')
+      .in('status', PUBLIC_STATUSES)
+      .gte('starts_at', fromIso)
+      .lt('starts_at', toIso),
+  );
+  return data.map((row) => row.id);
+}
