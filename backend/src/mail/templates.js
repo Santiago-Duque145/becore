@@ -67,21 +67,21 @@ export const TEMPLATES = {
       subject: `Nueva cita: ${appointment.title}`,
       heading: `Nueva cita: ${appointment.title}`,
       lines: ['Te invitaron a una cita.', ...appointmentLines(appointment)],
-      message: `Te invitaron a "${appointment.title}" el ${formatMailDate(appointment.startsAt)}.`,
+      message: `Te invitaron a "${appointment.title}" el ${formatMailDate(appointment.startsAt)}`,
     }),
   appointment_reminder: (appointment) =>
     build({
       subject: `Recordatorio de cita: ${appointment.title}`,
       heading: `Recordatorio de cita: ${appointment.title}`,
       lines: ['Tienes una cita próxima.', ...appointmentLines(appointment)],
-      message: `Recordatorio: "${appointment.title}" es ${formatMailDate(appointment.startsAt)}.`,
+      message: `Recordatorio: "${appointment.title}" es ${formatMailDate(appointment.startsAt)}`,
     }),
   appointment_cancelled: (appointment) =>
     build({
       subject: `Se canceló la cita: ${appointment.title}`,
       heading: `Se canceló la cita: ${appointment.title}`,
       lines: ['El organizador canceló esta cita.', ...appointmentLines(appointment)],
-      message: `Se canceló la cita "${appointment.title}" del ${formatMailDate(appointment.startsAt)}.`,
+      message: `Se canceló la cita "${appointment.title}" del ${formatMailDate(appointment.startsAt)}`,
     }),
 };
 
