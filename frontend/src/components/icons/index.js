@@ -139,3 +139,10 @@ export const CopyIcon = createIcon('CopyIcon', [
 ]);
 
 export const NavigationIcon = createIcon('NavigationIcon', [['path', { d: 'M3 11l19-9-9 19-2-8-8-2z' }]]);
+
+export const ShareIcon = createIcon('ShareIcon', [
+  ['circle', { cx: 18, cy: 5, r: 3 }],
+  ['circle', { cx: 6, cy: 12, r: 3 }],
+  ['circle', { cx: 18, cy: 19, r: 3 }],
+  ['path', { d: 'M8.6 13.5l6.8 4M15.4 6.5l-6.8 4' }],
+]);

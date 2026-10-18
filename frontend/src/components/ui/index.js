@@ -2,7 +2,7 @@
 export { Avatar } from './Avatar.jsx';
 export { Badge, CATEGORY_TONES, STATUS_BADGES } from './Badge.jsx';
 export { BrandMark } from './BrandMark.jsx';
-export { Button, LinkButton } from './Button.jsx';
+export { Button, ExternalLinkButton, LinkButton } from './Button.jsx';
 export { CapacityBar, capacityState } from './CapacityBar.jsx';
 export { Checkbox } from './Checkbox.jsx';
 export { Chip } from './Chip.jsx';

@@ -7,6 +7,8 @@ import { endLabel } from '../../lib/event-time.js';
 import { formatLongDay, formatTime } from '../../lib/format.js';
 import { AttendanceButton } from '../../components/events/AttendanceButton.jsx';
 import { DetailCover, DetailSkeleton, InfoRow } from '../../components/events/EventDetailParts.jsx';
+import { AddToCalendarButton } from '../../components/events/AddToCalendarButton.jsx';
+import { ShareEventButton } from '../../components/events/ShareEventButton.jsx';
 import { AvatarStack } from '../../components/events/AvatarStack.jsx';
 import { RateBanner } from '../../components/events/RateBanner.jsx';
 import { RatingBadge } from '../../components/events/RatingBadge.jsx';
@@ -45,6 +47,9 @@ export default function DetalleEventoPage() {
 
   const isOwner = event.organizer?.id === profile?.id;
   const showAttendance = !isOwner && profile?.role === 'participant' && event.status !== 'draft';
+  // Compartir: cualquier evento público; calendario: quien confirmó y el evento aún no termina
+  const canShare = event.status === 'published' || event.status === 'in_progress';
+  const canAddToCalendar = canShare && event.myAttendance?.status === 'confirmed';
   const hasActionBar = isOwner || showAttendance;
   // Activo: "7:00 p. m. · Termina aprox. 9:00 p. m. (2 h por defecto)"; finalizado/cancelado: solo el rango
   const finishLabel = endLabel(event);
@@ -93,6 +98,13 @@ export default function DetalleEventoPage() {
         </p>
 
         <RateBanner event={event} className="mb-[18px]" />
+
+        {(canShare || canAddToCalendar) && (
+          <div className="mb-[18px] flex flex-wrap gap-2">
+            {canShare && <ShareEventButton event={event} />}
+            {canAddToCalendar && <AddToCalendarButton event={event} />}
+          </div>
+        )}
 
         <div className="flex items-center gap-2.5 pt-1">
           <Avatar name={event.organizer?.fullName} decorative />
