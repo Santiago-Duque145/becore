@@ -20,7 +20,7 @@ import {
 } from '../../components/ui/index.js';
 import { CalendarIcon, UsersIcon } from '../../components/icons/index.js';
 import { STATUS_BADGES } from '../../components/ui/Badge.jsx';
-import { FieldsDemo, IconGrid, Section, Swatches, Typography } from './dev-sections.jsx';
+import { FieldsDemo, GeoQrDemo, IconGrid, Section, Swatches, Typography } from './dev-sections.jsx';
 
 // Página de verificación del sistema de diseño (solo en desarrollo): /dev/ui
 export default function DevUiPage() {
@@ -225,6 +225,10 @@ export default function DevUiPage() {
             </Button>
           </div>
         </Modal>
+      </Section>
+
+      <Section title="NearMeButton · QrCode">
+        <GeoQrDemo />
       </Section>
 
       <Section title="Íconos">

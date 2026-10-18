@@ -8,6 +8,7 @@
     "frontend"
   ],
   "scripts": {
+    "demo": "node scripts/demo.mjs",
     "dev": "concurrently --names api,web --prefix-colors cyan,magenta \"npm run dev -w backend\" \"npm run dev -w frontend\"",
     "lint": "npm run lint -w backend && npm run lint -w frontend",
     "test": "npm run test -w backend && npm run test -w frontend"

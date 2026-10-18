@@ -1,5 +1,9 @@
 import * as Icons from '../../components/icons/index.js';
 import { Field, Input, PasswordInput, Select, Textarea } from '../../components/ui/index.js';
+import { NearMeButton } from '../../components/events/NearMeButton.jsx';
+import { QrCode } from '../../components/share/QrCode.jsx';
+import { useGeolocation } from '../../hooks/useGeolocation.js';
+import { formatDistance, haversineKm } from '../../lib/geo.js';
 
 export function Section({ title, children }) {
   return (
@@ -101,6 +105,29 @@ export function FieldsDemo() {
       <Field label="Descripción">
         <Textarea rows={3} placeholder="Cuéntale a la gente de qué se trata" />
       </Field>
+    </div>
+  );
+}
+
+// M1: ubicación bajo demanda y QR. El estadio es solo un punto fijo para ver la distancia calculada.
+const ATANASIO_GIRARDOT = { lat: 6.2567, lng: -75.5906 };
+
+export function GeoQrDemo() {
+  const geo = useGeolocation();
+  return (
+    <div className="flex flex-wrap items-start gap-6">
+      <div className="flex flex-col gap-2">
+        <NearMeButton geo={geo} />
+        {!geo.supported && <p className="text-xs text-ink-muted">Sin contexto seguro: el botón no se muestra.</p>}
+        {geo.position && (
+          <p className="text-xs text-ink-muted">
+            Estadio Atanasio Girardot: {formatDistance(haversineKm(geo.position, ATANASIO_GIRARDOT))}
+          </p>
+        )}
+      </div>
+      <div className="w-40 overflow-hidden rounded-field">
+        <QrCode value="https://ejemplo.trycloudflare.com" label="QR de ejemplo" />
+      </div>
     </div>
   );
 }

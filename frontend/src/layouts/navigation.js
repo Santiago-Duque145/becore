@@ -1,4 +1,4 @@
-import { BellIcon, CalendarIcon, ClockIcon, HomeIcon, PlusIcon, UserIcon } from '../components/icons/index.js';
+import { BellIcon, CalendarIcon, ClockIcon, HomeIcon, PlusIcon, QrCodeIcon, UserIcon } from '../components/icons/index.js';
 
 // Navegación por rol (skill becore-ui, "Navegación"). Sin ítems de mapa (fuera de alcance).
 // Provisional hasta R7/R8: "Mis eventos" del organizador lleva a /descubre, y "Crear evento" va en la
@@ -39,6 +39,7 @@ export const SIDEBAR_LINKS = [
   { to: '/descubre', label: 'Eventos' },
   { to: '/citas', label: 'Citas' },
   { to: '/avisos', label: 'Notificaciones' },
+  { to: '/compartir', label: 'Compartir' },
   { to: '/perfil', label: 'Perfil' },
 ];
 
@@ -47,6 +48,7 @@ export const MOBILE_HEADER_ACTIONS = {
   participant: [{ to: '/citas', label: 'Citas', Icon: ClockIcon }],
   organizer: [
     { to: '/citas', label: 'Citas', Icon: ClockIcon },
+    { to: '/compartir', label: 'Compartir la app', Icon: QrCodeIcon },
     { to: '/eventos/nuevo', label: 'Crear evento', Icon: PlusIcon },
   ],
 };

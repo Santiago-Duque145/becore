@@ -4,6 +4,8 @@ const schema = z.object({
   NODE_ENV: z.string().default('development'),
   PORT: z.coerce.number().default(3000),
   FRONTEND_URL: z.string().url(),
+  // URL pública para los enlaces de los correos (modo demo con túnel). Vacía = no definida
+  APP_URL: z.preprocess((value) => (value === '' ? undefined : value), z.string().url().optional()),
   SUPABASE_URL: z.string().url(),
   SUPABASE_SECRET_KEY: z.string().min(1),
   SMTP_HOST: z.string().optional(),

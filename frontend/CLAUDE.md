@@ -203,8 +203,12 @@ fijos que la skill no define. Las contradicciones ya detectadas y su resolución
 
 ## 6. App instalable en iPhone (PWA)
 
-Se instala desde Safari → Compartir → "Agregar a pantalla de inicio". No se usa service worker, modo
-offline, push ni ninguna librería adicional (`vite-plugin-pwa` u otra).
+Se instala desde Safari → Compartir → "Agregar a pantalla de inicio" o con "Instalar app" en Chrome Android
+(por HTTPS, con `npm run demo`). Desde M1 hay un **service worker propio y mínimo** (`public/sw.js`, sin
+librerías; nada de `vite-plugin-pwa`): guarda el shell (HTML, JS y CSS de entrada, manifiesto e íconos), sirve
+`public/offline.html` si una navegación falla por falta de red y **nunca** toca `/api` ni otros orígenes. Se
+registra en `src/lib/register-sw.js` solo en el build de producción y en contexto seguro (HTTPS o localhost).
+Si cambias `sw.js`, sube su `VERSION`. Sin push.
 
 ### Manifiesto e íconos (R9)
 
@@ -214,8 +218,8 @@ offline, push ni ninguna librería adicional (`vite-plugin-pwa` u otra).
   generaron desde el `BrandMark` (fondo `#0B1420`, isotipo en el 62 % central) con Edge headless; para regenerarlos,
   renderiza el SVG del `BrandMark` a 512, 192 y 180 px.
 - `index.html`: `theme-color` `#0B1420`, `apple-touch-icon` y las metas `apple-mobile-web-app-*`.
-- Sin service worker. Por HTTP en la red local el celular lo agrega como acceso directo a pantalla completa (no como PWA
-  instalada); en `localhost` Edge la reconoce como instalable.
+- Por HTTP en la red local (plan B) el navegador no registra el service worker: el celular lo agrega como acceso
+  directo a pantalla completa, sin pantalla offline. Por el túnel HTTPS de `npm run demo` es una PWA completa.
 
 ### CSS obligatorio — agregar en `src/index.css`
 

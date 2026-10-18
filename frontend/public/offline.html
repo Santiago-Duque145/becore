@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#0B1420" />
+    <title>Sin conexión · Be Core</title>
+    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
+    <!-- Página que muestra el service worker cuando no hay red. Autocontenida: sin fuentes externas ni JS
+         del bundle. Colores = tokens de la skill becore-ui §1 (aquí no hay Tailwind). -->
+    <style>
+      :root {
+        --bg: #0b1420;
+        --bg-deep: #0d1b2a;
+        --panel: #14202e;
+        --line: rgb(255 255 255 / 0.08);
+        --ink: #f1f5f9;
+        --ink-muted: #94a3b8;
+        --accent: #14b8a6;
+        --on-accent: #04241f;
+        --ease: cubic-bezier(0.22, 1, 0.36, 1);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        -webkit-tap-highlight-color: transparent;
+      }
+      main {
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        padding: max(24px, env(safe-area-inset-top)) 22px max(24px, env(safe-area-inset-bottom));
+        text-align: center;
+      }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-family: "Poppins", system-ui, sans-serif;
+        font-weight: 700;
+        font-size: 18px;
+      }
+      .brand span {
+        color: var(--accent);
+      }
+      .card {
+        width: 100%;
+        max-width: 360px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 28px 22px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        animation: enter 200ms var(--ease) both;
+      }
+      .icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        background: rgb(20 184 166 / 0.1);
+        border: 1px solid rgb(20 184 166 / 0.2);
+        color: #5eead4;
+      }
+      h1 {
+        margin: 4px 0 0;
+        font-family: "Poppins", system-ui, sans-serif;
+        font-weight: 600;
+        font-size: 20px;
+      }
+      p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--ink-muted);
+      }
+      button {
+        margin-top: 8px;
+        width: 100%;
+        min-height: 48px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--accent);
+        color: var(--on-accent);
+        font: inherit;
+        font-weight: 700;
+        font-size: 14.5px;
+        cursor: pointer;
+        transition: transform 150ms var(--ease), filter 150ms var(--ease);
+      }
+      button:hover {
+        filter: brightness(1.1);
+      }
+      button:active {
+        transform: scale(0.98);
+      }
+      button:focus-visible {
+        outline: none;
+        box-shadow:
+          0 0 0 2px var(--bg),
+          0 0 0 4px var(--accent);
+      }
+      @keyframes enter {
+        from {
+          opacity: 0;
+          transform: translateY(0.5rem);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .card,
+        button {
+          animation: none;
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="brand" aria-label="Be Core">
+        <svg width="28" height="28" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+          <rect width="34" height="34" rx="9" fill="#0D1B2A" />
+          <path
+            d="M10 24 L10 10 Q10 8 12 8 L18 8 Q23 8 23 12.5 Q23 16 19 17 Q24 18 24 22.5 Q24 27 18 27 L12 27 Q10 27 10 25 Z"
+            fill="url(#brand-gradient)"
+          />
+          <defs>
+            <linearGradient id="brand-gradient" x1="10" y1="8" x2="24" y2="27" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#14B8A6" />
+              <stop offset="1" stop-color="white" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <div aria-hidden="true">Be <span>Core</span></div>
+      </div>
+
+      <section class="card" aria-labelledby="offline-title">
+        <div class="icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3l18 18" />
+            <path d="M8.5 16.4a5 5 0 017 0" />
+            <path d="M5 12.9a10 10 0 015.2-2.8" />
+            <path d="M14.2 10.2A10 10 0 0119 12.9" />
+            <path d="M1.5 9.3a15 15 0 014.4-2.7" />
+            <path d="M10.6 5.1A15 15 0 0122.5 9.3" />
+            <path d="M12 20h.01" />
+          </svg>
+        </div>
+        <h1 id="offline-title">Sin conexión</h1>
+        <p>Parece que te quedaste sin internet. Revisa tus datos o la Wi-Fi y vuelve a intentarlo: tus eventos te esperan.</p>
+        <button type="button" id="retry">Reintentar</button>
+      </section>
+    </main>
+    <script>
+      // Recarga la misma ruta; si la red volvió, entra directo a la app
+      document.getElementById('retry').addEventListener('click', () => window.location.reload());
+      window.addEventListener('online', () => window.location.reload());
+    </script>
+  </body>
+</html>
