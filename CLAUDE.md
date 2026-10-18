@@ -148,5 +148,5 @@ parece requerir algo de esta lista, detente y pregunta.
 
 ## 10. Estado actual
 
-- Sprint actual: **S1 — Usuarios y eventos** (5 – 11 oct 2026). Ver `docs/specs/backlog.md`.
+- Sprints 1 y 2 cerrados (tags `v0.1` y `v0.2`); sprint 3 casi cerrado (README, plan de validación, p90 y citas hechos). En curso: `docs/PLAN.md` (Fase 2b: M1, P0–P6; Fase 3: IA). Congelamiento `v1.0` el 29 oct. Ver `docs/specs/backlog.md`.
 - Al terminar cada sprint, actualiza esta línea en un commit `docs: avanzar a sprint N`.
