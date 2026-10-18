@@ -28,15 +28,17 @@ function toColumns(fields) {
   return columns;
 }
 
+// null solo cuando de verdad no hay fila. Un error de base (columna que falta, red caída…) se propaga
+// y termina en 500: antes se confundía con "perfil no encontrado" y sacaba al usuario de su sesión.
 export async function findProfileById(id) {
   const { data, error } = await supabaseAdmin
     .from('profiles')
     .select(PROFILE_COLUMNS)
     .eq('id', id)
-    .single();
+    .maybeSingle();
 
-  if (error || !data) return null;
-  return toCamel(data);
+  if (error) throw error;
+  return data ? toCamel(data) : null;
 }
 
 export async function findProfilesByIds(ids) {

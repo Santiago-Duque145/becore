@@ -114,3 +114,20 @@ describe('profiles.repository · onboarding', () => {
     await expect(completeOnboarding('u1', 'organizer')).rejects.toEqual({ message: 'boom' });
   });
 });
+
+describe('findProfileById: errores de base de datos', () => {
+  beforeEach(() => {
+    calls.length = 0;
+  });
+
+  it('sin fila → null (el perfil de verdad no existe)', async () => {
+    result = { data: null, error: null };
+    expect(await findProfileById('nadie')).toBeNull();
+  });
+
+  it('error de base → se propaga, no se disfraza de "no encontrado"', async () => {
+    const dbError = { code: '42703', message: 'column profiles.gender does not exist' };
+    result = { data: null, error: dbError };
+    await expect(findProfileById('u1')).rejects.toBe(dbError);
+  });
+});
