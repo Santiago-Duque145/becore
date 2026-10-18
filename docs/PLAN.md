@@ -1,0 +1,372 @@
+# Be Core · Plan de trabajo hasta la sustentación
+
+**Actualizado:** 2026-10-17 · **Responsables:** Felipe y Santiago · **Asistente:** Claude Code con **Opus 5.5**
+**Hitos:** congelamiento de código **29 oct** · partido de validación **31 oct** · sustentación **3–6 nov**
+
+> Reemplaza a `docs/PLAN-santiago.md` (2026-10-12). Ubicación en el repo: `docs/PLAN.md`.
+
+---
+
+## 0. Dónde estamos
+
+**Hecho (11–12 oct):** rediseño completo del frontend en 10 sesiones (R0–R9), fusionado en `main` con el PR #6. Informe: `docs/progreso/04_2026-10-12_rediseno-frontend.md`.
+
+| Sesión | Resultado |
+|---|---|
+| R0 | Auditoría → `docs/specs/rediseno-auditoria.md` |
+| R1 | Sistema de diseño: tokens, `components/ui/`, íconos, layouts por rol |
+| R2 | Migración de onboarding aplicada, `GET /me`, `PUT /me/onboarding`, `PUT /me/preferences` |
+| R3 | Login idéntico al mockup, registro, Google, recuperar contraseña, guards |
+| R4 | Onboarding de 5 pasos |
+| R5 | Descubre + "Para ti" por reglas (`GET /api/v1/events/recommended`) |
+| R6 | Detalle de evento con confirmación y cupo en vivo |
+| R7 | Mis eventos, Avisos, Perfil |
+| R8 | Panel del organizador, crear/editar evento, check-in, citas |
+| R9 | Pulido: Lighthouse Accesibilidad 100, PWA, carga diferida |
+
+**Configuración hecha:** Google OAuth (modo prueba), URLs de redirección, SMTP propio con Gmail, "Confirm email" desactivado, `GEMINI_API_KEY` en `backend/.env`. Las 7 pruebas del login pasaron.
+
+**Estado de Supabase (17 oct):** 3 migraciones aplicadas; 19 perfiles (5 con gustos), 10 eventos, 14 notificaciones, **0 citas** (el módulo de citas no se ha probado de punta a punta); **pgvector disponible, sin instalar**.
+
+**Nuevos requisitos del profesor (17 oct):** preguntar el sexo en el onboarding, más interactividad en el login, calificar eventos finalizados, imagen del evento (subida o generada con IA) y avatares. Entran al alcance por pedido del director; se registran en CLAUDE.md §8 (sesión P0).
+
+---
+
+## 1. Calendario
+
+| Días | Fase | Qué |
+|---|---|---|
+| **17 oct** | 1 | Estado real del código e higiene de Git |
+| **18 – 20** | 2 | Cerrar los sprints (según el informe de la Fase 1) |
+| **21 – 23** | 2b | Pedidos del profesor (P0–P4) y correos con marca + código (P5) |
+| **24 – 27** | 3 | IA con Gemini (IA0–IA6) |
+| **28** | — | Solo bugs, extras si sobra tiempo, ensayo de la demo |
+| **29** | 4 | **Congelamiento `v1.0`** |
+| **30 – 31** | 4 | Preparar y hacer el partido de validación |
+| **1 nov** | 4 | Consolidar resultados para la presentación |
+
+**Si hay que recortar**, en este orden: extras del día 28 → IA6 → IA5 → P4. Lo último en salir es la calificación (P2) y la recomendación híbrida (IA3).
+
+**Pendiente del director:** visto bueno a la integración de IA **antes del 24**. Si no aprueba, la Fase 3 se reduce a mantener el "Para ti" por reglas.
+
+---
+
+## 2. Cómo trabajamos
+
+- **Ramas:** `develop` es la rama de integración. Cada sesión sale de `develop` en `feature/<fase>-<n>`, termina con push y PR hacia `develop`. El 29 se fusiona `develop` → `main` y se crea el tag `v1.0`.
+- **Sesiones:** una por prompt, `/clear` entre sesiones, **modo plan** (Shift+Tab dos veces) y revisión del plan antes de aprobar.
+- **Seguridad:**
+  - Ningún token o clave se pega en un chat (Claude Code o Claude.ai).
+  - `.env` nunca se versiona ni lo lee Claude Code.
+- **Al terminar cada sesión:** su resumen se pega en el proyecto "BeCore - ProyectoGrado - Pipe" de Claude.ai para revisar y preparar el siguiente prompt.
+- **Informe por avance:** `docs/progreso/NN_YYYY-MM-DD_titulo.md`.
+- **Lo visual siempre** con la skill `.claude/skills/becore-ui/SKILL.md` y comparando con `docs/mockups/`.
+
+### Modelo recomendado por sesión
+
+En Claude Code se cambia con `/model` al iniciar cada sesión. Fable 5.1 solo si su plan lo incluye; si no, usen Opus 5.5 en su lugar.
+
+| Sesión | Modelo | Por qué |
+|---|---|---|
+| Fase 1 · estado | Opus 5.5 | Leer todo el repo y juzgar qué falta |
+| Fase 2 · asistencia, concurrencia, citas, correos | Opus 5.5 | Lógica de negocio delicada y depuración |
+| Fase 2 · subir cobertura de pruebas | Sonnet 5.5 | Trabajo repetitivo y bien acotado |
+| Fase 2 · README | Sonnet 5.5 | Documentación directa |
+| P0 · consentimiento y demografía | Opus 5.5 | Migración + texto legal + cambios en varias capas |
+| P1 · login interactivo | Opus 5.5 | Calidad visual y animación fina sin romper el mockup |
+| P2 · calificación | Opus 5.5 | Reglas de elegibilidad, notificaciones y UI |
+| P3 · avatares y portadas | Opus 5.5 | Seguridad de las subidas y diseño de los 12 avatares |
+| P4 · compartir y calendario | Sonnet 5.5 | Sencillo y acotado |
+| P5 · correos y código | Opus 5.5 | Flujos de autenticación; un error deja usuarios por fuera |
+| IA0 · spec de IA | **Fable 5.1** (o Opus 5.5) | Decisiones de arquitectura que defienden ante el jurado |
+| IA1 · base de datos e infraestructura | Opus 5.5 | pgvector, migración y cliente robusto |
+| IA2 · etiquetado y embeddings | Opus 5.5 | Prompts y procesos en segundo plano |
+| IA3 · recomendación híbrida | **Fable 5.1** (o Opus 5.5) | La pieza más compleja y la más evaluada |
+| IA4 · prueba A/B y métricas | Opus 5.5 | Medición correcta para la sustentación |
+| IA5 · portada con IA | Sonnet 5.5 | Se apoya en P3 y en el cliente de IA1 |
+| IA6 · resumen de reseñas | Sonnet 5.5 | Una función acotada |
+| Día 28 · bugs y ensayo | Opus 5.5 | Depuración entre capas |
+| Revisión de cada PR | Opus 5.5 en sesión nueva | Una sesión que no escribió el código revisa mejor |
+
+Haiku 5.5 no se recomienda para estas sesiones: el código ya es grande y las tareas cruzan varias capas.
+
+---
+
+## 3. Fase 1 · Estado e higiene de Git (17 oct)
+
+La sesión de estado ya está corriendo y produce `docs/progreso/05_2026-10-17_estado-sprints.md`. Hallazgo de Git: `develop` quedó 66 commits atrás porque los PR #5 y #6 se fusionaron directo a `main`. Arreglo: avance rápido de `develop` a `origin/main`, `main` local al día y borrar las ramas locales `feature/rediseno-r0` … `r8`, que ya están en `main`.
+
+**Entregable:** el informe `05_…` → prompts exactos de la Fase 2.
+
+---
+
+## 4. Fase 2 · Cerrar los sprints (18 – 20 oct)
+
+Los prompts se escriben a partir del informe de la Fase 1. Prioridad:
+
+1. **Asistencia y cupo:** confirmación atómica bajo concurrencia, cancelación, check-in.
+2. **Correos:** recordatorio automático y aviso de cambio o cancelación.
+3. **Citas y disponibilidad:** probar de punta a punta (hoy hay 0 citas en la base) y corregir.
+4. **Pruebas:** cobertura ≥ 70 % en eventos, cupos y asistencia.
+5. **README** de instalación reproducible en ambos computadores.
+
+---
+
+## 5. Fase 2b · Pedidos del profesor (21 – 23 oct)
+
+Rama `feature/profe-N` por sesión. Todas usan la skill `becore-ui`, validación con Zod en backend y errores según `docs/specs/api.md`. Cada migración se prueba primero en una transacción revertida y luego se aplica.
+
+### P0 · Alcance, datos personales y onboarding demográfico
+
+```
+Lee CLAUDE.md, docs/PLAN.md (§5), docs/specs/auth-onboarding.md y la skill becore-ui.
+
+1. Alcance: en CLAUDE.md §8 registra que el 2026-10-17 el director pidió agregar: sexo/edad en el onboarding, calificación de eventos finalizados, imagen del evento (subida o generada con IA), avatares y más interactividad en el login. Agrega una nota con fecha. No cambies nada más del alcance.
+2. Migración supabase/migrations/20261021XXXXXX_demographics_consent.sql:
+   - tipo gender_identity ('female','male','other','prefer_not_to_say');
+   - profiles.gender gender_identity NULL;
+   - profiles.age_range text NULL con check in ('18-24','25-34','35-44','45-54','55+');
+   - profiles.data_consent_at timestamptz NULL.
+   Los perfiles existentes quedan con data_consent_at = NULL (se les pide al entrar, ver punto 5).
+3. Registro (/registro) y primera entrada con Google: casilla obligatoria "Acepto la política de tratamiento de datos personales" con enlace a /privacidad. Crea /privacidad con un texto corto en el tono de la skill: qué datos se recogen (nombre, correo, gustos, sexo y rango de edad opcionales, calificaciones), para qué (organizar eventos, recomendaciones y estadísticas anónimas del proyecto de grado), que usamos IA (Gemini) para recomendar sin enviar nombre ni correo, cómo pedir que se borren (correo del proyecto) y que es un proyecto académico de la Universidad Católica Luis Amigó (Ley 1581 de 2012). La API guarda data_consent_at.
+4. Onboarding: nuevo paso "Cuéntanos un poco de ti" después del paso de rol, con dos grupos opcionales de OptionCard/Chip: "¿Con qué te identificas?" (Mujer, Hombre, Otro, Prefiero no decirlo) y "Rango de edad". Ajusta ProgressSteps (ahora 6 pasos), el reducer y PUT /api/v1/me/onboarding (Zod con los mismos valores). Edición posterior desde Perfil.
+5. Usuarios existentes sin data_consent_at: al entrar ven un diálogo accesible de una sola vez para aceptar (y opcionalmente completar sexo y edad). No se bloquea el login.
+6. IMPORTANTE: gender y age_range NO se usan en recomendaciones ni se envían a Gemini. Solo para estadísticas agregadas. Déjalo como comentario en el servicio de recomendaciones.
+7. Tests: Zod de onboarding con los nuevos campos, consentimiento obligatorio en el registro.
+Verificación a 390 y 1440 px. Informe en docs/progreso/.
+```
+
+### P1 · Login y onboarding más interactivos
+
+```
+Lee la skill becore-ui y docs/mockups/mobile-login.html.
+
+1. Hero de AuthLayout animado sin cambiar medidas ni posiciones del mockup: un SVG detrás del BrandMark con las "líneas de movimiento" (barras diagonales en turquesa, verde, naranja y amarillo de la marca) que se desplazan suavemente y puntos que se conectan con líneas finas en bucle (8–12 s). Solo CSS/SVG, sin librerías. Opacidad baja para no competir con el logo.
+2. Dato en vivo bajo el tagline: "12 eventos esta semana · 48 personas confirmadas". Endpoint público GET /api/v1/public/stats que devuelve solo esos dos conteos (sin datos personales), con caché de 5 min en memoria. Si falla o devuelve 0, no se muestra nada.
+3. Onboarding: chips con pequeño rebote al seleccionar, barra de progreso animada, transición entre pasos ya existente, y pantalla final con confeti en CSS (20–30 piezas con los colores de la marca, 1.5 s) además del check.
+4. Todo se apaga con prefers-reduced-motion. Lighthouse de /login debe seguir con Accesibilidad 100 y Rendimiento ≥ 85.
+```
+
+### P2 · Calificación de eventos finalizados
+
+```
+Lee la skill becore-ui, docs/specs/api.md y el módulo de asistencia y notificaciones.
+
+1. Migración supabase/migrations/20261022XXXXXX_event_ratings.sql:
+   - tabla event_ratings (id, event_id → events, user_id → profiles, stars smallint check 1–5, tags text[] check contra la lista RATING_TAGS, comment text check ≤ 500, created_at, updated_at, unique(event_id, user_id));
+   - RLS: lectura de las propias; escritura solo por Express;
+   - agrega 'event_rating_request' al enum notification_type.
+   RATING_TAGS: well_organized, punctual, good_vibe, would_repeat, good_venue, needs_improvement (con labels en español en backend/src/constants/).
+2. Reglas: solo puede calificar quien tiene asistencia con checked_in = true en un evento en estado finished, dentro de los 7 días siguientes. Puede editar su calificación en ese plazo.
+3. API: POST/PUT /api/v1/events/:id/rating, GET /api/v1/events/:id/rating/me, GET /api/v1/events/:id/ratings/summary (promedio, total, conteo por estrellas y por tag; comentarios solo para el organizador del evento).
+4. Cuando un evento pasa a finished: notificación in-app y correo "¿Cómo estuvo {evento}?" con enlace directo a /eventos/:id/calificar a quienes hicieron check-in.
+5. Frontend:
+   - /eventos/:id/calificar: 5 estrellas grandes accesibles (radiogroup, teclado), chips de tags, comentario opcional y botón "Enviar calificación"; pantalla de gracias.
+   - Banner "¿Cómo estuvo? Califica" en el detalle del evento finalizado y en Mis eventos (pestaña Pasados).
+   - ★ 4,6 (12) en las tarjetas de eventos finalizados y en el detalle.
+   - Panel del organizador: promedio general y por evento, distribución de estrellas y últimos comentarios.
+6. Tests: reglas de elegibilidad (sin check-in, evento no finalizado, fuera de plazo, duplicado), resumen.
+```
+
+### P3 · Avatares e imagen del evento
+
+```
+Lee la skill becore-ui y CLAUDE.md (toda escritura pasa por la API; el frontend no usa supabase.from).
+
+1. Storage: buckets "avatars" y "event-covers" en Supabase (públicos de lectura). Las subidas se hacen con URLs firmadas: el backend valida permisos y devuelve createSignedUploadUrl; el frontend sube el archivo directo a esa URL; luego confirma a la API, que guarda la ruta. Sin librerías nuevas.
+2. Migración: profiles.avatar_url text NULL, profiles.avatar_preset text NULL (check contra la lista de presets), events.cover_url text NULL.
+3. Compresión en el navegador antes de subir (canvas, sin librerías): máx. 1024 px de lado, WebP calidad 0.8, rechazar originales > 8 MB y tipos que no sean imagen.
+4. Avatares, en este orden de prioridad para mostrar: foto subida → foto de Google (user_metadata.avatar_url, se copia a profiles.avatar_url la primera vez si no hay otra) → preset elegido → iniciales.
+   - Crea 12 avatares preset propios en SVG con la paleta de la marca (personas estilizadas y diversas, deportivas y culturales, estilo plano coherente con el logo), en frontend/src/assets/avatars/.
+   - Selector en Perfil y opcional en el último paso del onboarding.
+   - Componente Avatar actualizado para usar esta prioridad.
+5. "Quiénes van": en tarjetas y detalle, fila de hasta 3 avatares solapados + "+N", como en los mockups. Amplía la respuesta de eventos con confirmedPreview: [{ name, avatarUrl }] (máx. 3, solo nombre de pila).
+6. Portada del evento: en el formulario de crear/editar, zona para subir imagen con vista previa y "Quitar". Si no hay, se mantiene la portada por categoría. Las tarjetas y el detalle usan cover_url si existe. Deja preparado un botón deshabilitado "Generar con IA" (se activa en IA5).
+7. Tests: permisos de subida (solo el organizador del evento sube su portada; cada usuario su avatar), validación de tipos.
+```
+
+### P4 · Compartir y agregar al calendario
+
+```
+Lee la skill becore-ui.
+
+1. Botón "Compartir" en el detalle del evento: Web Share API si existe; si no, menú con "WhatsApp" (wa.me con texto "¡Vamos a {evento}! {fecha} en {lugar}. Confirma aquí: {enlace}") y "Copiar enlace". El enlace usa window.location.origin.
+2. Botón "Agregar a mi calendario" visible al confirmar asistencia: opciones Google Calendar (URL de render con fechas en UTC) y archivo .ics generado en el navegador (VEVENT con zona horaria America/Bogota, sin librerías).
+3. Si un usuario sin sesión abre un enlace compartido, tras el login vuelve al evento (el guard ya conserva la ruta).
+```
+
+### P5 · Correos con la marca y verificación por código
+
+Pedido del 17 oct: todos los correos en HTML con la identidad de Be Core, y confirmación de cuenta y recuperación de contraseña con **código de 6 dígitos** en vez de enlace.
+
+**Antes de la sesión (a mano, en el dashboard de Supabase):**
+- Authentication → Sign In / Providers → Email:
+  - **activar "Confirm email"**;
+  - "Email OTP Length" = 6;
+  - "Email OTP Expiration" = 600 s (10 min).
+- Authentication → Rate Limits: correos por hora ≥ 30.
+
+```
+Lee la skill becore-ui, docs/specs/auth-onboarding.md y el código de /registro, /recuperar, /nueva-contrasena y /auth/callback. Lee también el servicio de correo del backend (Nodemailer).
+
+Contexto: en Supabase ya activamos "Confirm email" con OTP de 6 dígitos y 10 minutos de vigencia. Ya no usaremos enlaces de confirmación ni de recuperación: todo por código.
+
+1. Plantillas HTML de correo con la marca, en supabase/templates/:
+   - confirm-signup.html: "Tu código para entrar a Be Core";
+   - reset-password.html: "Tu código para cambiar la contraseña";
+   - email-change.html.
+   Reglas:
+   - HTML de correo compatible con Gmail, Outlook y Apple Mail: tablas, estilos inline, ancho máx. 600 px, sin JS, sin SVG y sin fuentes externas (Poppins/Inter con respaldo Arial).
+   - Cabecera azul profundo #0D1B2A con el logo en PNG; cuerpo claro (#FFFFFF / #F1F5F9) para que se lea bien también en clientes que alteran el modo oscuro.
+   - El código {{ .Token }} grande, centrado, monoespaciado, con espaciado entre dígitos y fondo turquesa suave; debajo "Vence en 10 minutos".
+   - Saludo con {{ .Data.full_name }} si existe; si no, "¡Hola!".
+   - Pie: "Si no fuiste tú, ignora este correo", tagline "Tu comunidad en movimiento" y "Proyecto de grado · Universidad Católica Luis Amigó".
+   - Versión de texto plano equivalente en un comentario al inicio del archivo.
+   - Asunto sugerido de cada plantilla en un comentario.
+   - NO uses {{ .ConfirmationURL }}.
+2. Logo: sube frontend/public/icons/icon-192.png (o el PNG del BrandMark que exista) a un bucket público "brand" de Supabase Storage y usa esa URL absoluta en las plantillas. Dime la URL final.
+3. Escribe docs/specs/correos.md con el paso a paso para pegar cada plantilla y su asunto en Supabase → Authentication → Emails → Templates (no puedes hacerlo tú).
+4. Correos del backend (recordatorios, cambios, cancelaciones, solicitud de calificación si ya existe): misma identidad. Crea backend/src/services/email/layout.js con una función renderEmail({ title, preheader, bodyHtml, cta? }) que use el mismo diseño, y migra todas las plantillas actuales a ella. Incluye siempre la versión de texto plano en Nodemailer. Botón CTA turquesa con enlace a window.location.origin equivalente (usa una variable APP_URL de backend/.env.example).
+5. Frontend, registro: tras signUp sin sesión, ir a /verificar?email=... con:
+   - 6 casillas de un dígito (inputMode="numeric", autoComplete="one-time-code", pegar el código completo funciona, avance y retroceso automático, accesible con un único label "Código de verificación");
+   - supabase.auth.verifyOtp({ email, token, type: 'email' }); si la versión del SDK requiere 'signup', usa la correcta y documéntalo;
+   - "Reenviar código" con cuenta regresiva de 60 s (supabase.auth.resend({ type: 'signup', email }));
+   - errores humanos: código incorrecto, código vencido, demasiados intentos;
+   - al verificar: /bienvenida.
+6. Recuperar contraseña en un solo flujo: /recuperar (correo) → resetPasswordForEmail → paso del código (mismo componente OtpInput) → verifyOtp({ email, token, type: 'recovery' }) → paso de nueva contraseña (updateUser) → login automático y toast. /nueva-contrasena queda solo como redirección al nuevo flujo.
+7. Login con correo de una cuenta sin confirmar: mensaje "Tu cuenta aún no está confirmada" con botón "Enviarme un código" que lleva a /verificar.
+8. Google no cambia (no necesita código).
+9. Tests de OtpInput (pegar, teclado, retroceso) y de los flujos con Supabase simulado.
+Verificación real: registro nuevo con un correo de Gmail y otro de Outlook/Hotmail; revisa que el correo llegue a bandeja de entrada (no spam), se vea bien en el celular y el código funcione. Captura de cada correo para docs/progreso/.
+```
+
+> Nota para el partido del 31: con la confirmación activa, cada amigo debe recibir y escribir el código. Prueben antes que los correos lleguen rápido con la red de la cancha. Si falla el día del partido, el plan B es desactivar "Confirm email" temporalmente en el dashboard (el código de la app soporta ambos casos).
+
+---
+
+## 6. Fase 3 · Inteligencia artificial con Gemini — híbrida (24 – 27 oct)
+
+> ⚠️ Requiere el visto bueno del director. IA0 lo registra en CLAUDE.md.
+
+### Arquitectura
+
+```
+Evento publicado/editado ──► Gemini etiqueta (gustos del onboarding) ──► embedding del evento (pgvector)
+Usuario guarda gustos    ──► embedding del perfil (pgvector)
+Calificaciones (P2)      ──► señal extra de afinidad (categorías y tags de eventos bien calificados)
+
+GET /api/v1/events/recommended
+  1. Candidatos por reglas (publicados, futuros, con cupo, no confirmados)   ← R5
+  2. Puntaje híbrido = 0.5 · similitud de embeddings + 0.5 · puntaje por reglas
+  3. Top 15 → Gemini re-ordena los 6 mejores y escribe la razón en español (JSON validado con Zod)
+  4. Caché por usuario; si Gemini falla o tarda > 3 s → puntaje híbrido sin LLM
+```
+
+En la sustentación se presenta como un **sistema de recomendación híbrido** (embeddings + reglas de negocio + re-ranking con LLM), validado con una **prueba A/B** en el partido.
+
+### Reglas
+
+- `GEMINI_API_KEY` solo en `backend/.env`. El frontend nunca llama a Gemini.
+- A Gemini **nunca** se le envía nombre, correo, IDs de usuario, sexo ni edad.
+- Timeout, respaldo sin IA y salida validada con Zod en toda llamada.
+- Modelos por variable de entorno (`GEMINI_MODEL`, `GEMINI_EMBEDDING_MODEL`, `GEMINI_IMAGE_MODEL`). Opus confirma los nombres vigentes en la documentación oficial.
+- Capa gratuita: Google puede usar los datos para mejorar sus productos (se menciona en /privacidad). **La generación de imágenes no tiene capa gratuita**: IA5 requiere activar facturación en la clave (aprox. US$0,03–0,07 por imagen). Con facturación activa, los datos de pago no se usan para entrenar.
+
+### Sesiones (rama `feature/ia-N`)
+
+**IA0 · Spec y decisión** (solo documentos)
+```
+Lee CLAUDE.md, docs/progreso/05_*, el módulo de recomendaciones de R5, el de calificaciones de P2 y la Fase 3 de docs/PLAN.md.
+Escribe docs/specs/ai.md: arquitectura híbrida, migración, contratos de API, prompts exactos para Gemini (en español, salida JSON con esquema), errores y respaldo, privacidad, pruebas con Gemini simulado y diseño de la prueba A/B. Confirma en la documentación oficial de Gemini los nombres vigentes del modelo de texto barato, del de embeddings y del de imágenes, y que el SDK oficial de Node es @google/genai. Actualiza CLAUDE.md §3 y §8: la IA entra al alcance con aprobación del director (fecha) y se usa la API de Gemini. No escribas código.
+```
+
+**IA1 · Base de datos e infraestructura**
+```
+Lee docs/specs/ai.md.
+1. Migración supabase/migrations/202610XXXXXXXX_ai_recommendations.sql:
+   - activar la extensión vector;
+   - events.tags text[] (check contra INTERESTS) y events.embedding vector(768);
+   - user_preferences.embedding vector(768);
+   - tabla ai_recommendations (user_id, items jsonb [{eventId, score, reason}], variant, generated_at, expires_at);
+   - tabla recommendation_events (user_id, event_id, variant, action in ('shown','clicked','confirmed'), created_at);
+   - índice HNSW sobre events.embedding;
+   - RLS: lectura propia, escritura solo Express.
+   Pruébala en una transacción revertida y luego aplícala.
+2. backend/src/services/ai/geminiClient.js: cliente único con timeout, 1 reintento, logs sin datos personales; funciones embedText(text), generateJson(prompt, schema) y generateImage(prompt).
+3. backend/.env.example (sin valores): GEMINI_MODEL, GEMINI_EMBEDDING_MODEL, GEMINI_IMAGE_MODEL, AI_ENABLED, AI_IMAGES_ENABLED.
+4. Tests con el cliente simulado.
+```
+
+**IA2 · Etiquetado y embeddings**
+```
+Lee docs/specs/ai.md.
+1. Al publicar o editar un evento: Gemini devuelve tags (solo slugs de INTERESTS, máx. 4) desde título, descripción y categoría; luego el embedding de "título + descripción + tags". En segundo plano: la API no espera a Gemini.
+2. Al guardar gustos: embedding del perfil con intereses, horarios, motivación y zona (sin nombre, sexo ni edad).
+3. npm run ai:backfill para eventos y perfiles existentes, con pausa entre llamadas.
+4. Tags como chips en el detalle del evento.
+5. Tests con Gemini simulado.
+```
+
+**IA3 · Recomendaciones híbridas con re-ranking**
+```
+Lee docs/specs/ai.md y el módulo de recomendaciones de R5.
+1. Sin cambiar el contrato de GET /api/v1/events/recommended:
+   - candidatos por reglas;
+   - puntaje híbrido (similitud coseno con pgvector + reglas normalizadas + bonus por categorías/tags de eventos que el usuario calificó con ≥ 4 estrellas);
+   - top 15;
+   - Gemini re-ordena y devuelve 6 con reason en español (Zod; descartar IDs que no estén entre los candidatos).
+2. Caché 6 h en ai_recommendations; se invalida al cambiar gustos, al calificar o al publicarse un evento.
+3. Respaldo si AI_ENABLED=false, error o > 3 s.
+4. < 2 s con caché. Mide y reporta.
+5. Tests: respaldo, IDs inventados, JSON inválido, caché.
+```
+
+**IA4 · Prueba A/B y métricas**
+```
+Lee docs/specs/ai.md.
+1. Variante determinista por hash del user_id: "rules" (R5) o "ai" (IA3).
+2. Registrar shown / clicked / confirmed en recommendation_events.
+3. GET /api/v1/admin/ai-metrics (solo organizadores), por variante: usuarios, mostrados, CTR, tasa de confirmación y calificación promedio de los eventos recomendados a los que asistieron.
+4. Tarjeta "Recomendaciones IA vs reglas" en el panel del organizador.
+5. Aviso "Usamos IA para recomendarte eventos" en el paso final del onboarding, con enlace a /privacidad.
+```
+
+**IA5 · Portada del evento generada con IA** (requiere facturación activa en la clave)
+```
+Lee docs/specs/ai.md y el trabajo de P3.
+1. Activa el botón "Generar con IA" del formulario de evento solo si AI_IMAGES_ENABLED=true.
+2. El backend arma el prompt desde título, categoría, lugar y descripción (sin personas reconocibles, sin texto dentro de la imagen, estilo ilustración plana con la paleta de la marca y formato horizontal), genera la imagen, la sube a event-covers y devuelve la URL.
+3. El organizador ve la vista previa y elige "Usar esta", "Generar otra" (máx. 3 por evento al día) o "Cancelar". Etiqueta pequeña "Imagen generada con IA" en la portada.
+4. Límite y registro de uso para controlar costos. Respaldo: portada por categoría.
+```
+
+**IA6 · Resumen de reseñas para el organizador**
+```
+Con las calificaciones de P2: en el panel del organizador, por evento con ≥ 3 comentarios, botón "Resumir con IA" que devuelve 2–3 frases (qué gustó, qué mejorar). Sin nombres de los participantes en el prompt. Caché hasta que llegue una calificación nueva.
+```
+
+**Opcional (día 28, si sobra tiempo):** "Escribir con IA" para la descripción del evento, lista de espera cuando el cupo se llena, check-in con QR.
+
+---
+
+## 7. Fase 4 · Congelamiento y validación
+
+| Fecha | Qué |
+|---|---|
+| 28 oct | Solo bugs. Ensayo completo de la demo en ambos computadores. |
+| **29 oct** | Fusionar `develop` → `main` y crear el tag **`v1.0`**. Desde aquí, nada nuevo. |
+| 30 oct | Crear el evento real del partido; agregar los correos de los amigos en *Test users* de Google; revisar la IP del portátil en la red que se usará; llevar hotspot. |
+| **31 oct** | **Partido:** registro + onboarding, confirmación, recordatorio por correo, check-in, **calificación al terminar**, A/B de recomendaciones y cuestionario SUS. Al SUS se le agregan: "¿Las recomendaciones de 'Para ti' te parecieron acertadas?" y "¿Calificar el evento fue fácil?". |
+| 1 nov | Consolidar SUS, métricas A/B, calificaciones (también por sexo y rango de edad, de forma agregada) y capturas en `docs/progreso/`. |
+
+---
+
+## 8. Checklist
+
+- [ ] Fase 1: informe `05_…` y `develop` al día
+- [ ] Fase 2: sprints cerrados, cobertura ≥ 70 %, citas probadas
+- [ ] Visto bueno del director para la IA (antes del 24)
+- [ ] P0 consentimiento y demografía · P1 login interactivo · P2 calificación · P3 avatares y portadas · P4 compartir · P5 correos con marca y código
+- [ ] IA0 → IA4 (IA5 e IA6 si hay tiempo y facturación)
+- [ ] `v1.0` el 29 de octubre
+- [ ] Partido del 31 con resultados guardados
