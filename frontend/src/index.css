@@ -116,6 +116,33 @@
       stroke-dashoffset: 0;
     }
   }
+
+  /* P1 · Hero de auth: barras que se desplazan (10 s, ida y vuelta) y enlaces que se dibujan y se recogen (12 s).
+     Pedido expreso del director (docs/PLAN.md §5, P1): segunda excepción al "nada decorativo en bucle" de la skill §4. */
+  --animate-hero-drift: hero-drift 10s ease-in-out infinite alternate;
+  --animate-hero-link: hero-link 12s var(--ease-out-soft) infinite;
+
+  @keyframes hero-drift {
+    from {
+      transform: translate(-12px, 8px);
+    }
+    to {
+      transform: translate(12px, -8px);
+    }
+  }
+
+  @keyframes hero-link {
+    0% {
+      stroke-dashoffset: 1;
+    }
+    30%,
+    70% {
+      stroke-dashoffset: 0;
+    }
+    100% {
+      stroke-dashoffset: -1;
+    }
+  }
 }
 
 /* Área táctil de 44 px para enlaces dentro de texto sin mover el layout (skill §4, objetivos ≥ 44 × 44) */

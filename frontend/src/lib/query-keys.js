@@ -12,4 +12,5 @@ export const queryKeys = {
   notificationsRoot: ['notifications'],
   notifications: ['notifications', 'list'],
   unreadCount: ['notifications', 'unread-count'],
+  publicStats: ['public', 'stats'],
 };
