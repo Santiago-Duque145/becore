@@ -7,6 +7,7 @@ import attendanceRoutes from './attendance.routes.js';
 import appointmentsRoutes from './appointments.routes.js';
 import notificationsRoutes from './notifications.routes.js';
 import dashboardRoutes from './dashboard.routes.js';
+import ratingsRoutes from './ratings.routes.js';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/', attendanceRoutes);
 router.use('/', appointmentsRoutes);
 router.use('/', notificationsRoutes);
 router.use('/', dashboardRoutes);
+router.use('/', ratingsRoutes);
 
 export default router;

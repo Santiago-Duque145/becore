@@ -18,6 +18,7 @@ const NuevoEventoPage = lazy(() => import('./pages/eventos/NuevoEventoPage.jsx')
 const DetalleEventoPage = lazy(() => import('./pages/eventos/DetalleEventoPage.jsx'));
 const EditarEventoPage = lazy(() => import('./pages/eventos/EditarEventoPage.jsx'));
 const AsistentesPage = lazy(() => import('./pages/eventos/AsistentesPage.jsx'));
+const CalificarEventoPage = lazy(() => import('./pages/eventos/CalificarEventoPage.jsx'));
 const PanelPage = lazy(() => import('./pages/PanelPage.jsx'));
 const CitasPage = lazy(() => import('./pages/CitasPage.jsx'));
 const NuevaCitaPage = lazy(() => import('./pages/NuevaCitaPage.jsx'));
@@ -68,6 +69,7 @@ export const router = createBrowserRouter([
       { path: '/eventos', element: <Navigate to="/descubre" replace /> },
       { path: '/eventos/nuevo', element: organizerOnly(page(NuevoEventoPage)) },
       { path: '/eventos/:id', element: page(DetalleEventoPage), handle: { immersive: true } },
+      { path: '/eventos/:id/calificar', element: page(CalificarEventoPage) },
       { path: '/eventos/:id/editar', element: organizerOnly(page(EditarEventoPage)) },
       { path: '/eventos/:id/asistentes', element: organizerOnly(page(AsistentesPage)) },
       { path: '/panel', element: page(PanelPage) },

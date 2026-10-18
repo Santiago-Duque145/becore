@@ -2,7 +2,7 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { translateDbError } from '../utils/db-errors.js';
 
 const COLUMNS =
-  'id, title, description, category, location, starts_at, ends_at, capacity, confirmed_count, status, cancelled_at, created_at, updated_at, organizer_id, organizer:profiles!organizer_id(id, full_name)';
+  'id, title, description, category, location, starts_at, ends_at, capacity, confirmed_count, status, cancelled_at, finished_at, created_at, updated_at, organizer_id, organizer:profiles!organizer_id(id, full_name)';
 
 const COLUMN_MAP = {
   title: 'title',
@@ -23,6 +23,7 @@ function toCamel(row) {
     category: row.category,
     location: row.location,
     startsAt: row.starts_at,
+    finishedAt: row.finished_at,
     endsAt: row.ends_at,
     capacity: row.capacity,
     confirmedCount: row.confirmed_count,
@@ -128,6 +129,14 @@ export async function listPublishedStartingBetween(fromIso, toIso) {
 // Pasa a in_progress / finished los eventos que ya empezaron o terminaron. Devuelve cuántos cambió.
 export async function refreshEventStatuses() {
   return unwrap(await supabaseAdmin.rpc('refresh_event_statuses'));
+}
+
+// Eventos que pasaron a finished desde sinceIso (para pedir la calificación)
+export async function listFinishedSince(sinceIso) {
+  const data = unwrap(
+    await supabaseAdmin.from('events').select(COLUMNS).eq('status', 'finished').gte('finished_at', sinceIso),
+  );
+  return data.map(toCamel);
 }
 
 // Panel del organizador: sus eventos (todos los estados) que empiezan desde fromIso, orden ascendente

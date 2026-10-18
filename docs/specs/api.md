@@ -79,6 +79,10 @@ Formato: `{ "error": { "code": "EVENT_FULL", "message": "El evento ya no tiene c
 | `EVENT_STARTED` | 409 | El evento ya empezó, no se puede modificar |
 | `CAPACITY_BELOW_CONFIRMED` | 409 | El cupo no puede ser menor que los confirmados actuales |
 | `CHECKIN_NOT_OPEN` | 409 | El check-in se habilita 2 horas antes del evento |
+| `EVENT_NOT_FINISHED` | 409 | Solo puedes calificar eventos que ya terminaron |
+| `NOT_ATTENDED` | 403 | Solo califican quienes hicieron check-in en el evento |
+| `RATING_WINDOW_CLOSED` | 409 | El plazo para calificar (7 días) ya terminó |
+| `RATING_NOT_FOUND` | 404 | Aún no calificaste este evento |
 | `APPOINTMENT_NOT_ACTIVE` | 409 | La cita fue cancelada |
 | `SLOT_OVERLAP` | 409 | Ese horario se cruza con otra de tus franjas. Elige otro o borra primero la que se cruza |
 | `APPOINTMENT_OUTSIDE_SLOT` | 409 | La cita debe quedar dentro de una de tus franjas de disponibilidad |
@@ -182,6 +186,21 @@ excluyen los de puntaje 0 y se ordena por puntaje desc y luego `startsAt` asc. `
 - Check-in: asistencia debe estar `confirmed` (si no → `NOT_CONFIRMED`), evento `published` o `in_progress`
   (si no → `EVENT_NOT_ACTIVE`) y `now() >= startsAt - 2 horas` (si no → `CHECKIN_NOT_OPEN`).
   Al marcar `true` inserta `activity_log` con `action = 'checked_in'`.
+
+### Calificación de eventos (P2)
+
+Solo califica un participante con `checked_in = true` en un evento `finished`, dentro de los 7 días posteriores a
+`finishedAt`. Una calificación por usuario y evento; dentro del plazo se puede editar.
+
+- `POST /events/:id/rating` (participante) → 201 `{ data: Rating }`. Body: `{ stars: 1–5, tags?: string[], comment?: string ≤ 500 }`.
+  `tags` ⊂ `well_organized, punctual, good_vibe, would_repeat, good_venue, needs_improvement`.
+- `PUT /events/:id/rating` (participante) → 200 `{ data: Rating }`. Mismo body; crea o reemplaza.
+- `GET /events/:id/rating/me` (participante) → `{ data: Rating }` o 404 `RATING_NOT_FOUND`.
+- `GET /events/:id/ratings/summary` (autenticado) → `{ data: { average, total, byStars: {1..5}, byTag, comments? } }`.
+  `comments` (anónimos, ≤ 20) solo si quien consulta es el organizador del evento; `average` es `null` sin votos.
+- Al pasar un evento a `finished`, el cron de estados envía el aviso `event_rating_request` (campana y correo, enlace
+  `/eventos/:id/calificar`) a quienes hicieron check-in. Una sola vez por usuario y evento.
+- `Event` incluye ahora `finishedAt` (ISO o `null`).
 
 ### Paneles (RF-18, RF-19)
 

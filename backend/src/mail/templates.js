@@ -53,7 +53,17 @@ const appointmentLines = (appointment) => {
   return lines;
 };
 
+const ratingLink = (event) => ({ label: 'Calificar el evento', url: `${appBaseUrl()}/eventos/${event.id}/calificar` });
+
 export const TEMPLATES = {
+  event_rating_request: (event) =>
+    build({
+      subject: `¿Cómo estuvo ${event.title}?`,
+      heading: `¿Cómo estuvo ${event.title}?`,
+      lines: ['Gracias por venir. Cuéntanos qué tal te fue: tu calificación ayuda a mejorar los próximos eventos.'],
+      message: `¿Cómo estuvo ${event.title}? Califica el evento.`,
+      link: ratingLink(event),
+    }),
   event_reminder: (event) =>
     build({
       subject: `Recordatorio: ${event.title} – ${formatMailDate(event.startsAt)}`,

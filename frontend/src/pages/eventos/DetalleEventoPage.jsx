@@ -6,6 +6,8 @@ import { useRealtimeEvent } from '../../hooks/useRealtimeEvent.js';
 import { formatLongDay, formatTime } from '../../lib/format.js';
 import { AttendanceButton } from '../../components/events/AttendanceButton.jsx';
 import { DetailCover, DetailSkeleton, InfoRow } from '../../components/events/EventDetailParts.jsx';
+import { RateBanner } from '../../components/events/RateBanner.jsx';
+import { RatingBadge } from '../../components/events/RatingBadge.jsx';
 import { OwnerActions } from '../../components/events/OwnerActions.jsx';
 import { Avatar, CapacityBar, EmptyState, ErrorState, LinkButton } from '../../components/ui/index.js';
 
@@ -79,9 +81,12 @@ export default function DetalleEventoPage() {
           <p className="mb-4 text-[13px] leading-[1.55] whitespace-pre-line text-ink/80">{event.description}</p>
         )}
 
-        <p className="mb-[18px] text-[11.5px] text-ink-muted">
+        <p className="mb-[18px] flex items-center gap-3 text-[11.5px] text-ink-muted">
           {event.confirmedCount === 1 ? '1 persona confirmada' : `${event.confirmedCount} personas confirmadas`}
+          <RatingBadge event={event} />
         </p>
+
+        <RateBanner event={event} className="mb-[18px]" />
 
         <div className="flex items-center gap-2.5 pt-1">
           <Avatar name={event.organizer?.fullName} decorative />
