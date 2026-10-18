@@ -40,7 +40,7 @@ Criterio: **Hecha y probada** = pruebas automáticas o verificación real; **Hec
 | S2-04 Check-in y asistentes | Hecha y probada | — |
 | S2-05 Correo y avisos de cambios | Hecha y probada | — (envío real verificado hoy, §4) |
 | S2-06 Recordatorios automáticos | Hecha y probada | — (corrida real verificada hoy; el cron de 15 min no lo observé disparar solo) |
-| S2-07 Disponibilidad y citas | Hecha y probada (API) | Interfaz sin probar de punta a punta (§5) |
+| S2-07 Disponibilidad y citas | Hecha y probada | — (interfaz rehecha y recorrida en el navegador en F2-1, §5.1) |
 | S2-08 Avance y release `v0.2` | Parcial | Informe hecho (`03_…`); **sin tag `v0.2`** |
 | S3-01 Panel del organizador | Hecha y probada | — (R8; servicio con pruebas) |
 | S3-02 Tiempo real | Hecha sin pruebas | Solo manual: `useRealtimeEvent` y ticker |
@@ -71,8 +71,8 @@ Desfase de documentos: `CLAUDE.md` §10 sigue en "Sprint actual: S1" (se pidió 
 | RF-11 | Confirmar asistencia | Hecha y probada |
 | RF-12 | Cancelar asistencia | Hecha y probada |
 | RF-13 | Check-in | Hecha y probada |
-| RF-14 | Citas | **Parcial**: API probada hoy (18/18); falta recorrer la interfaz |
-| RF-15 | Disponibilidad | **Parcial**: API probada hoy; falta recorrer la interfaz |
+| RF-14 | Citas | Hecha y probada (API 18/18 + flujo completo en el navegador con organizador y participante, §5.1) |
+| RF-15 | Disponibilidad | Hecha y probada (API + interfaz en el navegador; cruces y franja de la cita validados en la base, §5.2) |
 | RF-16 | Recordatorios | Hecha y probada |
 | RF-17 | Avisos de cambio o cancelación | Hecha y probada |
 | RF-18 | Panel del organizador | Hecha y probada |
@@ -120,7 +120,56 @@ Prueba por la API real (organizador y participante de demo): **18/18 OK**, inclu
 | Cancelar; participante → 403; cancelar dos veces → `APPOINTMENT_NOT_ACTIVE` | OK |
 | Borrar disponibilidad | OK |
 
-Limpieza: la tabla quedó en 0 citas. **Interfaz: no probada.** Solo revisé que `services/appointments.api.js` apunta a las mismas rutas y que las fechas pasan por `bogotaInputToIso`. Falta recorrer `/disponibilidad`, `/citas` y `/citas/nueva` en el navegador (no hay automatización de navegador instalada).
+Limpieza: la tabla quedó en 0 citas. La interfaz se probó después, en F2-1 (§5.1).
+
+### 5.1 Interfaz de citas y disponibilidad (F2-1, rama `feature/f2-1-citas`)
+
+**Qué cambió en el frontend**
+
+| Pantalla | Cambio |
+|---|---|
+| `/disponibilidad` | Formulario con **fecha, hora de inicio y hora de fin** (antes dos `datetime-local`), validación al salir del campo (fin > inicio, máx. 8 h, futuro) y **aviso de cruce** con las franjas ya cargadas: «Ese horario se cruza con otra de tus franjas. Elige otro o borra primero la del …». Lista agrupada por día; borrar pide confirmación. |
+| `/citas/nueva` | La cita se agenda **dentro de una franja**: se elige la franja (tarjetas), el horario se propone (1 h desde el inicio) con `min`/`max` de la franja y se valida que no se salga. Sin franjas: estado vacío con "Marcar disponibilidad". Buscador de participantes por nombre o correo (debounce 300 ms, máx. 30, chips para quitar). |
+| `/citas` | Pestañas Próximas / Pasadas, estado con texto (**Programada, En curso, Realizada, Cancelada**), detalle en diálogo y cancelación con un segundo paso de confirmación dentro del mismo diálogo (foco atrapado, Escape vuelve atrás). El organizador ve "Nueva cita" y el resumen "Tu disponibilidad" (columna derecha en escritorio). |
+| `/mis-eventos` | Sección **"Mis citas"** debajo de los eventos; sigue la pestaña Próximos / Pasados, con detalle y estado. |
+
+Piezas nuevas: `components/appointments/` (`AppointmentCard`, `AppointmentList`, `AppointmentDetailModal`, `AvailabilitySummary`, `ParticipantPicker`) y `lib/appointments.js` (reglas puras: estado, cruces, franja, horario sugerido; pruebas en `appointments.test.js`). Backend: solo se quitó el punto doble («3:00 p. m..») de los tres mensajes de aviso de cita en `mail/templates.js`; **el contrato de la API no cambió**.
+
+**Prueba en el navegador** (Edge headless manejado por CDP desde un script local, sin librerías nuevas; organizador `santiago@becore.test` y participante `jugador1@becore.test` en sesiones separadas, a 390 px y 1440 px):
+
+| Paso | Resultado |
+|---|---|
+| `/citas` y `/disponibilidad` vacías | Estados vacíos con acción |
+| Franja sin datos / fin antes del inicio | Mensajes por campo |
+| Franja 3:00–5:00 p. m. dentro de 3 días; luego 4:00–6:00 p. m. | Creada; la segunda muestra el aviso de cruce y no se envía |
+| Nueva cita sin datos | "El título debe tener…", "Elige una franja…", "Elige al menos un invitado" |
+| Cita con fin fuera de la franja | "Debe quedar dentro de la franja (3:00 p. m. – 5:00 p. m.)" |
+| Cita 3:00–4:00 p. m. con Jugador 1 | Creada y listada como Programada |
+| Participante: Mis eventos → Mis citas → detalle | Ve la cita y el detalle completo; Escape cierra y el foco vuelve a la fila |
+| Participante: Avisos | "Nueva cita: …" (`appointment_created`) |
+| Organizador cancela (detalle → confirmar) | Foco dentro del diálogo; la cita pasa a Cancelada |
+| Participante: Mis eventos y Avisos | Ve "Cancelada" y "Se canceló la cita: …" (`appointment_cancelled`) |
+| Borrar la franja desde la interfaz | Vuelve el estado vacío |
+
+Sin scroll horizontal a 390 ni a 1440 px y sin errores en consola. Los avisos aparecen en Avisos; el **correo** a `@becore.test` se omite por diseño (`DEMO_ADDRESS_SKIPPED`), así que el envío real de los correos de cita **no** se verificó en esta sesión (sí el de eventos, §4). El recordatorio de cita (`appointment_reminder`) no se disparó.
+
+**Limpieza:** las citas de prueba se borraron con un script (en cascada caen invitados y avisos), la franja se borró desde la interfaz y el consentimiento que pidió el diálogo al entrar con `santiago` y `jugador1` se revirtió (`data_consent_at`, sexo y edad en `null`, como estaban). Quedan 0 citas, 0 franjas y 0 avisos de cita.
+
+**Diferencias que quedan:** `/citas`, `/citas/nueva` y `/disponibilidad` no tienen mockup; siguen el estilo de `mobile-mis-eventos` y de la columna "Próximas citas" de `desktop-descubre`.
+
+### 5.2 Reglas de franjas y citas en el backend (rama `feature/f2-1-citas`)
+
+Las reglas que antes solo revisaba la interfaz ahora las impone la base, también con dos peticiones simultáneas:
+
+| Regla | Cómo | Error (409) |
+|---|---|---|
+| Una franja no se cruza con otra del mismo organizador | Restricción de exclusión `availability_slots_no_overlap` (`btree_gist`, `tstzrange [inicio, fin)`) | `SLOT_OVERLAP` |
+| Una cita queda completa dentro de una franja del organizador | Trigger `appointments_within_slot` (bloquea la franja con `FOR SHARE`) | `APPOINTMENT_OUTSIDE_SLOT` |
+| Una cita no se cruza con otra cita programada del organizador (las canceladas no cuentan) | Exclusión parcial `appointments_no_overlap` (`where status = 'scheduled'`) | `APPOINTMENT_OVERLAP` |
+
+**Migración `20261021130000_appointment_overlap_rules.sql`: probada en una transacción revertida y aplicada con `npx supabase db push` el 2026-10-17.** Antes de aplicarla había 0 franjas y 0 citas, así que ningún dato la violaba. Los códigos están en `api.md` §2 y la traducción en `db-errors.js`. La interfaz sigue avisando antes de enviar y, si la API responde con uno de estos códigos, muestra su mensaje en el aviso de la franja o debajo del campo Inicio de la cita.
+
+Pruebas: `db-errors.test.js` y `appointments-rules.routes.test.js` (en `npm test`) y `tests/integration/appointment-rules.test.js` contra Supabase real (`npm run test:integration -w backend`): cruce de franjas, cita fuera de franja y entre dos franjas que se tocan, cita cruzada con otra activa, cancelada que ya no bloquea, y dos franjas o dos citas cruzadas enviadas a la vez (gana una, la otra 409). 5/5 en tres corridas seguidas; la tabla quedó en 0 franjas y 0 citas.
 
 ## 6. Para la IA (Fase 3)
 
@@ -161,7 +210,7 @@ Puntaje: categoría +3; día, franja y zona +1 cada uno (hora de Bogotá). Se ex
 **Crítico antes del 29 oct (congelamiento)**
 1. Probar a mano el flujo de consentimiento (Google nuevo, correo nuevo, cuenta vieja) y "Sobre ti" en Perfil, a 390 y 1440 px.
 2. Confirmar que los 3 correos de prueba llegaron a la bandeja (no a spam).
-3. Recorrer la interfaz de citas y disponibilidad (RF-14/15); hoy solo la API está probada.
+3. ~~Recorrer la interfaz de citas y disponibilidad (RF-14/15)~~ Hecho en F2-1 (§5.1).
 4. Decisión del director sobre IA **antes del 24** (`PLAN.md` §1); sin ella la Fase 3 no arranca.
 5. Confirmar el correo de solicitudes de datos que muestra `/privacidad` (hoy sale de `.env.example`).
 

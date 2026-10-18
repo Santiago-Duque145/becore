@@ -10,8 +10,15 @@ const RPC_CODES = new Map([
   ['EVENT_STARTED', [409, 'El evento ya empezó, no se puede modificar']],
   ['CHECKIN_NOT_OPEN', [409, 'El check-in se habilita 2 horas antes del evento']],
   ['APPOINTMENT_NOT_ACTIVE', [409, 'La cita fue cancelada']],
+  ['APPOINTMENT_OUTSIDE_SLOT', [409, 'La cita debe quedar dentro de una de tus franjas de disponibilidad']],
   ['INVALID_EVENT_TRANSITION', [409, 'Ese cambio de estado no está permitido para el evento']],
   ['INVALID_INITIAL_STATUS', [409, 'Un evento nuevo no puede crearse en ese estado']],
+]);
+
+// Restricciones de exclusión (errcode 23P01) de la migración 20261021130000
+const EXCLUSION_CODES = new Map([
+  ['availability_slots_no_overlap', ['SLOT_OVERLAP', 'Ese horario se cruza con otra de tus franjas. Elige otro o borra primero la que se cruza']],
+  ['appointments_no_overlap', ['APPOINTMENT_OVERLAP', 'Ese horario se cruza con otra de tus citas. Elige otro horario']],
 ]);
 
 export function translateDbError(error) {
@@ -26,6 +33,14 @@ export function translateDbError(error) {
     const constraint = error.constraint_name ?? error.message ?? '';
     if (constraint.includes('events_confirmed_within_capacity')) {
       return new AppError(409, 'CAPACITY_BELOW_CONFIRMED', 'El cupo no puede ser menor que los confirmados actuales');
+    }
+    return new AppError(409, 'CONSTRAINT_VIOLATION', 'Los datos no cumplen las reglas');
+  }
+
+  if (error.code === '23P01') {
+    const constraint = error.constraint_name ?? error.message ?? '';
+    for (const [name, [appCode, message]] of EXCLUSION_CODES) {
+      if (constraint.includes(name)) return new AppError(409, appCode, message);
     }
     return new AppError(409, 'CONSTRAINT_VIOLATION', 'Los datos no cumplen las reglas');
   }

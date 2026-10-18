@@ -36,10 +36,11 @@
 
 | Días | Fase | Qué |
 |---|---|---|
-| **17 oct** | 1 | Estado real del código e higiene de Git |
-| **18 – 20** | 2 | Cerrar los sprints (según el informe de la Fase 1) |
-| **21 – 23** | 2b | Pedidos del profesor (P0–P4) y correos con marca + código (P5) |
-| **24 – 27** | 3 | IA con Gemini (IA0–IA6) |
+| **17 oct** | 1 | Estado real del código e higiene de Git ✅ (informe `06_2026-10-17_estado-sprints.md`; P0 hecho) |
+| **18** | 2 | Cerrar los sprints: interfaz de citas (F2-1) y README, validación, p90 y tags (F2-2) |
+| **18 – 19** | 2b | **M1: la app en el celular con HTTPS** (base para ubicación, QR e instalación) |
+| **19 – 22** | 2b | Pedidos del profesor P1–P4, mapa con distancia (P6) y correos con marca + código (P5) |
+| **23 – 27** | 3 | IA con Gemini (IA0–IA6) |
 | **28** | — | Solo bugs, extras si sobra tiempo, ensayo de la demo |
 | **29** | 4 | **Congelamiento `v1.0`** |
 | **30 – 31** | 4 | Preparar y hacer el partido de validación |
@@ -100,15 +101,36 @@ La sesión de estado ya está corriendo y produce `docs/progreso/05_2026-10-17_e
 
 ---
 
-## 4. Fase 2 · Cerrar los sprints (18 – 20 oct)
+## 4. Fase 2 · Cerrar los sprints (18 oct)
 
-Los prompts se escriben a partir del informe de la Fase 1. Prioridad:
+Según el informe 06: los 19 RF están hechos salvo RF-14 y RF-15 (citas y disponibilidad), a los que les falta la interfaz. La cobertura del backend es 75,3 % (eventos y asistencia al 100 %). Los correos de recordatorio, cambio y cancelación salen por SMTP. Pendientes del backlog: S3-06 (README), S3-07 (plan de validación), S3-05 (p90), tags v0.1 y v0.2, y variables faltantes en `.env.example`.
 
-1. **Asistencia y cupo:** confirmación atómica bajo concurrencia, cancelación, check-in.
-2. **Correos:** recordatorio automático y aviso de cambio o cancelación.
-3. **Citas y disponibilidad:** probar de punta a punta (hoy hay 0 citas en la base) y corregir.
-4. **Pruebas:** cobertura ≥ 70 % en eventos, cupos y asistencia.
-5. **README** de instalación reproducible en ambos computadores.
+### F2-1 · Interfaz de citas y disponibilidad (Opus 5.5)
+
+```
+Lee la skill becore-ui, docs/specs/backlog.md (RF-14, RF-15), docs/specs/api.md y docs/progreso/06_2026-10-17_estado-sprints.md. La API de citas y disponibilidad ya existe y pasa 18/18 pruebas; NO cambies su contrato salvo que encuentres un error real (dímelo antes).
+
+1. Organizador, /citas:
+   - Disponibilidad: lista de franjas y formulario para crear y borrar (fecha, hora inicio, hora fin; validación de cruces con mensaje claro).
+   - Nueva cita: título, fecha y hora dentro de una franja disponible, lugar y notas opcionales, y selección de participantes con buscador (por nombre, entre usuarios que han asistido a sus eventos o todos los participantes si la API lo permite).
+   - Lista de citas próximas y pasadas con estado; cancelar con diálogo de confirmación accesible.
+2. Participante: "Mis citas" (pestaña o sección en Mis eventos) con próximas y pasadas, detalle y estado.
+3. Las notificaciones y correos de cita (creada, recordatorio, cancelada) deben dispararse. Verifica que aparezcan en Avisos.
+4. Estados de carga, vacío y error; móvil y escritorio según la skill.
+5. Recorre el flujo completo en el navegador con un organizador y un participante del seed: crear franja → agendar cita con ese participante → el participante la ve y recibe aviso → cancelar → el participante ve el cambio. Captura y deja todo lo creado borrado al final.
+6. Actualiza el informe 06 marcando RF-14 y RF-15 como hechos y probados.
+```
+
+### F2-2 · Documentación, rendimiento y versiones (Sonnet 5.5)
+
+```
+Lee docs/progreso/06_2026-10-17_estado-sprints.md y docs/specs/backlog.md.
+1. README.md raíz: requisitos (Node 22, npm), clonar, npm install, crear backend/.env y frontend/.env desde los .example (qué es cada variable, sin valores), configuración manual de Supabase y Google (enlaza docs/specs/auth-onboarding.md §10), npm run dev, pruebas, acceso desde el celular por la IP y solución de problemas comunes (puerto 5173 ocupado, migración sin aplicar, firewall de Windows). Debe permitir a Santiago levantar todo desde cero.
+2. backend/.env.example: agrega las variables que faltan (GEMINI_*, AI_*, APP_URL y cualquier otra que use el código), sin valores y con un comentario por línea.
+3. S3-05: script backend/scripts/measure-p90.js (sin librerías nuevas, solo fetch) que hace 200 peticiones a GET /api/v1/events con un token de prueba pasado por variable de entorno y reporta p50, p90 y p99. Córrelo y deja el resultado en el informe (objetivo RNF: < 2 s en el 90 %).
+4. S3-07: docs/specs/plan-validacion.md con el guion del partido del 31 de octubre: preparación (red, hotspot, IP, Test users de Google), paso a paso para los participantes, qué medir (tiempos, errores, confirmaciones, check-ins, calificaciones), cuestionario SUS en español (10 ítems estándar) + 2 preguntas propias ("¿Las recomendaciones de 'Para ti' te parecieron acertadas?", "¿Calificar el evento fue fácil?") y cómo calcular el puntaje SUS.
+5. Tags: identifica los commits de cierre de sprint 1 y sprint 2 en main y propón los tags v0.1 y v0.2 (no los crees sin mostrarme los commits).
+```
 
 ---
 
@@ -194,6 +216,63 @@ Lee la skill becore-ui.
 2. Botón "Agregar a mi calendario" visible al confirmar asistencia: opciones Google Calendar (URL de render con fechas en UTC) y archivo .ics generado en el navegador (VEVENT con zona horaria America/Bogota, sin librerías).
 3. Si un usuario sin sesión abre un enlace compartido, tras el login vuelve al evento (el guard ya conserva la ruta).
 ```
+
+### M1 · La app en el celular con HTTPS real (Opus 5.5) — hacer primero
+
+**Problema:** por `http://192.168.x.x` los navegadores del celular bloquean todo lo que exige "contexto seguro": ubicación (distancia, "cerca de mí"), cámara (QR), instalación completa como app (service worker) y notificaciones push. Además, celulares y portátil deben estar en la misma Wi-Fi.
+
+**Solución:** un túnel de **Cloudflare** (gratis, sin cuenta) que publica el portátil en una dirección `https://algo.trycloudflare.com` con certificado válido. El sistema sigue corriendo en el portátil (no es despliegue, se respeta CLAUDE.md §3), pero los celulares entran desde cualquier red, incluso con datos móviles.
+
+**Antes de la sesión (a mano):**
+- En el portátil: `winget install Cloudflare.cloudflared`.
+- Supabase → Authentication → URL Configuration → Redirect URLs: agregar `https://*.trycloudflare.com/**`.
+- Google Cloud no cambia (su callback es el de Supabase).
+
+```
+Lee CLAUDE.md, frontend/CLAUDE.md, backend/CLAUDE.md y la skill becore-ui.
+
+Objetivo: que Be Core funcione completo en celulares por HTTPS real usando un túnel rápido de Cloudflare (cloudflared ya está instalado en el portátil), sin desplegar en la nube.
+
+1. Modo demo optimizado: script npm run demo en la raíz que
+   a) construye el frontend (vite build);
+   b) arranca el backend;
+   c) sirve el build con vite preview en el puerto 4173 con el mismo proxy /api → 3000 que el modo dev;
+   d) arranca "cloudflared tunnel --url http://localhost:4173", captura la URL https://*.trycloudflare.com de su salida y la imprime grande en la terminal;
+   e) pasa esa URL al backend como APP_URL para los enlaces de los correos.
+   Funciona en Windows (es el sistema del portátil). Sin librerías nuevas para orquestar si se puede hacer con Node; si necesitas una, justifícala.
+2. Vite: permite los hosts .trycloudflare.com en server.allowedHosts y preview.allowedHosts.
+3. Página /compartir (solo organizadores): muestra un QR grande de window.location.origin y el enlace, para que los participantes escaneen en la cancha. Librería de QR pequeña (justifícala) o una implementación propia.
+4. PWA completa: agrega un service worker propio y mínimo (sin librerías) que cachee el shell de la app (HTML, JS, CSS, íconos) y muestre una pantalla "Sin conexión" en el tono de la skill si no hay red. Nunca cachea /api ni Supabase. Solo se registra en contexto seguro. Prueba que Chrome Android ofrezca "Instalar app" y que iPhone (Safari → Compartir → Agregar a inicio) abra a pantalla completa.
+5. Hook useGeolocation preparado para P6: solo pide la ubicación cuando el usuario toca un botón ("Ver eventos cerca de mí"), maneja permiso denegado y no disponible, y oculta el botón si window.isSecureContext es falso. La ubicación NUNCA se envía al backend ni se guarda: la distancia se calcula en el navegador (haversine). Actualiza /privacidad con una línea sobre esto.
+6. Documenta en README el modo demo: comandos, la URL cambia en cada arranque, el QR, y qué hacer si cloudflared no conecta (plan B: modo por IP en la misma Wi-Fi, sin ubicación ni instalación completa).
+7. Verificación real con mi celular por datos móviles (no Wi-Fi): login con correo y con Google, onboarding, confirmar asistencia, instalar la app, abrir sin conexión y ver la pantalla offline. Deja la lista de lo probado en el informe.
+```
+
+> El día del partido el portátil necesita internet (por ejemplo, el hotspot de un celular). Los participantes entran con sus propios datos móviles escaneando el QR; ya no hace falta que estén en la misma Wi-Fi.
+
+### P6 · Mapa de eventos (Opus 5.5)
+
+Pedido del 17 oct: llevar a la app el mapa de los mockups. Se hace **sin Google Maps API**, con Leaflet y mapas libres; la ruta se abre en Google Maps o Waze con un enlace, sin costo. Se registra en CLAUDE.md §8: el mapa sale de "fuera de alcance" por pedido del director; la geolocalización del dispositivo sigue fuera.
+
+```
+Lee la skill becore-ui, docs/mockups/desktop-panel-organizador.html, docs/mockups/desktop-descubre.html, docs/mockups/mobile-detalle-evento.html y CLAUDE.md §8.
+
+0. Alcance: en CLAUDE.md §8 registra (fecha 2026-10-1X) que, por pedido del director, el mapa de eventos entra al alcance con Leaflet + teselas libres, y la ubicación del dispositivo solo para calcular distancias en el navegador (nunca se envía ni se guarda). Siguen fuera: Google Maps API y la "estela convergente".
+0b. Distancia (usa el hook useGeolocation de M1): botón "Cerca de mí" en Descubre; al aceptar, las tarjetas muestran "a 1,8 km" y se puede ordenar por cercanía; en el modo mapa aparece un punto con "Tú estás aquí". Si se niega el permiso o no hay HTTPS, todo funciona igual sin distancias.
+1. Librerías (justifícalas en el informe): leaflet y react-leaflet. Todas las vistas con mapa se cargan de forma diferida (React.lazy) para no inflar el bundle inicial. Comprueba el tamaño antes y después.
+2. Teselas: estilo oscuro coherente con la marca (por ejemplo, CARTO "dark_all" o similar libre para uso no comercial), con la atribución obligatoria visible. URL de teselas en una variable VITE_MAP_TILES_URL con valor por defecto; si fallan, mostrar el mapa estándar de OpenStreetMap.
+3. Migración: events.latitude y events.longitude numeric NULL, con checks de rango (lat −90..90, lng −180..180) y ambos nulos o ambos con valor. Pruébala en transacción revertida, aplícala y dilo en el PR.
+4. Crear/editar evento: además del texto de "lugar", un selector de ubicación en mapa centrado en Medellín. El organizador hace clic o arrastra el pin. Buscador opcional con Nominatim (OpenStreetMap) llamado desde el BACKEND (GET /api/v1/geocode?q=…, máximo 1 petición por segundo, User-Agent con el nombre del proyecto y caché en memoria), limitado a Colombia. La ubicación es opcional.
+5. Detalle del evento: mini mapa con el pin (no interactivo en móvil hasta tocarlo) y botón "Cómo llegar" con dos opciones: Google Maps (https://www.google.com/maps/dir/?api=1&destination=lat,lng) y Waze (https://waze.com/ul?ll=lat,lng&navigate=yes). Si el evento no tiene coordenadas, no se muestra.
+6. Descubre: conmutador "Lista / Mapa". En modo mapa, pines con el color de su categoría (turquesa deporte, amarillo cultura, verde recreación, gris otros); al tocar un pin, una tarjeta resumida con cupo y botón al detalle. Respeta los filtros de categoría.
+7. Organizador: página "Mapa en vivo" (ítem en la barra lateral, como en el mockup) con sus eventos activos como pines y cupo actualizado en tiempo real (Realtime de events ya existente); lista lateral filtrable y ficha del evento seleccionado. Sin la estela convergente.
+8. Accesibilidad: todo lo del mapa también está disponible como lista; los pines tienen nombre accesible; el mapa no atrapa el scroll de la página en móvil.
+9. Seed: agrega coordenadas reales de Medellín a los eventos de prueba existentes para que el mapa no salga vacío.
+10. Tests: validación de coordenadas (Zod), endpoint de geocodificación con Nominatim simulado y caché.
+Verificación a 390 y 1440 px.
+```
+
+> Para el partido: el mapa necesita internet en los celulares para cargar las teselas. Si la red local de la cancha no tiene salida a internet, el mapa no carga, pero el resto de la app sí funciona.
 
 ### P5 · Correos con la marca y verificación por código
 
@@ -366,7 +445,8 @@ Con las calificaciones de P2: en el panel del organizador, por evento con ≥ 3 
 - [ ] Fase 1: informe `05_…` y `develop` al día
 - [ ] Fase 2: sprints cerrados, cobertura ≥ 70 %, citas probadas
 - [ ] Visto bueno del director para la IA (antes del 24)
-- [ ] P0 consentimiento y demografía · P1 login interactivo · P2 calificación · P3 avatares y portadas · P4 compartir · P5 correos con marca y código
+- [ ] P0 consentimiento y demografía · P1 login interactivo · P2 calificación · P3 avatares y portadas · P4 compartir · P5 correos con marca y código · P6 mapa
+- [ ] M1 HTTPS en el celular: probado por datos móviles, app instalable, QR de acceso
 - [ ] IA0 → IA4 (IA5 e IA6 si hay tiempo y facturación)
 - [ ] `v1.0` el 29 de octubre
 - [ ] Partido del 31 con resultados guardados

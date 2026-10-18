@@ -80,6 +80,9 @@ Formato: `{ "error": { "code": "EVENT_FULL", "message": "El evento ya no tiene c
 | `CAPACITY_BELOW_CONFIRMED` | 409 | El cupo no puede ser menor que los confirmados actuales |
 | `CHECKIN_NOT_OPEN` | 409 | El check-in se habilita 2 horas antes del evento |
 | `APPOINTMENT_NOT_ACTIVE` | 409 | La cita fue cancelada |
+| `SLOT_OVERLAP` | 409 | Ese horario se cruza con otra de tus franjas. Elige otro o borra primero la que se cruza |
+| `APPOINTMENT_OUTSIDE_SLOT` | 409 | La cita debe quedar dentro de una de tus franjas de disponibilidad |
+| `APPOINTMENT_OVERLAP` | 409 | Ese horario se cruza con otra de tus citas. Elige otro horario |
 | `ONBOARDING_ALREADY_COMPLETED` | 409 | Ya completaste tu bienvenida; tu rol ya no se puede cambiar |
 | `DUPLICATE`, `CONSTRAINT_VIOLATION` | 409 | Ese registro ya existe / Los datos no cumplen las reglas |
 | `INTERNAL_ERROR` | 500 | Algo salió mal, intenta de nuevo |
@@ -215,7 +218,9 @@ Leen la tabla `notifications` (`message`, `read_at`) del usuario. El envío por 
 | POST | `/availability` | org | `{ startsAt, endsAt }` futuro, `endsAt > startsAt`, duración máx. 8 h | 201 bloque |
 | DELETE | `/availability/:id` | dueño | — | 204 |
 
-No se validan cruces entre bloques (alcance básico, así lo dice RF-15).
+Una franja no puede cruzarse con otra del mismo organizador → 409 `SLOT_OVERLAP`. Las que solo se tocan
+(una termina 5:00 p. m. y la otra empieza 5:00 p. m.) no se cruzan. Lo impone la base (`database.md` §2), también
+con dos peticiones simultáneas. Borrar una franja no toca las citas ya agendadas dentro de ella.
 
 ### Citas y reuniones (RF-14)
 
@@ -229,6 +234,11 @@ No se validan cruces entre bloques (alcance básico, así lo dice RF-15).
 Crear cita: `title` 3–100, `notes` 0–1000, `location` 0–200, `startsAt` futuro, `endsAt > startsAt`,
 `participantIds` arreglo de 1 a 30 uuids de perfiles con rol `participant`. Envía `appointment_created`
 a cada invitado. Cancelar envía `appointment_cancelled`; si ya estaba cancelada → `APPOINTMENT_NOT_ACTIVE`.
+
+Reglas de horario (las impone la base, `database.md` §2, también con dos peticiones simultáneas):
+la cita debe quedar **completa dentro de una sola franja** del organizador → si no, 409 `APPOINTMENT_OUTSIDE_SLOT`;
+y no puede cruzarse con otra cita **programada** del mismo organizador → 409 `APPOINTMENT_OVERLAP`
+(las canceladas no bloquean). En ambos casos no se crea la cita ni se avisa a nadie.
 
 ## 4. Correos (RF-16, RF-17)
 
