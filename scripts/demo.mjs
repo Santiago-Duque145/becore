@@ -2,6 +2,7 @@
 // abre un túnel rápido de Cloudflare y arranca el backend con APP_URL = la URL https del túnel.
 // Ctrl+C (o la caída de cualquier proceso) cierra todo. Solo usa Node; cloudflared debe estar instalado.
 import { spawn, spawnSync } from 'node:child_process';
+import { Resolver } from 'node:dns/promises';
 import { existsSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { dirname, join } from 'node:path';
@@ -96,6 +97,23 @@ async function waitFor(url, timeoutMs) {
       // todavía no responde
     }
     await sleep(1000);
+  }
+  return false;
+}
+
+// Espera a que el nombre del túnel exista en un DNS público. Si se consulta antes por el DNS del
+// sistema, Windows guarda la respuesta "no existe" en caché y la URL parece caída por minutos.
+async function waitForDns(hostname, timeoutMs) {
+  const resolver = new Resolver({ timeout: 3000, tries: 1 });
+  resolver.setServers(['1.1.1.1', '8.8.8.8']);
+  const until = Date.now() + timeoutMs;
+  while (Date.now() < until) {
+    try {
+      if ((await resolver.resolve4(hostname)).length) return true;
+    } catch {
+      // el registro DNS del túnel todavía no se publica
+    }
+    await sleep(2000);
   }
   return false;
 }
@@ -222,7 +240,9 @@ async function main() {
     fail(`El backend no respondió en el puerto ${API_PORT}.`);
 
   log('Comprobando la URL pública (el DNS del túnel puede tardar unos segundos)...');
-  const reachable = await waitFor(`${url}${HEALTH_PATH}`, 60000);
+  const reachable =
+    (await waitForDns(new URL(url).hostname, 60000)) &&
+    (await waitFor(`${url}${HEALTH_PATH}`, 30000));
   printBanner(url);
   await printQr(url);
   if (!reachable)
