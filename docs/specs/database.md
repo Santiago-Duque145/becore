@@ -55,6 +55,17 @@ erDiagram
   `events_confirmed_within_capacity`): bajar el cupo por debajo de los confirmados falla con `CAPACITY_BELOW_CONFIRMED`.
 - `ends_at` es opcional en eventos y obligatorio en citas; si existe debe ser mayor que `starts_at`.
 - Longitudes de texto: ver la columna en el SQL. Los esquemas Zod usan exactamente los mismos límites.
+- Franjas y citas (migración `20261021130000_appointment_overlap_rules`, extensión `btree_gist`), con rangos
+  `[starts_at, ends_at)` (los que solo se tocan no se cruzan):
+  - `availability_slots_no_overlap` (exclusión): una franja no se cruza con otra del mismo organizador → errcode
+    `23P01` → `SLOT_OVERLAP`.
+  - `appointments_no_overlap` (exclusión parcial, `where status = 'scheduled'`): una cita programada no se cruza con
+    otra programada del mismo organizador → `23P01` → `APPOINTMENT_OVERLAP`. Las canceladas no cuentan.
+  - Trigger `appointments_within_slot` (`enforce_appointment_within_slot`, antes de insertar o de cambiar horario,
+    organizador o estado): una cita programada cabe completa en una franja del organizador; si no, lanza
+    `APPOINTMENT_OUTSIDE_SLOT` (errcode `23514`). Bloquea esa franja con `FOR SHARE` mientras se inserta.
+  - Dos inserciones simultáneas que se cruzan: la segunda espera a que la primera confirme y falla (probado en
+    `backend/tests/integration/appointment-rules.test.js`). Borrar una franja no toca las citas ya agendadas.
 
 ### Ciclo de vida del evento
 
