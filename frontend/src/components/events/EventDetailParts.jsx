@@ -28,19 +28,25 @@ export function DetailCover({ event }) {
   return (
     <div
       className={cn(
-        'flex h-[230px] shrink-0 flex-col justify-between px-5 pt-[max(20px,env(safe-area-inset-top))] pb-5 md:h-[200px] md:rounded-card',
+        'relative flex h-[230px] shrink-0 flex-col justify-between overflow-hidden px-5 pt-[max(20px,env(safe-area-inset-top))] pb-5 md:h-[200px] md:rounded-card',
         COVER_BG[event.category] ?? COVER_BG.other,
       )}
     >
+      {event.coverUrl && (
+        <>
+          <img src={event.coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <span className="absolute inset-0 bg-gradient-to-t from-bg/70 via-transparent to-bg/40" aria-hidden="true" />
+        </>
+      )}
       <button
         type="button"
         onClick={goBack}
         aria-label="Volver"
-        className="focus-ring relative flex h-9 w-9 items-center justify-center rounded-[10px] bg-bg/55 text-ink after:absolute after:-inset-1 after:content-['']"
+        className="focus-ring relative z-10 flex h-9 w-9 items-center justify-center rounded-[10px] bg-bg/55 text-ink after:absolute after:-inset-1 after:content-['']"
       >
         <ChevronLeftIcon size={16} />
       </button>
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="relative z-10 flex flex-wrap items-center gap-2">
         <span
           className={cn(
             'rounded-full bg-bg/55 px-3 py-[5px] text-[11px] leading-none font-bold',

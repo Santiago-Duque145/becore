@@ -1,6 +1,7 @@
 import { forwardRef, useId } from 'react';
 import { CalendarIcon, UsersIcon } from '../../components/icons/index.js';
 import { Checkbox, Chip, Field, Input, OptionCard } from '../../components/ui/index.js';
+import { AvatarPicker } from '../../components/preferences/AvatarPicker.jsx';
 import { DemographicsFields } from '../../components/preferences/DemographicsFields.jsx';
 import {
   DAY_OPTIONS,
@@ -221,6 +222,8 @@ export function ZoneStep({ state, dispatch, titleRef }) {
           enterKeyHint="done"
         />
       </Field>
+      <p className="mt-2 mb-3 text-xs font-semibold text-ink-muted">Tu foto (opcional)</p>
+      <AvatarPicker compact />
     </>
   );
 }

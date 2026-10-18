@@ -6,6 +6,8 @@ import { LogOutIcon } from '../components/icons/index.js';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { updateMe } from '../services/profile.api.js';
 import { profileSchema } from '../lib/auth-schemas.js';
+import { useMyAvatar } from '../hooks/useMyAvatar.js';
+import { AvatarPicker } from '../components/preferences/AvatarPicker.jsx';
 import { Avatar, Button, Input, Spinner, useToast } from '../components/ui/index.js';
 import { PreferencesEditor } from '../components/preferences/PreferencesEditor.jsx';
 import { DemographicsEditor } from '../components/preferences/DemographicsEditor.jsx';
@@ -14,6 +16,7 @@ const ROLE_LABELS = { organizer: 'Organizador', participant: 'Participante' };
 
 export default function PerfilPage() {
   const { profile, setProfile, signOut } = useAuth();
+  const avatar = useMyAvatar();
   const navigate = useNavigate();
   const toast = useToast();
   const {
@@ -46,12 +49,19 @@ export default function PerfilPage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
       <header className="flex items-center gap-4 pt-1">
-        <Avatar name={profile.fullName} size="lg" decorative />
+        <Avatar name={profile.fullName} {...avatar} size="lg" decorative />
         <div className="min-w-0">
           <h1 className="truncate font-display text-xl font-semibold text-ink md:text-[22px]">{profile.fullName}</h1>
           <p className="text-xs text-ink-muted">{ROLE_LABELS[profile.role]}</p>
         </div>
       </header>
+
+      <section aria-labelledby="perfil-foto" className="rounded-card border border-line bg-panel p-5">
+        <h2 id="perfil-foto" className="mb-4 font-display text-base font-semibold text-ink">
+          Tu foto
+        </h2>
+        <AvatarPicker />
+      </section>
 
       <section aria-labelledby="perfil-datos" className="rounded-card border border-line bg-panel p-5">
         <h2 id="perfil-datos" className="mb-4 font-display text-base font-semibold text-ink">

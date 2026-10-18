@@ -10,14 +10,19 @@ function toCamel(row) {
     gender: row.gender,
     ageRange: row.age_range,
     dataConsentAt: row.data_consent_at,
+    avatarUrl: row.avatar_url,
+    avatarPreset: row.avatar_preset,
     createdAt: row.created_at,
   };
 }
 
 const PROFILE_COLUMNS =
-  'id, email, full_name, role, onboarding_completed_at, gender, age_range, data_consent_at, created_at';
+  'id, email, full_name, role, onboarding_completed_at, gender, age_range, data_consent_at, avatar_url, avatar_preset, created_at';
 
-const COLUMN_BY_FIELD = { fullName: 'full_name', gender: 'gender', ageRange: 'age_range', dataConsentAt: 'data_consent_at' };
+const COLUMN_BY_FIELD = { fullName: 'full_name', gender: 'gender', ageRange: 'age_range', dataConsentAt: 'data_consent_at',
+  avatarUrl: 'avatar_url',
+  avatarPreset: 'avatar_preset',
+};
 
 // Solo los campos presentes (undefined = no tocar; null = borrar el dato)
 function toColumns(fields) {
@@ -95,4 +100,20 @@ export async function completeOnboarding(id, role, demographics = {}) {
     .maybeSingle();
   if (error) throw error;
   return data ? toCamel(data) : null;
+}
+
+// Nombre de pila y avatar de cada confirmado (para la fila "quiénes van")
+export async function findAvatarsByIds(ids) {
+  if (!ids.length) return [];
+  const { data, error } = await supabaseAdmin
+    .from('profiles')
+    .select('id, full_name, avatar_url, avatar_preset')
+    .in('id', ids);
+  if (error) throw error;
+  return data.map((row) => ({
+    id: row.id,
+    firstName: row.full_name.trim().split(/\s+/)[0] ?? '',
+    avatarUrl: row.avatar_url,
+    avatarPreset: row.avatar_preset,
+  }));
 }

@@ -1,8 +1,12 @@
 import { z } from 'zod';
+import { IMAGE_TYPES } from '../constants/avatars.js';
 
 const CATEGORIES = ['sport', 'culture', 'recreation', 'other'];
 const isoWithZone = z.iso.datetime({ offset: true, error: 'Fecha y hora inválidas (ISO 8601 con zona)' });
 const futureDate = isoWithZone.refine((v) => new Date(v).getTime() > Date.now(), 'La fecha debe estar en el futuro');
+
+// Ruta del archivo que el organizador ya subió a Storage con la URL firmada (null = quitar la portada)
+const coverPath = z.string().trim().min(3).max(200).nullable();
 
 const fields = {
   title: z.string().trim().min(3, 'El título debe tener al menos 3 caracteres').max(100, 'El título no puede superar 100 caracteres'),
@@ -30,6 +34,7 @@ export const createEventSchema = z
     startsAt: fields.startsAt,
     endsAt: fields.endsAt.optional(),
     capacity: fields.capacity,
+    coverPath: coverPath.optional(),
     status: z.enum(['draft', 'published'], { error: 'Estado inválido' }).optional(),
   })
   .refine(endsAfterStarts, endsAfterMessage);
@@ -43,6 +48,7 @@ export const updateEventSchema = z
     startsAt: fields.startsAt,
     endsAt: fields.endsAt,
     capacity: fields.capacity,
+    coverPath,
   })
   .partial()
   .refine((d) => Object.keys(d).length > 0, 'Envía al menos un campo para actualizar')
@@ -66,4 +72,8 @@ export const recommendedQuerySchema = z.object({
 
 export const eventIdParamsSchema = z.object({
   id: z.uuid({ error: 'Identificador de evento inválido' }),
+});
+
+export const coverUploadSchema = z.object({
+  contentType: z.enum(IMAGE_TYPES, { error: 'Sube una imagen WebP, JPEG o PNG' }),
 });

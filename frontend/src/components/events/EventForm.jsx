@@ -12,6 +12,9 @@ import {
 } from '../../lib/event-schema.js';
 import { bogotaInputToIso } from '../../lib/format.js';
 import { Button, Field, Input, Select, Textarea, useToast } from '../ui/index.js';
+import { CoverUpload } from './CoverUpload.jsx';
+import { requestCoverUpload } from '../../services/events.api.js';
+import { uploadToTarget } from '../../services/storage.js';
 import { CapacityStepper, CategoryPicker } from './EventFormControls.jsx';
 import { EventCard } from './EventCard.jsx';
 
@@ -28,7 +31,7 @@ export const EMPTY_EVENT_VALUES = {
 };
 
 // Tarjeta de vista previa con lo que lleva escrito el organizador
-function previewEvent(values) {
+function previewEvent(values, coverUrl) {
   let startsAt = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString();
   try {
     if (values.startsAt) startsAt = new Date(bogotaInputToIso(values.startsAt)).toISOString();
@@ -37,6 +40,7 @@ function previewEvent(values) {
   }
   return {
     id: 'vista-previa',
+    coverUrl,
     title: values.title.trim() || 'Título del evento',
     category: values.category || 'other',
     location: values.location.trim() || 'Lugar del evento',
@@ -58,6 +62,7 @@ export function EventForm({
   onSubmit,
   onCancel,
   keepDuration = false,
+  initialCoverUrl = null,
 }) {
   const toast = useToast();
   const capacityId = useId();
@@ -74,6 +79,7 @@ export function EventForm({
     mode: 'onTouched',
   });
   const values = watch();
+  const [cover, setCover] = useState({ blob: null, previewUrl: null, removed: false });
   // Qué botón envió (borrador / publicar / guardar): se fija al hacer clic, antes del submit
   const intentRef = useRef(actions.at(-1).intent);
   const [pendingIntent, setPendingIntent] = useState(null);
@@ -86,7 +92,15 @@ export function EventForm({
     const intent = intentRef.current;
     setPendingIntent(intent);
     try {
-      await onSubmit(formValuesToPayload(formValues), intent);
+      const payload = formValuesToPayload(formValues);
+      // La imagen se sube al enviar (no al elegirla) para no dejar archivos huérfanos si se cancela
+      if (cover.blob) {
+        const { data: target } = await requestCoverUpload(cover.blob.type);
+        payload.coverPath = await uploadToTarget(target, cover.blob);
+      } else if (cover.removed) {
+        payload.coverPath = null;
+      }
+      await onSubmit(payload, intent);
     } catch (error) {
       const fieldErrors = (error.details ?? []).filter((d) => FIELDS.includes(d.field));
       fieldErrors.forEach((d) =>
@@ -173,6 +187,8 @@ export function EventForm({
           />
         </Field>
 
+        <CoverUpload value={cover} existingUrl={initialCoverUrl} onChange={setCover} />
+
         <Field
           label="Descripción (opcional)"
           hint={`${descriptionLength} / ${DESCRIPTION_MAX}`}
@@ -211,7 +227,7 @@ export function EventForm({
         <p className="mb-2.5 text-xs font-semibold text-ink-muted">
           Así lo verán los participantes
         </p>
-        <EventCard event={previewEvent(values)} preview />
+        <EventCard event={previewEvent(values, cover.previewUrl ?? (cover.removed ? null : initialCoverUrl))} preview />
       </aside>
     </div>
   );

@@ -4,6 +4,7 @@ import { Badge, CapacityBar, Skeleton } from '../ui/index.js';
 import { cn } from '../../lib/cn.js';
 import { formatDate } from '../../lib/format.js';
 import { AttendanceButton } from './AttendanceButton.jsx';
+import { AvatarStack } from './AvatarStack.jsx';
 import { RatingBadge } from './RatingBadge.jsx';
 import { EventCover } from './EventCover.jsx';
 import { StatusBadges } from './EventBadges.jsx';
@@ -36,6 +37,9 @@ export function EventCard({ event, reason, className, preview = false }) {
             <MapPinIcon size={12} className="shrink-0 text-ink-faint" />
             <span className="truncate">{event.location}</span>
           </p>
+          {event.confirmedPreview?.length > 0 && (
+            <AvatarStack people={event.confirmedPreview} total={event.confirmedCount} />
+          )}
           {(going || event.status !== 'published' || event.isFull) && (
             <div className="flex flex-wrap items-center gap-1.5">
               <StatusBadges event={event} />

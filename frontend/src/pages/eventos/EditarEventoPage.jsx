@@ -49,6 +49,7 @@ export default function EditarEventoPage() {
         initialValues={eventToFormValues(event)}
         actions={isDraft ? DRAFT_ACTIONS : PUBLISHED_ACTIONS}
         keepDuration={Boolean(event.endsAt)}
+        initialCoverUrl={event.coverUrl}
         onSubmit={handleSubmit}
         onCancel={() => navigate(`/eventos/${id}`)}
       />

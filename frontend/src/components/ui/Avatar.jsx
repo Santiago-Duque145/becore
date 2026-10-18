@@ -1,5 +1,6 @@
 import { forwardRef } from 'react';
 import { cn } from '../../lib/cn.js';
+import { PresetAvatarSvg } from '../../assets/avatars/index.jsx';
 
 const SIZES = {
   sm: 'h-6 w-6 text-[11px]',
@@ -15,9 +16,9 @@ export function initials(name = '') {
     .join('');
 }
 
-// Foto redonda o, si no hay, iniciales sobre bg-field. decorative=true cuando el nombre ya se lee al lado.
+// Foto redonda, avatar predefinido de la marca (preset) o, si no hay, iniciales sobre bg-field. decorative=true cuando el nombre ya se lee al lado.
 export const Avatar = forwardRef(function Avatar(
-  { name = '', src, size = 'md', decorative = false, className, ...props },
+  { name = '', src, preset, size = 'md', decorative = false, className, ...props },
   ref,
 ) {
   const a11y = decorative ? { 'aria-hidden': true } : { role: 'img', 'aria-label': name };
@@ -32,7 +33,13 @@ export const Avatar = forwardRef(function Avatar(
       {...a11y}
       {...props}
     >
-      {src ? <img src={src} alt="" className="h-full w-full object-cover" /> : initials(name)}
+      {src ? (
+        <img src={src} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+      ) : preset ? (
+        <PresetAvatarSvg id={preset} className="h-full w-full" />
+      ) : (
+        initials(name)
+      )}
     </span>
   );
 });

@@ -110,7 +110,8 @@ export const supabase = createClient(
 
 Solo se usa para: `auth.signUp`, `auth.signInWithPassword`, `auth.signInWithOAuth` (Google),
 `auth.resetPasswordForEmail`, `auth.updateUser` (contraseña), `auth.initialize` (leer errores que vuelven en la URL),
-`auth.signOut`, `auth.getSession`, `auth.onAuthStateChange` y `channel(...)` de Realtime. Todo eso vive en `AuthContext`. **Prohibido** `supabase.from(...)` en el frontend.
+`auth.signOut`, `auth.getSession`, `auth.onAuthStateChange`, `channel(...)` de Realtime y `storage.from(bucket).uploadToSignedUrl(...)`
+(solo en `services/storage.js`, con el token de un solo uso que entrega la API para avatares y portadas). Todo eso vive en `AuthContext`. **Prohibido** `supabase.from(...)` en el frontend.
 
 ### 4.2 Axios — `src/lib/api.js`
 

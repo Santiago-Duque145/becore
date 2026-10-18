@@ -1,5 +1,8 @@
 import * as eventsRepo from '../repositories/events.repository.js';
-import { findUserAttendances, listConfirmedUserIds } from '../repositories/attendance.repository.js';
+import { findUserAttendances, listConfirmedPreviewIds, listConfirmedUserIds } from '../repositories/attendance.repository.js';
+import { findAvatarsByIds } from '../repositories/profiles.repository.js';
+import { COVER_BUCKET } from '../constants/avatars.js';
+import * as storage from './storage.service.js';
 import { notify } from './notifications.service.js';
 import { buildContent } from '../mail/templates.js';
 import { AppError } from '../utils/app-error.js';
@@ -30,7 +33,42 @@ export async function toEventsWithAttendance(user, events) {
     events.map((e) => e.id),
   );
   const byEvent = new Map(attendances.map((a) => [a.eventId, a]));
-  return events.map((e) => toEvent(e, byEvent.get(e.id)));
+  const previews = await confirmedPreviews(events);
+  return events.map((e) => ({ ...toEvent(e, byEvent.get(e.id)), confirmedPreview: previews[e.id] ?? [] }));
+}
+
+const PREVIEW_SIZE = 3;
+
+// "Quiénes van": hasta 3 confirmados con nombre de pila y avatar, nada más
+async function confirmedPreviews(events) {
+  const withPeople = events.filter((e) => e.confirmedCount > 0);
+  const idsByEvent = (await listConfirmedPreviewIds(withPeople.map((e) => e.id), PREVIEW_SIZE)) ?? {};
+  const userIds = [...new Set(Object.values(idsByEvent).flat())];
+  if (!userIds.length) return {};
+  const profiles = await findAvatarsByIds(userIds);
+  const byId = new Map(profiles.map((p) => [p.id, p]));
+  return Object.fromEntries(
+    Object.entries(idsByEvent).map(([eventId, ids]) => [
+      eventId,
+      ids.filter((id) => byId.has(id)).map((id) => ({
+        name: byId.get(id).firstName,
+        avatarUrl: byId.get(id).avatarUrl,
+        avatarPreset: byId.get(id).avatarPreset,
+      })),
+    ]),
+  );
+}
+
+// El organizador sube la imagen a Storage con una URL firmada y envía aquí solo la ruta confirmada
+export const createCoverUpload = (user, contentType) =>
+  storage.createUploadTarget(COVER_BUCKET, user.id, contentType);
+
+// coverPath: undefined = no tocar, null = quitar la portada, string = ruta subida por este organizador
+function coverPatch(user, coverPath) {
+  if (coverPath === undefined) return {};
+  if (coverPath === null) return { coverUrl: null };
+  storage.assertOwnPath(user.id, coverPath);
+  return { coverUrl: storage.publicUrl(COVER_BUCKET, coverPath) };
 }
 
 // Fechas YYYY-MM-DD interpretadas en America/Bogota (UTC-5, sin horario de verano)
@@ -76,7 +114,12 @@ async function notifyConfirmed(event, type) {
 }
 
 export async function createEvent(user, input) {
-  const event = await eventsRepo.insertEvent(user.id, { ...input, status: input.status ?? 'draft' });
+  const { coverPath, ...fields } = input;
+  const event = await eventsRepo.insertEvent(user.id, {
+    ...fields,
+    ...coverPatch(user, coverPath),
+    status: fields.status ?? 'draft',
+  });
   return toEvent(event, null);
 }
 
@@ -104,7 +147,9 @@ export async function getEvent(user, id) {
   return result;
 }
 
-export async function updateEvent(user, id, patch) {
+export async function updateEvent(user, id, input) {
+  const { coverPath, ...fields } = input;
+  const patch = { ...fields, ...coverPatch(user, coverPath) };
   const event = await findOwnedActiveEvent(user, id);
 
   if (patch.capacity !== undefined && patch.capacity < event.confirmedCount) {

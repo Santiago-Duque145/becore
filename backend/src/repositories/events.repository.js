@@ -2,7 +2,7 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { translateDbError } from '../utils/db-errors.js';
 
 const COLUMNS =
-  'id, title, description, category, location, starts_at, ends_at, capacity, confirmed_count, status, cancelled_at, finished_at, created_at, updated_at, organizer_id, organizer:profiles!organizer_id(id, full_name)';
+  'id, title, description, category, location, starts_at, ends_at, capacity, confirmed_count, status, cancelled_at, finished_at, cover_url, created_at, updated_at, organizer_id, organizer:profiles!organizer_id(id, full_name)';
 
 const COLUMN_MAP = {
   title: 'title',
@@ -13,6 +13,7 @@ const COLUMN_MAP = {
   endsAt: 'ends_at',
   capacity: 'capacity',
   status: 'status',
+  coverUrl: 'cover_url',
 };
 
 function toCamel(row) {
@@ -24,6 +25,7 @@ function toCamel(row) {
     location: row.location,
     startsAt: row.starts_at,
     finishedAt: row.finished_at,
+    coverUrl: row.cover_url,
     endsAt: row.ends_at,
     capacity: row.capacity,
     confirmedCount: row.confirmed_count,

@@ -1,4 +1,5 @@
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router';
+import { useMyAvatar } from '../hooks/useMyAvatar.js';
 import { Avatar, BrandMark, Input } from '../components/ui/index.js';
 import { SearchIcon } from '../components/icons/index.js';
 import { cn } from '../lib/cn.js';
@@ -42,6 +43,7 @@ function TopBarSearch() {
 
 // Barra superior del participante (desktop-descubre.html: padding 20×40, enlaces 13.5 px con gap 30)
 export function DesktopTopBar({ profile, hasUnread = false }) {
+  const avatar = useMyAvatar();
   return (
     <header className="pt-safe sticky top-0 z-40 border-b border-line bg-bg/95 backdrop-blur-md">
       <div className="flex items-center justify-between px-10 py-5">
@@ -79,7 +81,7 @@ export function DesktopTopBar({ profile, hasUnread = false }) {
         <div className="flex items-center gap-[18px]">
           <TopBarSearch />
           <Link to="/perfil" aria-label="Mi perfil" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full">
-            <Avatar name={profile?.fullName} decorative />
+            <Avatar name={profile?.fullName} {...avatar} decorative />
           </Link>
         </div>
       </div>

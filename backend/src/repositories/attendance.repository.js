@@ -42,6 +42,24 @@ export async function listConfirmedUserIds(eventId) {
   return data.map((row) => row.user_id);
 }
 
+// Hasta `limit` confirmados por evento, los primeros en confirmar: { [eventId]: userId[] }
+export async function listConfirmedPreviewIds(eventIds, limit) {
+  if (!eventIds.length) return {};
+  const { data, error } = await supabaseAdmin
+    .from('attendances')
+    .select('event_id, user_id')
+    .in('event_id', eventIds)
+    .eq('status', 'confirmed')
+    .order('confirmed_at', { ascending: true });
+  if (error) throw translateDbError(error) ?? error;
+  const byEvent = {};
+  for (const { event_id: eventId, user_id: userId } of data) {
+    byEvent[eventId] ??= [];
+    if (byEvent[eventId].length < limit) byEvent[eventId].push(userId);
+  }
+  return byEvent;
+}
+
 // Quienes hicieron check-in: los únicos que pueden calificar
 export async function listCheckedInUserIds(eventId) {
   const { data, error } = await supabaseAdmin

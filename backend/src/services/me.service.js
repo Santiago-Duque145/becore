@@ -1,3 +1,5 @@
+import { AVATAR_BUCKET } from '../constants/avatars.js';
+import * as storage from './storage.service.js';
 import { INTERESTS } from '../constants/preferences.js';
 import {
   completeOnboarding as markOnboardingCompleted,
@@ -86,3 +88,25 @@ export async function completeOnboarding(user, { role, gender, ageRange, consent
 export async function updatePreferences(user, answers) {
   return toMe(user, await upsertPreferences(user.id, toPreferencesRow(answers)));
 }
+
+// ---- Avatar (P3): foto subida con URL firmada o uno de los 12 avatares de la marca ----
+
+export const createAvatarUpload = (user, contentType) =>
+  storage.createUploadTarget(AVATAR_BUCKET, user.id, contentType);
+
+async function saveAvatar(user, fields) {
+  const updated = await updateProfile(user.id, fields);
+  if (!updated) throw new AppError(404, 'NOT_FOUND', 'No encontramos lo que buscas');
+  return getMe(updated);
+}
+
+// La foto subida manda sobre el avatar predefinido: ambos pueden coexistir, se muestra primero la foto
+export async function setAvatarPhoto(user, path) {
+  storage.assertOwnPath(user.id, path);
+  return saveAvatar(user, { avatarUrl: storage.publicUrl(AVATAR_BUCKET, path) });
+}
+
+// Elegir un avatar predefinido reemplaza la foto subida (es la elección explícita más reciente)
+export const setAvatarPreset = (user, preset) => saveAvatar(user, { avatarPreset: preset, avatarUrl: null });
+
+export const clearAvatar = (user) => saveAvatar(user, { avatarPreset: null, avatarUrl: null });

@@ -8,6 +8,7 @@ vi.mock('../src/repositories/events.repository.js', () => ({
 }));
 vi.mock('../src/repositories/attendance.repository.js', () => ({
   findUserAttendances: vi.fn(),
+  listConfirmedPreviewIds: vi.fn(),
   listConfirmedUserIds: vi.fn().mockResolvedValue([]),
 }));
 vi.mock('../src/services/notifications.service.js', () => ({

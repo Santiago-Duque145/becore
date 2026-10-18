@@ -9,3 +9,6 @@ export const publishEvent = (id) => api.post(`/events/${id}/publish`);
 
 // "Para ti": Event[] con reason, por afinidad con las preferencias (auth-onboarding §8)
 export const listRecommendedEvents = (limit = 6) => api.get('/events/recommended', { params: { limit } });
+
+// Portada (P3): URL firmada para que el organizador suba la imagen; la ruta se envía luego como coverPath
+export const requestCoverUpload = (contentType) => api.post('/events/cover-upload-url', { contentType });

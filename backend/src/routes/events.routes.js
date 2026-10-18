@@ -8,6 +8,7 @@ import {
   listEventsQuerySchema,
   recommendedQuerySchema,
   eventIdParamsSchema,
+  coverUploadSchema,
 } from '../schemas/events.schemas.js';
 import * as controller from '../controllers/events.controller.js';
 
@@ -19,6 +20,7 @@ router.get('/events', requireAuth, validate({ query: listEventsQuerySchema }), c
 // Antes de /events/:id para que "recommended" no se valide como id
 router.get('/events/recommended', requireAuth, validate({ query: recommendedQuerySchema }), controller.listRecommended);
 router.post('/events', ...organizerOnly, validate({ body: createEventSchema }), controller.createEvent);
+router.post('/events/cover-upload-url', ...organizerOnly, validate({ body: coverUploadSchema }), controller.createCoverUpload);
 router.get('/events/:id', requireAuth, validate(byId), controller.getEvent);
 router.patch('/events/:id', ...organizerOnly, validate({ ...byId, body: updateEventSchema }), controller.updateEvent);
 router.post('/events/:id/cancel', ...organizerOnly, validate(byId), controller.cancelEvent);

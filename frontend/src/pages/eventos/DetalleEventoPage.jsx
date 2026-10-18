@@ -6,6 +6,7 @@ import { useRealtimeEvent } from '../../hooks/useRealtimeEvent.js';
 import { formatLongDay, formatTime } from '../../lib/format.js';
 import { AttendanceButton } from '../../components/events/AttendanceButton.jsx';
 import { DetailCover, DetailSkeleton, InfoRow } from '../../components/events/EventDetailParts.jsx';
+import { AvatarStack } from '../../components/events/AvatarStack.jsx';
 import { RateBanner } from '../../components/events/RateBanner.jsx';
 import { RatingBadge } from '../../components/events/RatingBadge.jsx';
 import { OwnerActions } from '../../components/events/OwnerActions.jsx';
@@ -82,6 +83,7 @@ export default function DetalleEventoPage() {
         )}
 
         <p className="mb-[18px] flex items-center gap-3 text-[11.5px] text-ink-muted">
+          <AvatarStack people={event.confirmedPreview} total={event.confirmedCount} />
           {event.confirmedCount === 1 ? '1 persona confirmada' : `${event.confirmedCount} personas confirmadas`}
           <RatingBadge event={event} />
         </p>

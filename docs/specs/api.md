@@ -202,6 +202,23 @@ Solo califica un participante con `checked_in = true` en un evento `finished`, d
   `/eventos/:id/calificar`) a quienes hicieron check-in. Una sola vez por usuario y evento.
 - `Event` incluye ahora `finishedAt` (ISO o `null`).
 
+### Avatares y portadas (P3)
+
+Las imágenes se suben a Supabase Storage con **URL firmada**: la API valida permisos y crea el destino; el
+navegador comprime (WebP, máx. 1024 px, originales ≤ 8 MB) y sube directo con el token; luego confirma la ruta.
+La carpeta de cada archivo es el id de quien lo sube; una ruta ajena responde 403 `FORBIDDEN`.
+
+- `POST /me/avatar/upload-url` → 201 `{ data: { bucket, path, token } }`. Body: `{ contentType: image/webp|jpeg|png }`.
+- `PUT /me/avatar` `{ path }` → guarda la URL pública como `avatarUrl`. Responde como `GET /me`.
+- `PUT /me/avatar-preset` `{ preset }` → uno de los 12 ids (`goleador`, `corredora`, `ciclista`, `nadador`, `bailarina`,
+  `guitarrista`, `pintor`, `fotografa`, `lectora`, `jardinero`, `ajedrecista`, `actriz`). Reemplaza la foto subida.
+- `DELETE /me/avatar` → quita foto y avatar elegido.
+- `POST /events/cover-upload-url` (organizador) → igual que el de avatar, en el bucket `event-covers`.
+- `POST/PATCH /events` aceptan `coverPath` (ruta subida por el propio organizador; `null` en PATCH quita la portada).
+- `Profile` suma `avatarUrl` y `avatarPreset`. `Event` suma `coverUrl` y `confirmedPreview: [{ name, avatarUrl, avatarPreset }]`
+  (hasta 3 confirmados, solo nombre de pila) en listas, detalle y recomendados.
+- Prioridad al mostrar: foto subida → avatar elegido → foto de Google (`user_metadata`) → iniciales.
+
 ### Paneles (RF-18, RF-19)
 
 **`GET /dashboard/organizer`** (org) → eventos del organizador con `starts_at` desde hace 30 días en adelante:
