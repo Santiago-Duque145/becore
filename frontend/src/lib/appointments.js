@@ -1,6 +1,6 @@
 // Reglas de presentación de citas y disponibilidad (F2-1). Puras para poder probarlas.
-// La API no valida cruces entre bloques ni que la cita caiga en un bloque (api.md, RF-15): estas
-// comprobaciones son ayudas de la interfaz, no reglas de negocio.
+// Las comprobaciones de cruces y de franja son ayudas de la interfaz para avisar antes de enviar:
+// la regla la impone la base (SLOT_OVERLAP, APPOINTMENT_OUTSIDE_SLOT, APPOINTMENT_OVERLAP, api.md §2).
 import { bogotaInputToIso, formatLongDay, formatTime, isoToBogotaInput } from './format.js';
 
 const QUARTER_MS = 15 * 60 * 1000;

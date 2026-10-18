@@ -10,7 +10,8 @@ import { formatTime } from '../lib/format.js';
 import { useAvailability, useCreateAvailability, useDeleteAvailability } from '../hooks/useAppointments.js';
 import { Button, EmptyState, ErrorState, Input, Modal, Skeleton, useToast } from '../components/ui/index.js';
 
-// La API no valida cruces entre bloques (api.md, RF-15): se avisa aquí con los bloques ya cargados
+// Se avisa antes de enviar con las franjas ya cargadas; la API también lo impide (409 SLOT_OVERLAP,
+// p. ej. si otra pestaña agregó una franja) y su mensaje se muestra en el mismo aviso
 function SlotForm({ slots }) {
   const toast = useToast();
   const createSlot = useCreateAvailability();
@@ -45,7 +46,8 @@ function SlotForm({ slots }) {
       },
       onError: (err) => {
         const known = (err.details ?? []).filter((d) => d.field === 'startsAt' || d.field === 'endsAt');
-        if (known.length) setOverlapMessage(known.map((d) => d.message).join(' · '));
+        if (err.code === 'SLOT_OVERLAP') setOverlapMessage(err.message);
+        else if (known.length) setOverlapMessage(known.map((d) => d.message).join(' · '));
         else toast.error(err.message);
       },
     });

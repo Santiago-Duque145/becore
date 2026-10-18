@@ -11,6 +11,8 @@ import { useAvailability, useCreateAppointment } from '../hooks/useAppointments.
 import { Button, EmptyState, ErrorState, Input, LinkButton, OptionCard, Skeleton, Textarea, useToast } from '../components/ui/index.js';
 
 const API_FIELDS = ['title', 'notes', 'location', 'startsAt', 'endsAt'];
+// Reglas de la API sobre el horario (409): el mensaje va debajo del campo Inicio
+const SCHEDULE_CONFLICTS = ['APPOINTMENT_OUTSIDE_SLOT', 'APPOINTMENT_OVERLAP'];
 
 const slotDay = new Intl.DateTimeFormat('es-CO', { weekday: 'long', day: 'numeric', month: 'short', timeZone: 'America/Bogota' });
 const slotTitle = (slot) => {
@@ -104,6 +106,7 @@ function AppointmentForm({ slots }) {
           navigate('/citas');
         },
         onError: (err) => {
+          if (SCHEDULE_CONFLICTS.includes(err.code)) return setError('startsAt', { message: err.message }, { shouldFocus: true });
           const details = err.details ?? [];
           details.filter((d) => API_FIELDS.includes(d.field)).forEach((d) => setError(d.field, { message: d.message }));
           const inviteeIssue = details.find((d) => d.field.startsWith('participantIds'));
