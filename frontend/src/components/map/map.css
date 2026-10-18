@@ -10,6 +10,19 @@
   color: var(--color-accent-soft);
 }
 
+/* Estilo oscuro: las teselas de OpenStreetMap son claras, así que se invierten y se les devuelve el tono
+   (hue-rotate) para que agua, parques y calles sigan reconociéndose, y se ajustan al azul de la marca.
+   El filtro va SOLO en la capa de teselas: los pines, popups y controles viven en otros paneles y no se tocan. */
+.leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.78) contrast(0.92) saturate(0.55);
+}
+
+/* Evita las líneas finas entre teselas (costuras) que aparecen con filtros en pantallas de alta densidad */
+.leaflet-tile {
+  outline: 1px solid transparent;
+  image-rendering: auto;
+}
+
 /* Atribución obligatoria de las teselas: siempre visible y legible */
 .leaflet-control-attribution {
   background: color-mix(in srgb, var(--color-bg) 78%, transparent) !important;

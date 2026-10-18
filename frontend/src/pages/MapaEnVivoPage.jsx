@@ -5,7 +5,7 @@ import { useRealtimeOrganizerEvents } from '../hooks/useRealtimeOrganizerEvents.
 import { SearchIcon } from '../components/icons/index.js';
 import { CapacityBar, Chip, EmptyState, ErrorState, Input, LinkButton, Skeleton } from '../components/ui/index.js';
 import { formatDate } from '../lib/format.js';
-import { hasCoordinates } from '../lib/map.js';
+import { hasCoordinates, isActiveEvent } from '../lib/map.js';
 import { CATEGORY_FILTERS, matchesSearch } from './descubre/descubre-filters.js';
 
 // Leaflet pesa: el mapa se descarga solo al entrar en esta página
@@ -32,7 +32,7 @@ export default function MapaEnVivoPage() {
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   // Activos: publicados o en curso (los borradores y cancelados no están en el mapa)
-  const active = (data?.pages.flatMap((page) => page.data) ?? []).filter((e) => e.status === 'published' || e.status === 'in_progress');
+  const active = (data?.pages.flatMap((page) => page.data) ?? []).filter(isActiveEvent);
   const events = active.filter((e) => (!category || e.category === category) && matchesSearch(e, search));
   const selected = events.find((e) => e.id === selectedId);
   const unlocated = events.filter((e) => !hasCoordinates(e)).length;

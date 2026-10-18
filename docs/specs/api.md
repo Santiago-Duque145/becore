@@ -233,6 +233,9 @@ La carpeta de cada archivo es el id de quien lo sube; una ruta ajena responde 40
 - `Event` suma `latitude` y `longitude` (números o `null`). `POST /events` y `PATCH /events/:id` los aceptan juntos
   (latitud −90..90, longitud −180..180); una sola de las dos responde 400. En `PATCH`, `null` en las dos quita la ubicación.
   La base lo exige con checks (`events_coordinates_together`, rangos).
+- **Ubicación automática:** si `POST /events` llega sin `latitude`/`longitude`, o `PATCH /events/:id` edita un evento que aún
+  no tiene ubicación y no trae coordenadas, el backend geocodifica el texto de `location` (versiones cada vez más cortas, máx.
+  4 intentos). Si no logra ubicarlo, guarda el evento igual. `latitude: null, longitude: null` explícitos significan "sin ubicación".
 - `GET /geocode?q=…` (organizador; `q` de 3 a 120 caracteres) → `{ data: [{ label, lat, lng }] }` (máx. 5). Busca en
   Nominatim (OpenStreetMap) **desde el backend**: limitada a Colombia y sesgada hacia Medellín, máximo 1 petición por
   segundo (cola), `User-Agent` con el nombre del proyecto y caché en memoria de 24 h. Si Nominatim falla: 502 `GEOCODE_UNAVAILABLE`.

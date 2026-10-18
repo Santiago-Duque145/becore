@@ -7,16 +7,15 @@ export const MEDELLIN = { lat: 6.2442, lng: -75.5812 };
 export const DEFAULT_ZOOM = 12;
 export const PIN_ZOOM = 15;
 
-// Teselas: estilo oscuro de CARTO (libre para uso no comercial). VITE_MAP_TILES_URL permite cambiarlas.
-export const DEFAULT_TILES_URL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-export const TILES_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+// Teselas: OpenStreetMap estándar (libre, sin clave). Es la ÚNICA constante de teselas de la app: todos los mapas
+// (Descubre, detalle, selector de ubicación y Mapa en vivo) pasan por MapBase. El estilo oscuro NO viene de las
+// teselas: lo da un filtro CSS solo sobre la capa de teselas (map.css, .leaflet-tile-pane), no sobre pines ni popups.
+export const TILES_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+export const TILES_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+export const TILES_MAX_ZOOM = 19;
 
-// Respaldo si las teselas oscuras fallan: el mapa estándar de OpenStreetMap
-export const FALLBACK_TILES_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-export const FALLBACK_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
-
-export const tilesUrl = (envValue) => (envValue && envValue.trim() ? envValue.trim() : DEFAULT_TILES_URL);
+// Aviso cuando el backend no logró ubicar el lugar con el texto (el evento se guardó igual)
+export const LOCATION_MISSING_NOTICE = 'No pudimos ubicar el lugar en el mapa. Puedes marcarlo editando el evento.';
 
 // Color del pin por categoría: turquesa deporte, amarillo cultura, verde recreación, gris otros (tokens del tema)
 export const PIN_COLORS = {
@@ -26,6 +25,9 @@ export const PIN_COLORS = {
   other: 'var(--color-ink-muted)',
 };
 export const pinColor = (category) => PIN_COLORS[category] ?? PIN_COLORS.other;
+
+// "Activo" en el Mapa en vivo: publicado o en curso. Borradores, cancelados y finalizados no se muestran.
+export const isActiveEvent = (event) => event?.status === 'published' || event?.status === 'in_progress';
 
 // ¿El evento tiene ubicación marcada en el mapa?
 export function hasCoordinates(event) {

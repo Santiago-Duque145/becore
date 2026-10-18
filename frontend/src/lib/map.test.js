@@ -1,13 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import {
-  DEFAULT_TILES_URL,
+  TILES_ATTRIBUTION,
+  TILES_MAX_ZOOM,
+  TILES_URL,
   boundsOf,
   directionsLinks,
   hasCoordinates,
+  isActiveEvent,
   isValidPoint,
   pinColor,
   sortByDistance,
-  tilesUrl,
   withDistance,
 } from './map.js';
 
@@ -15,10 +17,32 @@ const medellin = { lat: 6.2442, lng: -75.5812 };
 const ev = (id, latitude, longitude, extra = {}) => ({ id, latitude, longitude, ...extra });
 
 describe('teselas', () => {
-  it('usa las de CARTO por defecto y respeta VITE_MAP_TILES_URL', () => {
-    expect(tilesUrl(undefined)).toBe(DEFAULT_TILES_URL);
-    expect(tilesUrl('   ')).toBe(DEFAULT_TILES_URL);
-    expect(tilesUrl(' https://x.test/{z}/{x}/{y}.png ')).toBe('https://x.test/{z}/{x}/{y}.png');
+  it('son las de OpenStreetMap estándar, sin clave, en una sola constante', () => {
+    expect(TILES_URL).toBe('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+    expect(TILES_URL).not.toMatch(/carto|key|apikey/i);
+    expect(TILES_MAX_ZOOM).toBe(19);
+  });
+  it('llevan la atribución obligatoria "© OpenStreetMap contributors"', () => {
+    expect(TILES_ATTRIBUTION).toContain('&copy;');
+    expect(TILES_ATTRIBUTION).toContain('OpenStreetMap</a> contributors');
+    expect(TILES_ATTRIBUTION).toContain('openstreetmap.org/copyright');
+  });
+  it('ningún componente define otra URL de teselas ni usa variables de entorno para ello', async () => {
+    const { readdir, readFile } = await import('node:fs/promises');
+    const dir = new URL('../components/map/', import.meta.url);
+    for (const file of await readdir(dir)) {
+      if (!/\.(jsx?|css)$/.test(file)) continue;
+      const code = await readFile(new URL(file, dir), 'utf8');
+      expect(code, file).not.toMatch(/https?:\/\/[^'"\s]*\{z\}/);
+      expect(code, file).not.toMatch(/VITE_MAP_TILES_URL/);
+    }
+  });
+  it('el oscurecido es un filtro CSS solo en la capa de teselas', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const css = await readFile(new URL('../components/map/map.css', import.meta.url), 'utf8');
+    expect(css).toMatch(/\.leaflet-tile-pane\s*\{[^}]*filter:\s*invert\(1\)/);
+    // ningún otro selector (pines, popups, controles) lleva invert()
+    expect(css.match(/invert\(/g)).toHaveLength(1);
   });
 });
 
@@ -89,4 +113,39 @@ describe('boundsOf', () => {
   it('encuadra los puntos válidos', () =>
     expect(boundsOf([{ lat: 6.2, lng: -75.6 }, { lat: 6.3, lng: -75.5 }, null])).toEqual([[6.2, -75.6], [6.3, -75.5]]));
   it('sin puntos devuelve null', () => expect(boundsOf([])).toBeNull());
+});
+
+describe('Mapa en vivo: eventos activos', () => {
+  // Estados reales de la base de pruebas: santiago@becore.test solo tiene cancelados y finalizados
+  const states = ['draft', 'published', 'in_progress', 'finished', 'cancelled'];
+
+  it('solo publicados y en curso son activos', () => {
+    expect(states.filter((status) => isActiveEvent({ status }))).toEqual(['published', 'in_progress']);
+  });
+
+  it('un organizador con solo eventos cancelados y finalizados no tiene eventos activos', () => {
+    const events = [{ status: 'cancelled' }, { status: 'cancelled' }, { status: 'finished' }, { status: 'finished' }];
+    expect(events.filter(isActiveEvent)).toEqual([]);
+  });
+
+  it('un evento activo sin coordenadas aparece en la lista pero no como pin', () => {
+    const avengers = { status: 'published', latitude: null, longitude: null };
+    expect(isActiveEvent(avengers)).toBe(true);
+    expect(hasCoordinates(avengers)).toBe(false);
+  });
+
+  it('no falla con datos vacíos', () => expect(isActiveEvent(undefined)).toBe(false));
+});
+
+describe('Cerca de mí con eventos sin ubicación', () => {
+  const located = (id, latitude, longitude) => ({ id, latitude, longitude });
+  const user = { lat: 6.1762, lng: -75.5917 }; // cerca de Viva Envigado
+
+  it('el evento sin coordenadas no muestra distancia y va al final con "Más cerca primero"', () => {
+    const events = [located('sin', null, null), located('lejos', 6.29, -75.5428), located('viva', 6.1762915, -75.5916923)];
+    const sorted = sortByDistance(withDistance(events, user));
+    expect(sorted.map((e) => e.id)).toEqual(['viva', 'lejos', 'sin']);
+    expect(sorted[2]).not.toHaveProperty('distanceKm');
+    expect(sorted[0].distanceKm).toBeLessThan(0.1);
+  });
 });

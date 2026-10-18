@@ -129,7 +129,7 @@ export default function LocationPicker({ value, onChange }) {
 
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs text-ink-muted">
-          {value ? `Pin en ${value.lat.toFixed(5)}, ${value.lng.toFixed(5)}` : 'Toca el mapa para poner el pin. Si no lo marcas, solo se muestra el texto del lugar.'}
+          {value ? `Pin en ${value.lat.toFixed(5)}, ${value.lng.toFixed(5)}` : 'Toca el mapa para poner el pin. Si no lo marcas, ubicamos el lugar con el texto que escribiste.'}
         </p>
         {value && (
           <Button variant="ghost" size="sm" onClick={() => onChange(null)}>

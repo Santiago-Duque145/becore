@@ -4,16 +4,7 @@ import { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import { useMediaQuery } from '../../hooks/useMediaQuery.js';
 import { cn } from '../../lib/cn.js';
-import {
-  DEFAULT_ZOOM,
-  FALLBACK_ATTRIBUTION,
-  FALLBACK_TILES_URL,
-  MEDELLIN,
-  TILES_ATTRIBUTION,
-  tilesUrl,
-} from '../../lib/map.js';
-
-const TILE_ERRORS_BEFORE_FALLBACK = 4;
+import { DEFAULT_ZOOM, MEDELLIN, TILES_ATTRIBUTION, TILES_MAX_ZOOM, TILES_URL } from '../../lib/map.js';
 
 // Con el dedo, un mapa grande se traga el scroll de la página. En pantallas táctiles el mapa empieza "bloqueado"
 // (arrastrar desplaza la página) y un botón lo activa. La rueda del mouse nunca hace zoom: están los botones +/-.
@@ -26,14 +17,10 @@ function InteractionLock({ locked }) {
   return null;
 }
 
-// Mapa base: teselas oscuras (VITE_MAP_TILES_URL) con respaldo al mapa estándar de OpenStreetMap si fallan,
-// y la atribución obligatoria siempre visible.
+// Mapa base: teselas de OpenStreetMap (oscurecidas con CSS en map.css) y la atribución obligatoria siempre visible.
 export function MapBase({ center = MEDELLIN, zoom = DEFAULT_ZOOM, className, label, lockOnTouch = true, children }) {
   const coarse = useMediaQuery('(pointer: coarse)');
   const [unlocked, setUnlocked] = useState(false);
-  const [tileErrors, setTileErrors] = useState(0);
-  const configured = tilesUrl(import.meta.env.VITE_MAP_TILES_URL);
-  const useFallback = tileErrors >= TILE_ERRORS_BEFORE_FALLBACK && configured !== FALLBACK_TILES_URL;
   const locked = coarse && lockOnTouch && !unlocked;
 
   return (
@@ -44,12 +31,7 @@ export function MapBase({ center = MEDELLIN, zoom = DEFAULT_ZOOM, className, lab
         scrollWheelZoom={false}
         className="h-full w-full"
       >
-        <TileLayer
-          key={useFallback ? 'osm' : 'main'}
-          url={useFallback ? FALLBACK_TILES_URL : configured}
-          attribution={useFallback ? FALLBACK_ATTRIBUTION : TILES_ATTRIBUTION}
-          eventHandlers={{ tileerror: () => setTileErrors((n) => n + 1) }}
-        />
+        <TileLayer url={TILES_URL} attribution={TILES_ATTRIBUTION} maxZoom={TILES_MAX_ZOOM} />
         <InteractionLock locked={locked} />
         {children}
       </MapContainer>

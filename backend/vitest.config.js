@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     passWithNoTests: true,
+    setupFiles: ['./tests/setup.js'],
     exclude: ['tests/integration/**', 'node_modules/**'],
     env: {
       NODE_ENV: 'test',
