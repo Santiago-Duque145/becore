@@ -119,3 +119,18 @@ export const SparklesIcon = createIcon('SparklesIcon', [
 ]);
 
 export const MinusIcon = createIcon('MinusIcon', [['path', { d: 'M5 12h14' }]]);
+
+// M1: compartir la app con QR y ubicación del dispositivo
+export const QrCodeIcon = createIcon('QrCodeIcon', [
+  ['rect', { x: 3, y: 3, width: 7, height: 7, rx: 1 }],
+  ['rect', { x: 14, y: 3, width: 7, height: 7, rx: 1 }],
+  ['rect', { x: 3, y: 14, width: 7, height: 7, rx: 1 }],
+  ['path', { d: 'M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3' }],
+]);
+
+export const CopyIcon = createIcon('CopyIcon', [
+  ['rect', { x: 9, y: 9, width: 12, height: 12, rx: 2 }],
+  ['path', { d: 'M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1' }],
+]);
+
+export const NavigationIcon = createIcon('NavigationIcon', [['path', { d: 'M3 11l19-9-9 19-2-8-8-2z' }]]);

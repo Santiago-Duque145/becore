@@ -25,6 +25,15 @@ const SECTIONS = [
     ),
   },
   {
+    title: 'Tu ubicación',
+    body: (
+      <p>
+        Solo la pedimos si tocas «Ver eventos cerca de mí», para calcular a qué distancia queda cada evento. Ese cálculo
+        se hace en tu celular: tu ubicación nunca se envía a nuestro servidor ni se guarda.
+      </p>
+    ),
+  },
+  {
     title: 'Inteligencia artificial',
     body: (
       <p>

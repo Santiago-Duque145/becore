@@ -42,7 +42,7 @@ cp frontend/.env.example frontend/.env
 | `PORT` | Puerto del backend (3000). |
 | `NODE_ENV` | Entorno (`development`). Opcional. |
 | `FRONTEND_URL` | Origen permitido por CORS: `http://localhost:5173`. |
-| `APP_URL` | URL pública para los enlaces de los correos. Reservada para la fase de demo con túnel; el código actual aún no la lee. |
+| `APP_URL` | URL pública para los enlaces de los correos ("Ver el evento", "Ver mis citas"). Opcional: `npm run demo` la pone sola con la URL del túnel; si está vacía se usa `FRONTEND_URL`. |
 | `SUPABASE_URL` | URL del proyecto de Supabase (Settings > API). |
 | `SUPABASE_SECRET_KEY` | Secret key (`sb_secret_...`). Solo en este archivo. |
 | `SMTP_HOST`, `SMTP_PORT` | Servidor SMTP de Gmail (`smtp.gmail.com`, `465`). |
@@ -139,6 +139,34 @@ Vite escucha en toda la red (`host: true`). Con el portátil y el celular en la 
 3. El inicio de sesión con Google solo funciona si esa URL está en las *Redirect URLs* de Supabase (`http://192.168.*.*:5173/**`). Con correo y contraseña no hace falta.
 
 Al ser `http` sin certificado, no hay instalación completa como app ni geolocalización.
+
+### 8.1 Modo demo con HTTPS (`npm run demo`)
+
+Para que los celulares entren por **HTTPS real** desde cualquier red (incluso datos móviles), con ubicación e instalación como app, el portátil se publica con un túnel rápido de Cloudflare (gratis, sin cuenta). La app sigue corriendo en el portátil; no es un despliegue.
+
+Requisitos (una sola vez): `winget install Cloudflare.cloudflared` y, en Supabase → Authentication → URL Configuration → Redirect URLs, agregar `https://*.trycloudflare.com/**` (para Google y los correos de Auth).
+
+```bash
+npm run demo
+```
+
+El script:
+
+1. construye el frontend (`vite build`);
+2. lo sirve con `vite preview` en `http://localhost:4173`, con el mismo proxy `/api → :3000` que el modo dev;
+3. abre `cloudflared tunnel --url http://localhost:4173` y toma la URL `https://<algo>.trycloudflare.com`;
+4. arranca el backend con `APP_URL` = esa URL, para que los enlaces de los correos apunten al túnel;
+5. imprime la URL en un recuadro y un **QR** en la terminal. Los organizadores también tienen el QR en la página `/compartir`.
+
+Ten en cuenta:
+
+- **La URL cambia en cada arranque.** Vuelve a compartir el QR cada vez. Los correos enviados en una sesión anterior traen la URL vieja.
+- Cierra `npm run dev` antes: el modo demo necesita los puertos 3000 y 4173 libres. Si no puedes liberar el 3000, usa otro puerto para el backend del demo: `DEMO_API_PORT=3100 npm run demo` (en PowerShell: `$env:DEMO_API_PORT=3100; npm run demo`).
+- `Ctrl+C` cierra todo (backend, preview y túnel). Si cualquiera de los tres se cae, el script cierra los otros dos.
+- El portátil necesita internet (por ejemplo, el *hotspot* de un celular). Si el aviso dice que la URL pública aún no responde, espera unos segundos: el DNS del túnel nuevo tarda en propagarse.
+- Si `cloudflared` no está en el `PATH`, el script lo busca en `C:\Program Files (x86)\cloudflared\`; también puedes indicar la ruta con la variable `CLOUDFLARED`.
+
+**Plan B si cloudflared no conecta** (sin internet, firewall de la red, etc.): usa el modo por IP de la §8 con `npm run dev`, con todos en la misma Wi-Fi. Funciona el flujo principal (login con correo, confirmar asistencia), pero sin ubicación ni instalación completa como app, y Google solo si la IP está en las *Redirect URLs*.
 
 ## 9. Solución de problemas
 

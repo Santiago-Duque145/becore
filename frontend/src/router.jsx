@@ -25,6 +25,7 @@ const DisponibilidadPage = lazy(() => import('./pages/DisponibilidadPage.jsx'));
 const PerfilPage = lazy(() => import('./pages/PerfilPage.jsx'));
 const MisEventosPage = lazy(() => import('./pages/MisEventosPage.jsx'));
 const AvisosPage = lazy(() => import('./pages/AvisosPage.jsx'));
+const CompartirPage = lazy(() => import('./pages/CompartirPage.jsx'));
 const PrivacidadPage = lazy(() => import('./pages/PrivacidadPage.jsx'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage.jsx'));
 
@@ -76,6 +77,8 @@ export const router = createBrowserRouter([
       { path: '/perfil', element: page(PerfilPage) },
       { path: '/mis-eventos', element: page(MisEventosPage) },
       { path: '/avisos', element: page(AvisosPage) },
+      // M1: QR con la dirección de la app para que los participantes entren escaneando
+      { path: '/compartir', element: organizerOnly(page(CompartirPage)) },
     ],
   },
   // Verificación del sistema de diseño: solo en desarrollo y fuera del bundle de producción
