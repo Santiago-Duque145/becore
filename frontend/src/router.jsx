@@ -10,7 +10,7 @@ import { page } from './components/layout/PageFallback.jsx';
 const LoginPage = lazy(() => import('./pages/auth/LoginPage.jsx'));
 const RegistroPage = lazy(() => import('./pages/auth/RegistroPage.jsx'));
 const RecuperarPage = lazy(() => import('./pages/auth/RecuperarPage.jsx'));
-const NuevaContrasenaPage = lazy(() => import('./pages/auth/NuevaContrasenaPage.jsx'));
+const VerificarPage = lazy(() => import('./pages/auth/VerificarPage.jsx'));
 const AuthCallbackPage = lazy(() => import('./pages/auth/AuthCallbackPage.jsx'));
 const BienvenidaPage = lazy(() => import('./pages/onboarding/BienvenidaPage.jsx'));
 const DescubrePage = lazy(() => import('./pages/descubre/DescubrePage.jsx'));
@@ -46,7 +46,10 @@ export const router = createBrowserRouter([
   { path: '/privacidad', element: page(PrivacidadPage, 'screen') },
   // Públicas a propósito: la sesión llega en la URL (Google, confirmación de correo, recuperación)
   { path: '/auth/callback', element: page(AuthCallbackPage, 'screen') },
-  { path: '/nueva-contrasena', element: page(NuevaContrasenaPage, 'screen') },
+  // Código de 6 dígitos para confirmar la cuenta (P5)
+  { path: '/verificar', element: page(VerificarPage, 'screen') },
+  // Alias de enlaces viejos: la recuperación ahora es un solo flujo con código en /recuperar
+  { path: '/nueva-contrasena', element: <Navigate to="/recuperar" replace /> },
   {
     path: '/bienvenida',
     element: (

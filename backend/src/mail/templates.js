@@ -2,6 +2,7 @@
 // `message` (≤ 500 caracteres) es el texto corto que también usará la campana del S3.
 
 import { env } from '../config/env.js';
+import { paragraph, renderEmail } from './layout.js';
 
 // Base de los enlaces: APP_URL (túnel del modo demo) o, si no está, FRONTEND_URL
 export const appBaseUrl = () => (env.APP_URL ?? env.FRONTEND_URL).replace(/\/+$/, '');
@@ -17,18 +18,14 @@ export const formatMailDate = (iso) => dateFormat.format(new Date(iso));
 const MESSAGE_LIMIT = 500;
 const truncate = (value) => (value.length > MESSAGE_LIMIT ? `${value.slice(0, MESSAGE_LIMIT - 1)}…` : value);
 
-const escapeHtml = (value) =>
-  String(value).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
-
-const linkButton = (link) =>
-  `<p style="margin:20px 0 0"><a href="${escapeHtml(link.url)}" style="display:inline-block;background:#14B8A6;color:#0D1B2A;font-weight:bold;text-decoration:none;padding:12px 20px;border-radius:8px">${escapeHtml(link.label)}</a></p>`;
-
+// El diseño (cabecera con logo, pie, botón) vive en layout.js y es el mismo de las plantillas de Supabase
 function layout(heading, lines, link) {
-  const body = lines.map((l) => `<p style="margin:0 0 12px;color:#0D1B2A;font-size:16px;line-height:1.5">${escapeHtml(l)}</p>`).join('');
-  return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden">
-<div style="background:#0D1B2A;padding:16px 24px"><span style="color:#14B8A6;font-size:20px;font-weight:bold">Be Core</span><span style="color:#ffffff;font-size:13px"> · Tu comunidad en movimiento</span></div>
-<div style="padding:24px"><h1 style="margin:0 0 16px;font-size:20px;color:#0D1B2A">${escapeHtml(heading)}</h1>${body}${link ? linkButton(link) : ''}</div>
-</div>`;
+  return renderEmail({
+    title: heading,
+    preheader: lines[0] ?? heading,
+    bodyHtml: lines.map(paragraph).join(''),
+    cta: link ? { label: link.label, url: link.url } : undefined,
+  });
 }
 
 function build({ subject, heading, lines, message, link }) {
@@ -37,7 +34,16 @@ function build({ subject, heading, lines, message, link }) {
     subject,
     message: truncate(message),
     html: layout(heading, lines, link),
-    text: [heading, '', ...lines, ...linkText, '', 'Be Core · Tu comunidad en movimiento'].join('\n'),
+    text: [
+      heading,
+      '',
+      ...lines,
+      ...linkText,
+      '',
+      'Si no fuiste tú, ignora este correo.',
+      'Be Core · Tu comunidad en movimiento',
+      'Proyecto de grado · Universidad Católica Luis Amigó',
+    ].join('\n'),
   };
 }
 
