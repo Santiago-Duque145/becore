@@ -38,3 +38,9 @@ Diseño ya decidido, para que Santiago siga:
 ## Pruebas manuales en el celular (ninguna hecha)
 
 Por datos móviles: login con correo y con Google, onboarding, confirmar asistencia, "Instalar app" en Chrome Android, "Agregar a inicio" en iPhone y abrir a pantalla completa, y abrir sin conexión para ver la pantalla offline.
+
+## Actualización 2026-10-18 (commit `9413af6`)
+
+Los puntos 1–7 de arriba quedaron **escritos** (`scripts/demo.mjs`, `allowedHosts`, `/compartir`, `public/sw.js` + `offline.html`, `useGeolocation` + `lib/geo.js`, `APP_URL` en el backend, sección en el README). Lint limpio; backend 223/223 y frontend 135/135.
+
+**Sin verificar de punta a punta** (las sesiones se cortaron por límite de uso): `npm run demo` completo con el túnel real y su cierre con Ctrl+C, que el QR se decodifique con un lector real, y el service worker en un navegador. Hay que repetir la "Verificación" del punto 8 y las pruebas manuales en el celular antes de dar M1 por terminado. Un proceso `cloudflared` huérfano de una prueba se cerró a mano.
