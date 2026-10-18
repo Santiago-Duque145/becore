@@ -41,18 +41,18 @@ Criterio: **Hecha y probada** = pruebas automáticas o verificación real; **Hec
 | S2-05 Correo y avisos de cambios | Hecha y probada | — (envío real verificado hoy, §4) |
 | S2-06 Recordatorios automáticos | Hecha y probada | — (corrida real verificada hoy; el cron de 15 min no lo observé disparar solo) |
 | S2-07 Disponibilidad y citas | Hecha y probada | — (interfaz rehecha y recorrida en el navegador en F2-1, §5.1) |
-| S2-08 Avance y release `v0.2` | Parcial | Informe hecho (`03_…`); **sin tag `v0.2`** |
+| S2-08 Avance y release `v0.2` | Hecha | Informe `03_…`; tag `v0.2` en `38f65e8` |
 | S3-01 Panel del organizador | Hecha y probada | — (R8; servicio con pruebas) |
 | S3-02 Tiempo real | Hecha sin pruebas | Solo manual: `useRealtimeEvent` y ticker |
 | S3-03 Panel del participante | Hecha y probada | — |
 | S3-04 Pulido responsive | Hecha | — (R9: Lighthouse Accesibilidad 100 según el informe 04) |
-| S3-05 Cobertura y rendimiento | Parcial | Cobertura cumplida (§3). Falta medir el **p90 de `GET /events`** con `autocannon` (meta < 2 s) |
-| S3-06 Guía de instalación (README) | **No empezada** | `README.md` tiene 2 líneas |
-| S3-07 Plan de validación | **No empezada** | Falta el guion del partido y el cuestionario SUS |
+| S3-05 Cobertura y rendimiento | Hecha | Cobertura cumplida (§3). `GET /events`, 200 peticiones secuenciales con `backend/scripts/measure-p90.js` (2026-10-17, backend local → Supabase): **p50 736 ms · p90 782 ms · p99 1018 ms** (meta p90 < 2 s: cumple) |
+| S3-06 Guía de instalación (README) | Hecha | `README.md` completo; falta probarlo desde cero en el segundo equipo |
+| S3-07 Plan de validación | Hecha | `docs/specs/plan-validacion.md` (guion, SUS, 2 preguntas propias) |
 | S3-08 Avance y release `v0.9` | **No empezada** | Informe del sprint 3 y tag |
 | S4-01 a S4-05 | **No empezada** | Correcciones, validación (31 oct), presentación, guion de demo y video de respaldo, informe final |
 
-Desfase de documentos: `CLAUDE.md` §10 sigue en "Sprint actual: S1" (se pidió `docs: avanzar a sprint N`).
+`CLAUDE.md` §10 actualizado al estado real (sprints 1 y 2 cerrados, sprint 3 casi cerrado).
 
 ## 3. RF-01 a RF-19
 
@@ -215,10 +215,10 @@ Puntaje: categoría +3; día, franja y zona +1 cada uno (hora de Bogotá). Se ex
 5. Confirmar el correo de solicitudes de datos que muestra `/privacidad` (hoy sale de `.env.example`).
 
 **Importante**
-6. Fase 2 (18–20): README reproducible en ambos equipos (S3-06) y medir el p90 de `GET /events` (S3-05).
+6. ~~p90 de `GET /events`~~ medido (S3-05). Falta probar el README desde cero en el segundo equipo (S3-06).
 7. P0–P5 del 21 al 23 de oct (calificación, avatares, correos con código…) según `PLAN.md`.
-8. Tags `v0.1` y `v0.2` nunca se crearon; `CLAUDE.md` §10 sigue en S1.
-9. Plan de validación del partido y cuestionario SUS (S3-07).
+8. ~~Tags `v0.1` y `v0.2`~~ creados; `CLAUDE.md` §10 actualizado.
+9. ~~Plan de validación y SUS~~ hecho (S3-07).
 10. Agregar a `.env.example` y `env.js` las variables de IA y `APP_URL`.
 
 **Después**
