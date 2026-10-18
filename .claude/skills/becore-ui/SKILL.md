@@ -15,12 +15,12 @@ Be Core es una app **mobile-first, en tema oscuro**, para organizar eventos depo
 | `mobile-mis-eventos.html` | `/mis-eventos` |
 | `desktop-panel-organizador.html` | `/panel` (organizador) |
 
-**Del mockup se omiten siempre** (fuera de alcance, CLAUDE.md §8): distancia "x km", chip "Ver ruta", mapa / "Mapa en vivo" / mini-mapa, acceso al chat. Donde estaban, el layout se reacomoda sin dejar huecos.
+**Del mockup se omite siempre** (fuera de alcance, CLAUDE.md §9): el acceso al chat y la "estela convergente" del mapa. Desde P6 **sí** entran la distancia "a x km" (solo si el usuario toca "Cerca de mí"), "Cómo llegar", el mini-mapa del detalle, el modo mapa de Descubre y el "Mapa en vivo" del organizador, con Leaflet (sin Google Maps API).
 
 **Navegación**
 - Móvil (< 768 px): barra inferior de 4 pestañas como `mobile-descubre.html` → Inicio (`/descubre` o `/panel` si es organizador), Mis eventos, Avisos (`/avisos`, punto naranja si hay no leídas), Perfil.
-- Escritorio participante: barra superior como `desktop-descubre.html` → Descubre, Mis eventos, Citas, Notificaciones (sin "Mapa").
-- Escritorio organizador: barra lateral como `desktop-panel-organizador.html` → Panel, Eventos, Citas, Notificaciones, Perfil (sin "Mapa en vivo"; "Participantes" y "Configuración" solo si la página existe).
+- Escritorio participante: barra superior como `desktop-descubre.html` → Descubre, Mis eventos, Citas, Notificaciones (con "Mapa" como modo de Descubre, desde P6).
+- Escritorio organizador: barra lateral como `desktop-panel-organizador.html` → Panel, Eventos, Citas, Notificaciones, Perfil (con "Mapa en vivo" desde P6; "Participantes" y "Configuración" solo si la página existe).
 
 ## 0. Antes de escribir código
 
@@ -162,7 +162,7 @@ Cercano, activo, comunitario, en español de Colombia, tuteo. Frases cortas.
 
 - No instalar librerías de UI (MUI, Chakra, shadcn, etc.) ni de animación sin justificarlo antes según `CLAUDE.md` del repo. Tailwind + componentes propios alcanzan.
 - No usar `supabase.from(...)` en el frontend. Datos siempre por `/api/v1`. (Solo `supabase.auth.*` y Realtime de lectura.)
-- No implementar mapa real, chat ni distancia: son solo mockup (fuera de alcance).
+- No implementar el chat ni la "estela convergente" (fuera de alcance). El mapa, la distancia y "Cómo llegar" se implementan con Leaflet, sin Google Maps API (P6).
 - No usar emojis como íconos de interfaz; usa SVG inline (estilo trazo 2 px, 24×24, `currentColor`).
 - No tema claro por ahora: la app es oscura.
 

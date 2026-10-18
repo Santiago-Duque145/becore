@@ -84,6 +84,7 @@ Formato: `{ "error": { "code": "EVENT_FULL", "message": "El evento ya no tiene c
 | `RATING_WINDOW_CLOSED` | 409 | El plazo para calificar (7 días) ya terminó |
 | `RATING_NOT_FOUND` | 404 | Aún no calificaste este evento |
 | `EVENT_NOT_IN_PROGRESS` | 409 | Solo puedes finalizar un evento que está en curso |
+| `GEOCODE_UNAVAILABLE` | 502 | No pudimos buscar esa dirección ahora. Marca el lugar directamente en el mapa |
 | `APPOINTMENT_NOT_ACTIVE` | 409 | La cita fue cancelada |
 | `SLOT_OVERLAP` | 409 | Ese horario se cruza con otra de tus franjas. Elige otro o borra primero la que se cruza |
 | `APPOINTMENT_OUTSIDE_SLOT` | 409 | La cita debe quedar dentro de una de tus franjas de disponibilidad |
@@ -226,6 +227,16 @@ La carpeta de cada archivo es el id de quien lo sube; una ruta ajena responde 40
   (un borrador ajeno responde 404). Alimenta la lista de "quiénes van". `Event.organizer` suma `avatarUrl` y
   `avatarPreset`; `GET /events/:id/attendees` (organizador) suma los mismos dos campos por asistente.
 - Prioridad al mostrar: foto subida → avatar elegido → foto de Google (`user_metadata`) → iniciales.
+
+### Mapa de eventos (P6)
+
+- `Event` suma `latitude` y `longitude` (números o `null`). `POST /events` y `PATCH /events/:id` los aceptan juntos
+  (latitud −90..90, longitud −180..180); una sola de las dos responde 400. En `PATCH`, `null` en las dos quita la ubicación.
+  La base lo exige con checks (`events_coordinates_together`, rangos).
+- `GET /geocode?q=…` (organizador; `q` de 3 a 120 caracteres) → `{ data: [{ label, lat, lng }] }` (máx. 5). Busca en
+  Nominatim (OpenStreetMap) **desde el backend**: limitada a Colombia y sesgada hacia Medellín, máximo 1 petición por
+  segundo (cola), `User-Agent` con el nombre del proyecto y caché en memoria de 24 h. Si Nominatim falla: 502 `GEOCODE_UNAVAILABLE`.
+- La ubicación del dispositivo **no** pasa por la API: la distancia "a 1,8 km" se calcula en el navegador.
 
 ### Paneles (RF-18, RF-19)
 

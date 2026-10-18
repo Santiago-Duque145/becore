@@ -1,0 +1,100 @@
+/* Estilo del mapa (P6): Leaflet adaptado al tema oscuro con los tokens de la marca. Se carga junto al mapa
+   (carga diferida), no en el bundle inicial. */
+.leaflet-container {
+  font-family: inherit;
+  background: var(--color-bg);
+  color: var(--color-ink);
+}
+
+.leaflet-container a {
+  color: var(--color-accent-soft);
+}
+
+/* Atribución obligatoria de las teselas: siempre visible y legible */
+.leaflet-control-attribution {
+  background: color-mix(in srgb, var(--color-bg) 78%, transparent) !important;
+  color: var(--color-ink-muted) !important;
+  font-size: 10px;
+}
+
+.leaflet-bar a,
+.leaflet-bar a:hover {
+  background: var(--color-panel);
+  color: var(--color-ink);
+  border-color: var(--color-line);
+}
+
+.leaflet-bar a:hover {
+  background: var(--color-field);
+}
+
+.leaflet-touch .leaflet-bar a {
+  width: 36px;
+  height: 36px;
+  line-height: 36px;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--color-panel);
+  color: var(--color-ink);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.45);
+}
+
+.leaflet-popup-content {
+  margin: 12px 14px;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  color: var(--color-ink-muted);
+}
+
+.leaflet-marker-icon:focus-visible {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: 3px;
+  border-radius: 50%;
+}
+
+/* Pin de evento: gota del color de su categoría */
+.becore-pin {
+  position: relative;
+  display: block;
+  width: 28px;
+  height: 28px;
+  border-radius: 50% 50% 50% 0;
+  background: var(--pin, var(--color-ink-muted));
+  border: 2px solid var(--color-bg);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.5);
+  transform: translateY(-4px) rotate(-45deg);
+}
+
+.becore-pin::after {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: var(--color-bg);
+}
+
+.becore-pin[data-selected='true'] {
+  width: 34px;
+  height: 34px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pin) 35%, transparent), 0 2px 10px rgb(0 0 0 / 0.55);
+}
+
+/* "Tú estás aquí" */
+.becore-user {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-accent-soft);
+  border: 3px solid var(--color-bg);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent-soft) 35%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .leaflet-fade-anim .leaflet-popup {
+    transition: opacity 0.15s linear;
+  }
+}

@@ -17,6 +17,7 @@ const DescubrePage = lazy(() => import('./pages/descubre/DescubrePage.jsx'));
 const NuevoEventoPage = lazy(() => import('./pages/eventos/NuevoEventoPage.jsx'));
 const DetalleEventoPage = lazy(() => import('./pages/eventos/DetalleEventoPage.jsx'));
 const EditarEventoPage = lazy(() => import('./pages/eventos/EditarEventoPage.jsx'));
+const MapaEnVivoPage = lazy(() => import('./pages/MapaEnVivoPage.jsx'));
 const AsistentesPage = lazy(() => import('./pages/eventos/AsistentesPage.jsx'));
 const CalificarEventoPage = lazy(() => import('./pages/eventos/CalificarEventoPage.jsx'));
 const PanelPage = lazy(() => import('./pages/PanelPage.jsx'));
@@ -81,6 +82,7 @@ export const router = createBrowserRouter([
       { path: '/disponibilidad', element: organizerOnly(page(DisponibilidadPage)) },
       { path: '/perfil', element: page(PerfilPage) },
       { path: '/mis-eventos', element: page(MisEventosPage) },
+      { path: '/mapa', element: organizerOnly(page(MapaEnVivoPage)) },
       { path: '/avisos', element: page(AvisosPage) },
       // M1: QR con la dirección de la app para que los participantes entren escaneando
       { path: '/compartir', element: organizerOnly(page(CompartirPage)) },

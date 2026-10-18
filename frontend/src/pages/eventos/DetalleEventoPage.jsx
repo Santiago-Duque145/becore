@@ -8,6 +8,7 @@ import { endLabel } from '../../lib/event-time.js';
 import { formatLongDay, formatTime } from '../../lib/format.js';
 import { AttendanceButton } from '../../components/events/AttendanceButton.jsx';
 import { DetailCover, DetailSkeleton, InfoRow } from '../../components/events/EventDetailParts.jsx';
+import { EventLocation } from '../../components/events/EventLocation.jsx';
 import { AddToCalendarButton } from '../../components/events/AddToCalendarButton.jsx';
 import { ShareEventButton } from '../../components/events/ShareEventButton.jsx';
 import { AvatarStack } from '../../components/events/AvatarStack.jsx';
@@ -79,6 +80,7 @@ export default function DetalleEventoPage() {
 
         <InfoRow icon={CalendarIcon} main={formatLongDay(event.startsAt)} sub={timeRange} />
         <InfoRow icon={MapPinIcon} main={event.location} />
+        <EventLocation event={event} />
 
         <div className="mt-1.5 mb-4 rounded-[14px] border border-white/[0.06] bg-panel px-4 py-3.5">
           <CapacityBar

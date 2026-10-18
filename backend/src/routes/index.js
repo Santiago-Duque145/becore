@@ -8,6 +8,7 @@ import appointmentsRoutes from './appointments.routes.js';
 import notificationsRoutes from './notifications.routes.js';
 import dashboardRoutes from './dashboard.routes.js';
 import ratingsRoutes from './ratings.routes.js';
+import geocodeRoutes from './geocode.routes.js';
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use('/', appointmentsRoutes);
 router.use('/', notificationsRoutes);
 router.use('/', dashboardRoutes);
 router.use('/', ratingsRoutes);
+router.use('/', geocodeRoutes);
 
 export default router;

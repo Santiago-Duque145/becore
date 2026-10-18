@@ -1,6 +1,6 @@
-import { BellIcon, CalendarIcon, ClockIcon, HomeIcon, PlusIcon, QrCodeIcon, UserIcon } from '../components/icons/index.js';
+import { BellIcon, CalendarIcon, ClockIcon, HomeIcon, MapPinIcon, PlusIcon, QrCodeIcon, UserIcon } from '../components/icons/index.js';
 
-// Navegación por rol (skill becore-ui, "Navegación"). Sin ítems de mapa (fuera de alcance).
+// Navegación por rol (skill becore-ui, "Navegación"). El mapa de eventos entra desde P6.
 // Provisional hasta R7/R8: "Mis eventos" del organizador lleva a /descubre, y "Crear evento" va en la
 // cabecera móvil.
 
@@ -24,7 +24,7 @@ export const MOBILE_TABS = {
   ],
 };
 
-// Barra superior del participante en escritorio (desktop-descubre.html, sin "Mapa")
+// Barra superior del participante en escritorio (desktop-descubre.html). El mapa es un modo de Descubre (?vista=mapa)
 export const TOP_BAR_LINKS = [
   { to: '/descubre', label: 'Descubre' },
   { to: '/mis-eventos', label: 'Mis eventos' },
@@ -32,11 +32,12 @@ export const TOP_BAR_LINKS = [
   { to: '/avisos', label: 'Notificaciones' },
 ];
 
-// Barra lateral del organizador (desktop-panel-organizador.html, sin "Mapa en vivo";
+// Barra lateral del organizador (desktop-panel-organizador.html, con "Mapa en vivo" desde P6;
 // "Participantes" y "Configuración" se agregan cuando exista su página)
 export const SIDEBAR_LINKS = [
   { to: '/panel', label: 'Panel' },
   { to: '/descubre', label: 'Eventos' },
+  { to: '/mapa', label: 'Mapa en vivo' },
   { to: '/citas', label: 'Citas' },
   { to: '/avisos', label: 'Notificaciones' },
   { to: '/compartir', label: 'Compartir' },
@@ -48,6 +49,7 @@ export const MOBILE_HEADER_ACTIONS = {
   participant: [{ to: '/citas', label: 'Citas', Icon: ClockIcon }],
   organizer: [
     { to: '/citas', label: 'Citas', Icon: ClockIcon },
+    { to: '/mapa', label: 'Mapa en vivo', Icon: MapPinIcon },
     { to: '/compartir', label: 'Compartir la app', Icon: QrCodeIcon },
     { to: '/eventos/nuevo', label: 'Crear evento', Icon: PlusIcon },
   ],

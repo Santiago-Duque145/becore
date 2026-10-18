@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react';
+import { lazy, Suspense, useId, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -11,12 +11,15 @@ import {
   formValuesToPayload,
 } from '../../lib/event-schema.js';
 import { bogotaInputToIso } from '../../lib/format.js';
-import { Button, Field, Input, Select, Textarea, useToast } from '../ui/index.js';
+import { Button, Field, Input, Select, Skeleton, Textarea, useToast } from '../ui/index.js';
 import { CoverUpload } from './CoverUpload.jsx';
 import { requestCoverUpload } from '../../services/events.api.js';
 import { uploadToTarget } from '../../services/storage.js';
 import { CapacityStepper, CategoryPicker } from './EventFormControls.jsx';
 import { EventCard } from './EventCard.jsx';
+
+// Leaflet pesa: el selector de ubicación se descarga solo al abrir el formulario
+const LocationPicker = lazy(() => import('../map/LocationPicker.jsx'));
 
 const FIELDS = ['title', 'description', 'category', 'location', 'startsAt', 'endsAt', 'capacity'];
 
@@ -63,6 +66,7 @@ export function EventForm({
   onCancel,
   keepDuration = false,
   initialCoverUrl = null,
+  initialPlace = null,
 }) {
   const toast = useToast();
   const capacityId = useId();
@@ -80,6 +84,7 @@ export function EventForm({
   });
   const values = watch();
   const [cover, setCover] = useState({ blob: null, previewUrl: null, removed: false });
+  const [place, setPlace] = useState(initialPlace); // { lat, lng } | null
   // Qué botón envió (borrador / publicar / guardar): se fija al hacer clic, antes del submit
   const intentRef = useRef(actions.at(-1).intent);
   const [pendingIntent, setPendingIntent] = useState(null);
@@ -99,6 +104,14 @@ export function EventForm({
         payload.coverPath = await uploadToTarget(target, cover.blob);
       } else if (cover.removed) {
         payload.coverPath = null;
+      }
+      // Ubicación: con pin se envían las dos coordenadas; si había y se quitó, null en las dos; si no, nada
+      if (place) {
+        payload.latitude = place.lat;
+        payload.longitude = place.lng;
+      } else if (initialPlace) {
+        payload.latitude = null;
+        payload.longitude = null;
       }
       await onSubmit(payload, intent);
     } catch (error) {
@@ -166,6 +179,10 @@ export function EventForm({
         <Field label="Lugar" error={errors.location?.message}>
           <Input placeholder="Ej.: Cancha La Floresta, Medellín" {...register('location')} />
         </Field>
+
+        <Suspense fallback={<Skeleton className="mb-4 h-72" />}>
+          <LocationPicker value={place} onChange={setPlace} />
+        </Suspense>
 
         <Field
           label="Cupo máximo"

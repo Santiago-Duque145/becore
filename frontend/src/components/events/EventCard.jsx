@@ -4,6 +4,7 @@ import { endLabel } from '../../lib/event-time.js';
 import { Badge, CapacityBar, Skeleton } from '../ui/index.js';
 import { cn } from '../../lib/cn.js';
 import { formatDate } from '../../lib/format.js';
+import { formatDistance } from '../../lib/geo.js';
 import { AttendanceButton } from './AttendanceButton.jsx';
 import { AvatarStack } from './AvatarStack.jsx';
 import { RatingBadge } from './RatingBadge.jsx';
@@ -43,6 +44,9 @@ export function EventCard({ event, reason, className, preview = false }) {
           <p className="flex items-center gap-1.5 text-[11.5px] text-ink-muted md:text-xs">
             <MapPinIcon size={12} className="shrink-0 text-ink-faint" />
             <span className="truncate">{event.location}</span>
+            {Number.isFinite(event.distanceKm) && (
+              <span className="shrink-0 font-semibold text-accent-soft">· {formatDistance(event.distanceKm)}</span>
+            )}
           </p>
           {(going || event.status !== 'published' || event.isFull) && (
             <div className="flex flex-wrap items-center gap-1.5">
