@@ -87,6 +87,7 @@ describe('updateName', () => {
       fullName: 'Ana María',
       role: 'participant',
       onboardingCompleted: false,
+      dataConsentAccepted: false,
       preferences: null,
     });
   });

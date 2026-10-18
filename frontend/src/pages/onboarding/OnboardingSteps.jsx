@@ -1,6 +1,7 @@
 import { forwardRef, useId } from 'react';
 import { CalendarIcon, UsersIcon } from '../../components/icons/index.js';
 import { Chip, Field, Input, OptionCard } from '../../components/ui/index.js';
+import { DemographicsFields } from '../../components/preferences/DemographicsFields.jsx';
 import {
   DAY_OPTIONS,
   INTEREST_GROUPS,
@@ -11,7 +12,7 @@ import {
   TIME_SLOT_OPTIONS,
 } from '../../constants/preferences.js';
 
-// Los 5 pasos de /bienvenida con los textos de auth-onboarding §6.
+// Los 6 pasos de /bienvenida con los textos de auth-onboarding §6.
 // Cada paso recibe el estado del reducer, dispatch y la ref del título (recibe el foco al cambiar de paso).
 
 const ROLE_ICONS = { participant: UsersIcon, organizer: CalendarIcon };
@@ -70,6 +71,29 @@ export function RoleStep({ state, dispatch, titleRef, firstName }) {
             onClick={() => dispatch({ type: 'setRole', role: value })}
           />
         ))}
+      </div>
+    </>
+  );
+}
+
+// Opcional y solo para estadísticas agregadas del proyecto: no cambia las recomendaciones
+export function DemographicsStep({ state, dispatch, titleRef }) {
+  const titleId = useId();
+  return (
+    <>
+      <StepHeading
+        ref={titleRef}
+        id={titleId}
+        title="Cuéntanos un poco de ti"
+        subtitle="Es opcional. Solo lo usamos para estadísticas anónimas del proyecto; no cambia tus recomendaciones."
+      />
+      <div role="group" aria-labelledby={titleId}>
+        <DemographicsFields
+          gender={state.gender}
+          ageRange={state.ageRange}
+          onGender={(value) => dispatch({ type: 'pick', field: 'gender', value })}
+          onAgeRange={(value) => dispatch({ type: 'pick', field: 'ageRange', value })}
+        />
       </div>
     </>
   );
@@ -174,4 +198,4 @@ export function ZoneStep({ state, dispatch, titleRef }) {
   );
 }
 
-export const STEPS = [RoleStep, InterestsStep, AvailabilityStep, MotivationStep, ZoneStep];
+export const STEPS = [RoleStep, DemographicsStep, InterestsStep, AvailabilityStep, MotivationStep, ZoneStep];

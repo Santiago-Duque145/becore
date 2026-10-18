@@ -139,6 +139,13 @@ Pagos, IA/chatbot, geolocalización real o mapas con API, chat interno, gamifica
 despliegue en la nube. Los mockups de mapa y chat son solo diseño para la sustentación. Si una tarea
 parece requerir algo de esta lista, detente y pregunta.
 
+> **Nota 2026-10-17 — ampliación pedida por el director (Víctor Daniel Gil Vera):** agregar (1) sexo y rango de
+> edad opcionales en el onboarding, (2) calificación de eventos finalizados, (3) imagen del evento (subida o
+> generada con IA), (4) avatares y (5) más interactividad en el login. Cada punto entra al desarrollo cuando se
+> especifique en `docs/specs/`; el punto 3 (imagen generada con IA) requiere además cerrar la decisión sobre
+> "IA/chatbot" de esta sección. Lo demás del alcance no cambia. Primer punto implementado: sexo, rango de edad y
+> consentimiento de datos (`docs/progreso/05_*`).
+
 ## 10. Estado actual
 
 - Sprint actual: **S1 — Usuarios y eventos** (5 – 11 oct 2026). Ver `docs/specs/backlog.md`.

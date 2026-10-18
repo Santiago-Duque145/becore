@@ -12,6 +12,10 @@ export async function putOnboarding(req, res) {
   res.json({ data: await meService.completeOnboarding(req.user, req.body) });
 }
 
+export async function putConsent(req, res) {
+  res.json({ data: await meService.acceptDataConsent(req.user, req.body) });
+}
+
 export async function putPreferences(req, res) {
   res.json({ data: await meService.updatePreferences(req.user, req.body) });
 }

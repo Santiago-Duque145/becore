@@ -25,6 +25,7 @@ const DisponibilidadPage = lazy(() => import('./pages/DisponibilidadPage.jsx'));
 const PerfilPage = lazy(() => import('./pages/PerfilPage.jsx'));
 const MisEventosPage = lazy(() => import('./pages/MisEventosPage.jsx'));
 const AvisosPage = lazy(() => import('./pages/AvisosPage.jsx'));
+const PrivacidadPage = lazy(() => import('./pages/PrivacidadPage.jsx'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage.jsx'));
 
 const organizerOnly = (element) => <RoleRoute role="organizer">{element}</RoleRoute>;
@@ -39,6 +40,8 @@ export const router = createBrowserRouter([
   { path: '/ingresar', element: <Navigate to="/login" replace /> },
   { path: '/registro', element: page(RegistroPage, 'screen') },
   { path: '/recuperar', element: page(RecuperarPage, 'screen') },
+  // Pública a propósito: se lee antes de crear la cuenta
+  { path: '/privacidad', element: page(PrivacidadPage, 'screen') },
   // Públicas a propósito: la sesión llega en la URL (Google, confirmación de correo, recuperación)
   { path: '/auth/callback', element: page(AuthCallbackPage, 'screen') },
   { path: '/nueva-contrasena', element: page(NuevaContrasenaPage, 'screen') },

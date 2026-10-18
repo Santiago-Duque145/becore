@@ -1,12 +1,14 @@
 import { MAX_MOTIVATIONS, MAX_ZONE_LENGTH } from '../../constants/preferences.js';
 
 // Estado del onboarding en un solo reducer (auth-onboarding §6). Volver atrás no borra nada.
-export const TOTAL_STEPS = 5;
+export const TOTAL_STEPS = 6;
 
 export function initialOnboardingState(role) {
   return {
     step: 1,
     role: role === 'organizer' ? 'organizer' : 'participant', // preseleccionado el rol actual
+    gender: null, // opcionales; solo estadísticas, no se usan para recomendar
+    ageRange: null,
     interests: [],
     days: [],
     timeSlots: [],
@@ -17,6 +19,7 @@ export function initialOnboardingState(role) {
 }
 
 const LIST_FIELDS = ['interests', 'days', 'timeSlots', 'motivations'];
+const SINGLE_FIELDS = ['gender', 'ageRange'];
 
 export function onboardingReducer(state, action) {
   switch (action.type) {
@@ -26,6 +29,9 @@ export function onboardingReducer(state, action) {
       return { ...state, step: Math.max(state.step - 1, 1) };
     case 'setRole':
       return { ...state, role: action.role };
+    case 'pick': // elección única opcional: tocar la elegida la quita
+      if (!SINGLE_FIELDS.includes(action.field)) return state;
+      return { ...state, [action.field]: state[action.field] === action.value ? null : action.value };
     case 'toggle': {
       if (!LIST_FIELDS.includes(action.field)) return state;
       const list = state[action.field];
@@ -47,6 +53,8 @@ export function toOnboardingPayload(state) {
   const zone = state.zone.trim();
   return {
     role: state.role,
+    ...(state.gender ? { gender: state.gender } : {}),
+    ...(state.ageRange ? { ageRange: state.ageRange } : {}),
     interests: state.interests,
     days: state.days,
     timeSlots: state.timeSlots,

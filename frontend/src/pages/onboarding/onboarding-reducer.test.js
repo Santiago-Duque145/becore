@@ -22,11 +22,36 @@ describe('onboardingReducer', () => {
     expect(s.interests).toEqual(['football']);
   });
 
-  it('no pasa de 1 ni de 5', () => {
+  it('no pasa de 1 ni de 6', () => {
     let s = run(initialOnboardingState(), { type: 'back' });
     expect(s.step).toBe(1);
     s = run(s, ...Array(8).fill({ type: 'next' }));
-    expect(s.step).toBe(5);
+    expect(s.step).toBe(6);
+  });
+
+  it('sexo y rango de edad: elección única opcional, tocar la elegida la quita', () => {
+    let s = run(
+      initialOnboardingState(),
+      { type: 'pick', field: 'gender', value: 'female' },
+      { type: 'pick', field: 'gender', value: 'other' },
+      { type: 'pick', field: 'ageRange', value: '25-34' },
+    );
+    expect(s).toMatchObject({ gender: 'other', ageRange: '25-34' });
+    s = run(s, { type: 'pick', field: 'gender', value: 'other' });
+    expect(s.gender).toBeNull();
+  });
+
+  it('pick ignora campos que no son de elección única', () => {
+    const s = initialOnboardingState();
+    expect(run(s, { type: 'pick', field: 'interests', value: 'football' })).toBe(s);
+  });
+
+  it('payload: sexo y edad solo van si se eligieron (el paso es opcional)', () => {
+    const base = initialOnboardingState('participant');
+    expect(toOnboardingPayload(base)).not.toHaveProperty('gender');
+    expect(toOnboardingPayload(base)).not.toHaveProperty('ageRange');
+    const chosen = run(base, { type: 'pick', field: 'gender', value: 'prefer_not_to_say' }, { type: 'pick', field: 'ageRange', value: '55+' });
+    expect(toOnboardingPayload(chosen)).toMatchObject({ gender: 'prefer_not_to_say', ageRange: '55+' });
   });
 
   it('toggle agrega y quita', () => {

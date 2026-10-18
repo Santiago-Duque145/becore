@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext.jsx';
+import { ConsentGate } from '../preferences/ConsentGate.jsx';
 import { ErrorState } from '../ui/index.js';
 
 // Rutas donde un onboarding pendiente no redirige (auth-onboarding §7)
@@ -25,5 +26,10 @@ export function RequireOnboarding({ children }) {
   if (profile.onboardingCompleted === false && !EXEMPT_PATHS.includes(pathname)) {
     return <Navigate to="/bienvenida" replace />;
   }
-  return children;
+  return (
+    <>
+      {children}
+      <ConsentGate />
+    </>
+  );
 }
