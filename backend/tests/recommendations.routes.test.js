@@ -72,6 +72,16 @@ describe('GET /api/v1/events/recommended', () => {
     const res = await auth(request(app).get('/api/v1/events/recommended?limit=3'));
     expect(res.status).toBe(200);
     expect(res.body.data).toEqual([]);
+    expect(res.body.meta).toEqual({ emptyReason: 'no_preferences' }); // aditivo: data sigue siendo el arreglo
+  });
+
+  it('con resultados no agrega meta (el contrato de siempre)', async () => {
+    findPreferencesByUserId.mockResolvedValue({ categories: ['sport'], days: [], timeSlots: [], zone: null });
+    repo.listRecommendationCandidates.mockResolvedValue([
+      { id: 'e1', title: 'P', category: 'sport', location: 'C', startsAt: '2030-10-31T13:00:00.000Z', capacity: 10, confirmedCount: 0, status: 'published', organizerId: 'o', organizer: { id: 'o' } },
+    ]);
+    const res = await auth(request(app).get('/api/v1/events/recommended'));
+    expect(res.body).not.toHaveProperty('meta');
   });
 
   it('limit fuera de rango → 400', async () => {

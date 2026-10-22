@@ -8,6 +8,7 @@
     "start": "node --env-file=.env src/server.js",
     "seed": "node --env-file=.env scripts/seed.js",
     "seed:coords": "node --env-file=.env scripts/seed-coordinates.js",
+    "seed:demo": "node --env-file=.env scripts/seed-demo.js",
     "images:reprocess": "node --env-file=.env scripts/reprocess-images.js",
     "ai:backfill": "node --env-file=.env scripts/ai-backfill.js",
     "reminders": "node --env-file=.env scripts/run-reminders.js",
