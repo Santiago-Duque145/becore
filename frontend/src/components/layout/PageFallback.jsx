@@ -1,11 +1,12 @@
 import { Suspense } from 'react';
-import { Skeleton } from '../ui/index.js';
+import { FullScreenLoader, Skeleton } from '../ui/index.js';
 
 // Mientras se descarga el código de una página (carga diferida por ruta, R9).
-// 'content': dentro del AppShell (bloques con la forma de una página). 'screen': pantalla completa (auth).
+// 'content': dentro del AppShell (bloques con la forma de una página: se percibe más rápido que un loader).
+// 'screen': pantalla completa (auth) con el BrandLoader, que aparece solo si la descarga pasa de 300 ms (P7).
 function PageFallback({ variant }) {
   if (variant === 'screen') {
-    return <div className="min-h-dvh bg-bg" aria-busy="true" aria-label="Cargando" />;
+    return <FullScreenLoader />;
   }
   return (
     <div className="flex flex-col gap-4" aria-busy="true" aria-label="Cargando">

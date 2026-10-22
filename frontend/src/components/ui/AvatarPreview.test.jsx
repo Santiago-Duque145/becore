@@ -25,7 +25,7 @@ describe('AvatarPreviewView', () => {
 
   it('usa la misma URL de la foto y un skeleton mientras carga', () => {
     expect(html).toContain('src="https://cdn.test/a.webp"');
-    expect(html).toContain('animate-pulse');
+    expect(html).toContain('skeleton-sweep');
   });
 
   it('sin foto muestra el avatar predefinido o las iniciales, sin imagen ni skeleton', () => {
@@ -35,7 +35,7 @@ describe('AvatarPreviewView', () => {
     expect(preset).not.toContain('<img');
     const initials = render({ name: 'Luis Pérez', role: 'organizer' });
     expect(initials).not.toContain('<img');
-    expect(initials).not.toContain('animate-pulse');
+    expect(initials).not.toContain('skeleton-sweep');
   });
 
   it('el botón "Cambiar foto" solo aparece cuando se pide', () => {

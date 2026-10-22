@@ -106,7 +106,7 @@ Crea/usa estos y solo estos para lo básico. Todos aceptan `className` para ajus
 
 | Componente | Especificación |
 |---|---|
-| `Button` | Variantes `primary` (`bg-accent text-on-accent font-bold`), `secondary` (`bg-field border border-line text-ink`), `ghost`, `danger`. Alto mínimo 48 px en móvil, `rounded-field`, `py-4 text-[14.5px]`. Prop `loading` → spinner + `aria-busy` + deshabilitado. `active:scale-[0.98]` con `transition`. |
+| `Button` | Variantes `primary` (`bg-accent text-on-accent font-bold`), `secondary` (`bg-field border border-line text-ink`), `ghost`, `danger`. Alto mínimo 48 px en móvil, `rounded-field`, `py-4 text-[14.5px]`. Prop `loading` → tres puntos que rebotan (`LoadingDots`, P7) + `aria-busy` + deshabilitado. `active:scale-[0.98]` con `transition`. |
 | `Input` | `bg-field border border-line rounded-field px-4 py-3.5 text-base md:text-sm text-ink placeholder:text-ink-faint` (16 px en móvil para que iOS no haga zoom al enfocar). Foco: `focus:border-accent focus:ring-2 focus:ring-accent/30 outline-none`. Error: borde `danger` + mensaje debajo con `role="alert"`. Siempre con `<label>` asociado. |
 | `PasswordInput` | `Input` + botón de ojo para mostrar/ocultar (`aria-label="Mostrar contraseña"`). |
 | `Field` | Envuelve label + input + ayuda/error. `mb-4`. |
@@ -116,9 +116,11 @@ Crea/usa estos y solo estos para lo básico. Todos aceptan `className` para ajus
 | `ProgressSteps` | Barra segmentada (n segmentos, 4 px de alto, `gap-1.5`). Completados `bg-accent`, actual `bg-accent/60`, pendientes `bg-line`. Incluye texto "Paso 2 de 5" para lectores de pantalla. |
 | `Divider` | Línea – texto – línea (`text-[11.5px] text-ink-muted`), como "o continúa con" del login. |
 | `Toast` | Esquina inferior, `bg-panel border border-line`, ícono por tipo, se cierra solo a los 4 s, `role="status"`. |
-| `Skeleton` | Bloques `bg-field animate-pulse rounded-card` con la forma del contenido real. |
+| `Skeleton` | Bloques `bg-field rounded-card` con la forma del contenido real y el barrido de marca `skeleton-sweep` (turquesa muy suave; quieto con movimiento reducido). Nada de `animate-pulse`. |
 | `EmptyState` | Ícono + título + una frase + 1 acción. Nunca una pantalla en blanco. |
 | `BrandMark` | Isotipo SVG del mockup (cuadro `#0D1B2A` + "B" con degradado turquesa→blanco) + wordmark. Tamaños 28 / 52 px. |
+| `BrandLoader` | P7. Isotipo animado (la "B" se dibuja, líneas de color detrás, puntos que se conectan) en `sm`/`md`/`lg` (32/52/72 px) con frases rotativas de `constants/loading.js`. `category` → ícono animado de la categoría. `role="status"` anuncia "Cargando" una vez. `Spinner` es su versión pequeña con texto fijo. |
+| `FullScreenLoader` | P7. Espera de pantalla completa: aparece a los 300 ms, dura mínimo 500 ms (con `useLoaderVisibility`) y a los 8 s pasa a "Esto está tardando más de lo normal…" con Reintentar. Solo para arranque, `/auth/callback`, rutas diferidas de pantalla completa y guardado del onboarding. |
 
 ## 4. Patrones de UX obligatorios
 
@@ -131,7 +133,7 @@ Crea/usa estos y solo estos para lo básico. Todos aceptan `className` para ajus
 - `Field` trae `mb-4`. Cuando el contenedor ya separa los campos (`flex gap-*`), usa la prop `flush`; no pases `mb-0` para pisar `mb-4`: en Tailwind gana el orden del CSS generado, no el del atributo `class`. Lo mismo para cualquier componente de `ui/`: ajústalo con sus props, no con clases que contradigan las suyas.
 
 **Carga y feedback**
-- Toda acción de red: estado `loading` en el botón que la disparó (no spinners de pantalla completa).
+- Toda acción de red: estado `loading` en el botón que la disparó. `FullScreenLoader` solo en los casos de su fila (§3).
 - Listas: `Skeleton` en la primera carga; en recargas, mantener datos viejos (TanStack Query `placeholderData: keepPreviousData`).
 - Éxito: `Toast` breve o cambio visible en el mismo elemento (p. ej. botón pasa a "Confirmado ✓" en verde).
 - Errores de red: mensaje + botón "Reintentar".
@@ -144,7 +146,7 @@ Crea/usa estos y solo estos para lo básico. Todos aceptan `className` para ajus
 **Movimiento**
 - Transiciones de 150–250 ms con `ease-out-soft`. Entrada de pantallas: `opacity` + `translate-y-2`.
 - Todo lo animado se apaga con `motion-reduce:` (`motion-reduce:transition-none motion-reduce:animate-none`).
-- Las animaciones comunican algo (llegó un dato, cambió un estado). Nada decorativo en bucle salvo el punto "en vivo".
+- Las animaciones comunican algo (llegó un dato, cambió un estado). Nada decorativo en bucle salvo el punto "en vivo", el hero de auth (P1) y los cargadores mientras se espera (P7).
 
 **Accesibilidad**
 - Un `h1` por pantalla. Orden de foco lógico. Foco siempre visible (`focus-visible:ring-2 ring-accent`).

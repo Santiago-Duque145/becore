@@ -1,6 +1,6 @@
 import { forwardRef } from 'react';
 import { cn } from '../../lib/cn.js';
-import { LoaderIcon } from '../icons/index.js';
+import { LoadingDots } from './LoadingDots.jsx';
 
 // Botón de acceso con Google. Colores fijos por las guías de marca de Google
 // (fondo #FFFFFF, texto #1F1F1F, logo sin recolorear): única excepción a los tokens (skill §3).
@@ -22,7 +22,7 @@ export const GoogleButton = forwardRef(function GoogleButton(
       )}
       {...props}
     >
-      {loading ? <LoaderIcon size={18} className="animate-spin motion-reduce:animate-none" /> : <GoogleLogo />}
+      {loading ? <LoadingDots className="w-[18px] justify-center" /> : <GoogleLogo />}
       {children}
     </button>
   );

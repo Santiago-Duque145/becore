@@ -2,9 +2,10 @@ import { useEffect, useReducer, useRef } from 'react';
 import { Navigate } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useCompleteOnboarding } from '../../hooks/useCompleteOnboarding.js';
+import { useLoaderVisibility } from '../../hooks/useLoaderTiming.js';
 import { homePathFor } from '../../layouts/navigation.js';
 import { ChevronLeftIcon } from '../../components/icons/index.js';
-import { Button, ProgressSteps, useToast } from '../../components/ui/index.js';
+import { Button, FullScreenLoader, ProgressSteps, useToast } from '../../components/ui/index.js';
 import { consentBlocks, initialOnboardingState, onboardingReducer, toOnboardingPayload, totalSteps } from './onboarding-reducer.js';
 import { stepsFor } from './OnboardingSteps.jsx';
 import { OnboardingDone } from './OnboardingDone.jsx';
@@ -42,7 +43,11 @@ export default function BienvenidaPage() {
   }, [state.step]);
 
   const firstName = profile?.fullName?.trim().split(/\s+/)[0];
+  // Guardado del onboarding: BrandLoader encima del formulario si tarda más de 300 ms (mínimo 500 ms visible)
+  const loaderVisible = useLoaderVisibility(mutation.isPending);
+  const saveLoader = loaderVisible && <FullScreenLoader immediate variant="overlay" onRetry={() => save(modeRef.current)} />;
 
+  if (loaderVisible && !mutation.isPending && state.finished) return saveLoader;
   if (state.finished) return <OnboardingDone firstName={firstName} homePath={homePathFor(state.role)} />;
   // Ya completo (usuario del seed, o "Omitir" terminó): al inicio de su rol
   if (profile?.onboardingCompleted) return <Navigate to={homePathFor(profile.role)} replace />;
@@ -112,6 +117,7 @@ export default function BienvenidaPage() {
           </Button>
         </div>
       </div>
+      {saveLoader}
     </form>
   );
 }

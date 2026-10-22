@@ -18,7 +18,8 @@ import { StatusBadges } from './EventBadges.jsx';
 export function EventCard({ event, reason, className, preview = false }) {
   const going = event.myAttendance?.status === 'confirmed';
   const Body = preview ? 'div' : Link;
-  const bodyProps = preview ? {} : { to: `/eventos/${event.id}` };
+  // La categoría viaja al detalle para que su pantalla de carga use el ícono animado de la categoría (P7)
+  const bodyProps = preview ? {} : { to: `/eventos/${event.id}`, state: { category: event.category } };
   return (
     <article
       className={cn(
@@ -83,7 +84,7 @@ export function EventCard({ event, reason, className, preview = false }) {
 export function EventCardSkeleton({ className }) {
   return (
     <div className={cn('overflow-hidden rounded-card border border-white/[0.06] bg-panel', className)} aria-hidden="true">
-      <div className="h-[84px] animate-pulse bg-field motion-reduce:animate-none md:h-[108px]" />
+      <div className="skeleton-sweep h-[84px] bg-field md:h-[108px]" />
       <div className="flex flex-col gap-2.5 p-4">
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-3 w-1/2" />

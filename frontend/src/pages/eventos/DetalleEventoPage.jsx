@@ -1,4 +1,4 @@
-import { useParams } from 'react-router';
+import { useLocation, useParams } from 'react-router';
 import { AlertCircleIcon, CalendarIcon, MapPinIcon } from '../../components/icons/index.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useEvent } from '../../hooks/useEvent.js';
@@ -22,11 +22,12 @@ import { CapacityBar, PreviewableAvatar, EmptyState, ErrorState, LinkButton } fr
 // Escritorio: columna centrada de 720 px y la barra de acción al final de la columna.
 export default function DetalleEventoPage() {
   const { id } = useParams();
+  const location = useLocation();
   const { profile } = useAuth();
   const { data: event, isPending, isError, error, refetch } = useEvent(id);
   useRealtimeEvent(id);
 
-  if (isPending) return <DetailSkeleton />;
+  if (isPending) return <DetailSkeleton category={location.state?.category} />;
   if (isError) {
     return (
       <div className="mx-auto max-w-[720px] px-[22px] pt-16 md:px-0 md:pt-0">
