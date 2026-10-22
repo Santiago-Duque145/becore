@@ -7,6 +7,14 @@ export const WEBP_QUALITY = 0.8;
 export const IMAGE_PRESETS = {
   cover: { maxWidth: 1200, maxHeight: 1200 },
   avatar: { maxWidth: 256, maxHeight: 256 },
+  // P8: original de la portada, para volver a encuadrar sin perder calidad (cabe en el límite de 3 MB del bucket)
+  original: { maxWidth: 2400, maxHeight: 2400, quality: 0.85 },
+};
+
+// P8 · Salida del editor de encuadre: portada 2:1 (≤ 1200 × 600, como la declara EventCover) y avatar ≤ 256 × 256
+export const CROP_PRESETS = {
+  cover: { maxWidth: 1200, maxHeight: 600, aspect: 2 },
+  avatar: { maxWidth: 256, maxHeight: 256, aspect: 1 },
 };
 
 // Devuelve un mensaje de error en español, o null si el archivo se puede procesar
@@ -35,10 +43,37 @@ export async function compressImage(file, preset = 'cover') {
   canvas.height = height;
   canvas.getContext('2d').drawImage(bitmap, 0, 0, width, height);
   bitmap.close?.();
+  return encode(canvas, IMAGE_PRESETS[preset].quality);
+}
 
-  const toBlob = (type) => new Promise((resolve) => canvas.toBlob(resolve, type, WEBP_QUALITY));
+// WebP; si el navegador no lo codifica (Safari), JPEG
+async function encode(canvas, quality = WEBP_QUALITY) {
+  const toBlob = (type) => new Promise((resolve) => canvas.toBlob(resolve, type, quality));
   let blob = await toBlob('image/webp');
   if (!blob || blob.type !== 'image/webp') blob = await toBlob('image/jpeg');
   if (!blob) throw new Error('No pudimos procesar la imagen');
   return blob;
 }
+
+// Tamaño final del recorte: el rectángulo elegido, reducido a los máximos del preset (nunca se agranda)
+export function cropOutputSize(rect, preset = 'cover') {
+  const { maxWidth, maxHeight, aspect } = CROP_PRESETS[preset];
+  const width = Math.max(1, Math.round(Math.min(rect.width, maxWidth, maxHeight * aspect)));
+  return { width, height: Math.max(1, Math.round(width / aspect)) };
+}
+
+// P8 · Recorta en el navegador lo que quedó dentro del marco (rect en px reales de source) y lo comprime igual que
+// compressImage. source: <img> ya cargada (con crossOrigin si viene de Storage) o ImageBitmap.
+export async function cropImage(source, rect, preset = 'cover') {
+  const { width, height } = cropOutputSize(rect, preset);
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(source, rect.x, rect.y, rect.width, rect.height, 0, 0, width, height);
+  return encode(canvas);
+}
+
+// P8 · Original guardado al lado de la portada (backend storage.service.originalPathFor): ".../abc.webp" → ".../abc-original.webp"
+export const originalUrlFor = (coverUrl) => (coverUrl ? coverUrl.replace(/(\.[a-z]+)(\?.*)?$/, '-original$1') : null);

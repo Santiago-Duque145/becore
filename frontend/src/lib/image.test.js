@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fitWithin, IMAGE_PRESETS, MAX_ORIGINAL_BYTES, validateImageFile, WEBP_QUALITY } from './image.js';
+import { cropOutputSize, fitWithin, IMAGE_PRESETS, MAX_ORIGINAL_BYTES, originalUrlFor, validateImageFile, WEBP_QUALITY } from './image.js';
 
 describe('validateImageFile', () => {
   it('rechaza lo que no es imagen', () => {
@@ -40,4 +40,26 @@ describe('fitWithin', () => {
   });
 
   it('WebP con calidad 0,8', () => expect(WEBP_QUALITY).toBe(0.8));
+});
+
+describe('encuadre (P8)', () => {
+  it('portada 2:1 a máximo 1200 × 600 y avatar a 256, sin agrandar recortes pequeños', () => {
+    expect(cropOutputSize({ width: 3000, height: 1500 }, 'cover')).toEqual({ width: 1200, height: 600 });
+    expect(cropOutputSize({ width: 800, height: 400 }, 'cover')).toEqual({ width: 800, height: 400 });
+    expect(cropOutputSize({ width: 1000, height: 1000 }, 'avatar')).toEqual({ width: 256, height: 256 });
+    expect(cropOutputSize({ width: 120, height: 120 }, 'avatar')).toEqual({ width: 120, height: 120 });
+  });
+
+  it('el original se guarda a ≤ 2400 px con calidad 0,85', () => {
+    expect(fitWithin(6000, 4000, IMAGE_PRESETS.original)).toEqual({ width: 2400, height: 1600 });
+    expect(IMAGE_PRESETS.original.quality).toBe(0.85);
+  });
+
+  it('la URL del original sale de la de la portada', () => {
+    expect(originalUrlFor('https://x.supabase.co/storage/v1/object/public/event-covers/u/abc.webp')).toBe(
+      'https://x.supabase.co/storage/v1/object/public/event-covers/u/abc-original.webp',
+    );
+    expect(originalUrlFor('https://x/u/abc.jpg?v=2')).toBe('https://x/u/abc-original.jpg');
+    expect(originalUrlFor(null)).toBeNull();
+  });
 });

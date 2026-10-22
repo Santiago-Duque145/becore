@@ -20,4 +20,6 @@ export const recordSearchOpen = (searchId, eventId) => api.post(`/events/search/
 export const createEventDraft = (text) => api.post('/events/draft', { text });
 
 // Portada (P3): URL firmada para que el organizador suba la imagen; la ruta se envía luego como coverPath
-export const requestCoverUpload = (contentType) => api.post('/events/cover-upload-url', { contentType });
+// withOriginal (P8): también una URL para guardar el original al lado (volver a encuadrar sin perder calidad)
+export const requestCoverUpload = (contentType, withOriginal = false) =>
+  api.post('/events/cover-upload-url', { contentType, ...(withOriginal && { withOriginal: true }) });

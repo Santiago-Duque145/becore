@@ -107,8 +107,12 @@ export function EventForm({
       const payload = formValuesToPayload(formValues);
       // La imagen se sube al enviar (no al elegirla) para no dejar archivos huérfanos si se cancela
       if (cover.blob) {
-        const { data: target } = await requestCoverUpload(cover.blob.type);
+        const { data: target } = await requestCoverUpload(cover.blob.type, Boolean(cover.originalBlob));
         payload.coverPath = await uploadToTarget(target, cover.blob);
+        // P8: el original para volver a encuadrar. Si falla, la portada igual se guarda (el editor usará la portada)
+        if (cover.originalBlob && target.original) {
+          await uploadToTarget({ bucket: target.bucket, ...target.original }, cover.originalBlob).catch(() => null);
+        }
       } else if (cover.removed) {
         payload.coverPath = null;
       }
@@ -222,7 +226,12 @@ export function EventForm({
           />
         </Field>
 
-        <CoverUpload value={cover} existingUrl={initialCoverUrl} onChange={setCover} />
+        <CoverUpload
+          value={cover}
+          existingUrl={initialCoverUrl}
+          onChange={setCover}
+          event={{ title: values.title, category: values.category, capacity: Number(values.capacity) || 0 }}
+        />
 
         <Field
           label="Descripción (opcional)"

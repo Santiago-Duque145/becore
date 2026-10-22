@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { AVATAR_PRESETS, PresetAvatarSvg } from '../../assets/avatars/index.jsx';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useAvatarActions } from '../../hooks/useAvatarActions.js';
@@ -6,6 +6,7 @@ import { useMyAvatar } from '../../hooks/useMyAvatar.js';
 import { validateImageFile } from '../../lib/image.js';
 import { cn } from '../../lib/cn.js';
 import { Avatar, Button, useToast } from '../ui/index.js';
+import { AvatarCropModal } from './AvatarCropModal.jsx';
 
 // Foto de perfil: subir una (se comprime en el navegador) o elegir uno de los 12 avatares de la marca.
 // compact: sin título ni "Quitar" (último paso del onboarding).
@@ -14,6 +15,7 @@ export function AvatarPicker({ compact = false }) {
   const avatar = useMyAvatar();
   const toast = useToast();
   const fileRef = useRef(null);
+  const [cropFile, setCropFile] = useState(null); // P8: foto elegida, abierta en el editor de encuadre
   const { uploadPhoto, choosePreset, removeAvatar, pending, uploading } = useAvatarActions();
   const hasOwn = Boolean(profile?.avatarUrl || profile?.avatarPreset);
 
@@ -31,7 +33,13 @@ export function AvatarPicker({ compact = false }) {
     event.target.value = '';
     const problem = validateImageFile(file);
     if (problem) return toast.error(problem);
-    return run(() => uploadPhoto(file), 'Actualizamos tu foto.');
+    setCropFile(file);
+    return undefined;
+  }
+
+  async function uploadCropped(blob) {
+    await run(() => uploadPhoto(blob), 'Actualizamos tu foto.');
+    setCropFile(null);
   }
 
   return (
@@ -50,6 +58,13 @@ export function AvatarPicker({ compact = false }) {
           <input ref={fileRef} type="file" accept="image/*" className="sr-only" tabIndex={-1} onChange={handleFile} aria-label="Elegir foto de perfil" />
         </div>
       </div>
+      <AvatarCropModal
+        file={cropFile}
+        name={profile?.fullName}
+        onConfirm={uploadCropped}
+        onChangeImage={() => fileRef.current?.click()}
+        onCancel={() => setCropFile(null)}
+      />
 
       <div>
         <p className="mb-2 text-xs font-semibold text-ink-muted">O elige un avatar</p>

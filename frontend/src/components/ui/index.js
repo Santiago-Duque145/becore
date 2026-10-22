@@ -14,6 +14,7 @@ export { ErrorState } from './ErrorState.jsx';
 export { Field } from './Field.jsx';
 export { FullScreenLoader } from './FullScreenLoader.jsx';
 export { GoogleButton } from './GoogleButton.jsx';
+export { ImageCropper } from './ImageCropper.jsx';
 export { Input } from './Input.jsx';
 export { LoadingDots } from './LoadingDots.jsx';
 export { Modal } from './Modal.jsx';

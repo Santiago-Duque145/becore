@@ -153,3 +153,9 @@ export const ShareIcon = createIcon('ShareIcon', [
   ['circle', { cx: 18, cy: 19, r: 3 }],
   ['path', { d: 'M8.6 13.5l6.8 4M15.4 6.5l-6.8 4' }],
 ]);
+
+// P8 · Encuadrar una imagen
+export const CropIcon = createIcon('CropIcon', [
+  ['path', { d: 'M6 2v14a2 2 0 002 2h14' }],
+  ['path', { d: 'M18 22V8a2 2 0 00-2-2H2' }],
+]);
