@@ -30,7 +30,12 @@ actualizada en IA1 con las mediciones reales de Gemini (§2) y la decisión de r
   - Medición de todos los flash/flash-lite disponibles (IA1, `docs/progreso/17_*` §2): `gemini-3.6-flash` es el más
     rápido y estable (mediana ~1,1 s) y queda por defecto. Aun así hubo 429 (límite por minuto de la capa gratuita) y
     respuestas sueltas de hasta 19 s.
-  - Conclusión: hoy no se puede esperar a Gemini dentro de una petición del usuario (ver §3).
+  - **Cupo de la capa gratuita (medido en IA2, 22 oct):** `gemini-3.6-flash` y `gemini-3.5-flash` tienen
+    **20 peticiones por día y por modelo** (`GenerateRequestsPerDayPerProjectPerModel-FreeTier`, límite 20). Se
+    reinicia a medianoche, hora del Pacífico. La página oficial de límites no publica las cifras por modelo (remite a
+    AI Studio). El modelo de embeddings tiene su propio cupo y siguió respondiendo cuando los de texto ya no.
+  - Conclusión: hoy no se puede esperar a Gemini dentro de una petición del usuario (ver §3), y el modelo de texto
+    da para muy pocas llamadas al día (ver §13).
 - **SDK:** `@google/genai` 2.30.0 (instalado en IA1). El paquete viejo `@google/generative-ai`
   está obsoleto desde el 30 nov 2025.
 - **API:** Google recomienda la nueva Interactions API (`ai.interactions.create`, salida JSON con
@@ -213,7 +218,8 @@ híbrido = min(1, 0.5 · similitud + 0.5 · reglas + bonus)
 | Error de red, 429, 5xx o JSON que no pasa Zod | Igual que el anterior. Se registra `[ai] json <modelo> falló: <código> (<ms>, intento n)`, sin datos del usuario. |
 | Alias inventados o repetidos | Se descartan y se completa con el orden híbrido. |
 | Etiquetas o embedding fallan (segundo plano) | 1 reintento a los 2 s. Si vuelve a fallar, queda en `NULL`/`{}` y lo cubre `ai:backfill`. |
-| Varios fallos seguidos | Tras 3 fallos en 60 s, la IA se salta durante 5 min ("cortacircuito" en memoria). |
+| Varios fallos seguidos | Tras 3 fallos en 60 s, **ese modelo** se salta durante 5 min ("cortacircuito" en memoria, por modelo: si el de texto se pausa, los embeddings siguen). |
+| Cupo del día agotado (429 con cuota `PerDay`) | `AI_QUOTA_EXHAUSTED`: no se reintenta y ese modelo se pausa 1 h. El backfill deja los eventos que falten para otra corrida y sigue con los perfiles (otro modelo). |
 
 Nunca se devuelve un error al usuario por culpa de Gemini: `GET /events/recommended` siempre responde 200.
 
@@ -282,6 +288,17 @@ y sin clave, el backend arranca con un aviso y se comporta como `false`. La clav
 
 - Visto bueno del director: **solicitado por correo el 22 oct 2026, pendiente** (`CLAUDE.md` §9).
 - Facturación: **no se activa** (decisión del 22 oct). IA5 pasa a trabajo futuro (§14).
+- **Cupo del modelo de texto (abierto, 22 oct):** con 20 peticiones al día por modelo no alcanza para etiquetar los
+  eventos que se publiquen **y** re-ordenar "Para ti" a cada usuario cada 6 h. Opciones, antes de IA3:
+  1. **Etiquetas con embeddings en lugar del LLM.** Se compara el embedding del evento con el de cada uno de los
+     18 gustos (calculados una vez) y se toman los más parecidos sobre un umbral. Usa el modelo de embeddings, que
+     tiene su propio cupo. Deja todo el cupo de texto para el re-ordenado.
+  2. **Cadena de modelos de respaldo** (`GEMINI_TEXT_MODEL` + otros flash), cada uno con sus 20 diarias.
+  3. **Facturación solo para texto** (Tier 1). Con el precio publicado de `gemini-3.5-flash-lite` (US$0,30 por millón
+     de tokens de entrada y US$2,50 de salida), un re-ordenado de ~1.500 tokens de entrada y ~200 de salida cuesta unos
+     US$0,001. El de `gemini-3.6-flash` no se consultó: confirmarlo en la página de precios. Con facturación, Google no
+     usa los datos para entrenar.
+  4. **Re-ordenado solo en la variante `ai` de la A/B y con caché más larga** (12–24 h).
 
 ## 14. Trabajo futuro
 

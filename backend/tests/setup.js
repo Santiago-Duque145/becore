@@ -14,3 +14,13 @@ vi.mock('../src/services/ai/geminiClient.js', async (importOriginal) => {
   const original = await importOriginal();
   return { ...original, gemini: original.createGeminiClient({ sdk: null, config: { enabled: false } }) };
 });
+
+// event_ai / user_ai: las pruebas de eventos y gustos no tocan la base real
+vi.mock('../src/repositories/ai.repository.js', async (importOriginal) => ({
+  ...(await importOriginal()),
+  upsertEventAi: vi.fn(async () => {}),
+  upsertUserAi: vi.fn(async () => {}),
+  findEventTags: vi.fn(async () => []),
+  listEventsMissingAi: vi.fn(async () => []),
+  listPreferencesMissingAi: vi.fn(async () => []),
+}));

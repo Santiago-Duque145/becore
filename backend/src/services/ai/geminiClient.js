@@ -4,12 +4,14 @@ import { env } from '../../config/env.js';
 // Cliente único de Gemini (docs/specs/ai.md §3 y §7). Solo el backend llama a Gemini.
 // - Toda llamada tiene timeout (AbortSignal) y, si se pide, 1 reintento ante 429/503/red (segundo plano).
 // - La salida JSON se valida con Zod: Gemini no aplica minLength/maxLength/uniqueItems del esquema.
-// - Cortacircuito: 3 fallos en 60 s → la IA se salta 5 min (no se insiste mientras Gemini está saturado).
+// - Cortacircuito POR MODELO: 3 fallos en 60 s → ese modelo se salta 5 min; cupo diario agotado → 1 h. Un modelo con
+//   problemas (p. ej. el de texto) no apaga al otro (el de embeddings tiene su propio cupo).
 // - Logs: modelo, operación, duración y código. NUNCA el prompt, la respuesta ni datos del usuario.
 // IA5 (imágenes) quedó como trabajo futuro: no hay generateImage.
 
 export class AiError extends Error {
-  // code: AI_DISABLED | AI_UNAVAILABLE (cortacircuito) | AI_TIMEOUT | AI_RATE_LIMITED | AI_OVERLOADED | AI_INVALID_OUTPUT | AI_ERROR
+  // code: AI_DISABLED | AI_UNAVAILABLE (cortacircuito) | AI_TIMEOUT | AI_RATE_LIMITED | AI_QUOTA_EXHAUSTED (cupo del día)
+  //       | AI_OVERLOADED | AI_INVALID_OUTPUT | AI_ERROR
   constructor(code, message = code) {
     super(message);
     this.code = code;
@@ -18,14 +20,16 @@ export class AiError extends Error {
 
 const EMBEDDING_DIMENSIONS = 768;
 const RETRY_DELAY_MS = 2000;
-const BREAKER = { failures: 3, windowMs: 60_000, pauseMs: 5 * 60_000 };
+const BREAKER = { failures: 3, windowMs: 60_000, pauseMs: 5 * 60_000, quotaPauseMs: 60 * 60_000 };
 const RETRIABLE = new Set(['AI_TIMEOUT', 'AI_RATE_LIMITED', 'AI_OVERLOADED', 'AI_ERROR']);
 
 // Error del SDK → código propio (sin copiar el mensaje de Google, que puede repetir el contenido enviado)
 export function toAiError(error) {
   if (error instanceof AiError) return error;
   if (error?.name === 'TimeoutError' || error?.name === 'AbortError') return new AiError('AI_TIMEOUT');
-  if (error?.status === 429) return new AiError('AI_RATE_LIMITED');
+  // La capa gratuita tiene cupo por minuto y por día (20 peticiones diarias por modelo en los flash, medido el 22 oct).
+  // El del día no se recupera en minutos: no se reintenta. Del mensaje de Google solo se mira el id de la cuota.
+  if (error?.status === 429) return new AiError(/PerDay/.test(String(error.message)) ? 'AI_QUOTA_EXHAUSTED' : 'AI_RATE_LIMITED');
   if (error?.status === 503 || error?.status === 500) return new AiError('AI_OVERLOADED');
   return new AiError('AI_ERROR');
 }
@@ -33,34 +37,41 @@ export function toAiError(error) {
 // deps inyectables para las pruebas: sdk (con .models.generateContent / .models.embedContent), config, reloj, log y espera
 export function createGeminiClient({ sdk, config, now = Date.now, log = console.warn, sleep = defaultSleep } = {}) {
   const enabled = Boolean(sdk) && config.enabled;
-  let failures = [];
-  let pausedUntil = 0;
+  const breakers = new Map(); // modelo → { failures: [t…], pausedUntil }
+  const breakerFor = (model) => breakers.get(model) ?? breakers.set(model, { failures: [], pausedUntil: 0 }).get(model);
 
-  function recordFailure() {
+  function recordFailure(model, error) {
+    const b = breakerFor(model);
     const t = now();
-    failures = [...failures.filter((f) => t - f < BREAKER.windowMs), t];
-    if (failures.length >= BREAKER.failures) {
-      pausedUntil = t + BREAKER.pauseMs;
-      failures = [];
-      log('[ai] cortacircuito: IA en pausa 5 min');
+    if (error.code === 'AI_QUOTA_EXHAUSTED') {
+      b.pausedUntil = t + BREAKER.quotaPauseMs;
+      log(`[ai] ${model}: cupo del día agotado, en pausa 1 h`);
+      return;
+    }
+    b.failures = [...b.failures.filter((f) => t - f < BREAKER.windowMs), t];
+    if (b.failures.length >= BREAKER.failures) {
+      b.pausedUntil = t + BREAKER.pauseMs;
+      b.failures = [];
+      log(`[ai] cortacircuito: ${model} en pausa 5 min`);
     }
   }
 
   async function call(operation, model, run, { timeoutMs, retry }) {
     if (!enabled) throw new AiError('AI_DISABLED');
-    if (now() < pausedUntil) throw new AiError('AI_UNAVAILABLE');
+    const breaker = breakerFor(model);
+    if (now() < breaker.pausedUntil) throw new AiError('AI_UNAVAILABLE');
     for (let attempt = 0; ; attempt++) {
       const started = now();
       try {
         const result = await run(AbortSignal.timeout(timeoutMs));
-        failures = [];
+        breaker.failures = [];
         return result;
       } catch (raw) {
         const error = toAiError(raw);
         log(`[ai] ${operation} ${model} falló: ${error.code} (${now() - started} ms, intento ${attempt + 1})`);
         if (error.code === 'AI_INVALID_OUTPUT') throw error; // reintentar no arregla un JSON mal formado del mismo prompt
-        recordFailure();
-        if (!retry || attempt > 0 || !RETRIABLE.has(error.code) || now() < pausedUntil) throw error;
+        recordFailure(model, error);
+        if (!retry || attempt > 0 || !RETRIABLE.has(error.code) || now() < breaker.pausedUntil) throw error;
         await sleep(RETRY_DELAY_MS);
       }
     }

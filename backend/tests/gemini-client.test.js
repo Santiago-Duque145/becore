@@ -123,9 +123,33 @@ describe('cortacircuito y logs', () => {
     expect(logs.join('\n')).not.toMatch(/datos|evento|sistema/);
   });
 
-  it('toAiError traduce timeout, 429, 503 y otros', () => {
+  it('el cortacircuito es por modelo: si el de texto se pausa, los embeddings siguen', async () => {
+    const sdk = fakeSdk({ generate: async () => Promise.reject(httpError(503)) });
+    const { c } = client(sdk);
+    for (let i = 0; i < 3; i++) await expect(c.generateJson(request)).rejects.toMatchObject({ code: 'AI_OVERLOADED' });
+    await expect(c.generateJson(request)).rejects.toMatchObject({ code: 'AI_UNAVAILABLE' });
+    expect(await c.embedText('title: none | text: x')).toHaveLength(768);
+  });
+
+  it('cupo del día agotado (429 PerDay): no reintenta y pausa ese modelo 1 h', async () => {
+    let t = 0;
+    const quota = Object.assign(new Error('{"quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier"}'), { status: 429 });
+    const sdk = fakeSdk({ generate: async () => Promise.reject(quota) });
+    const { c, logs } = client(sdk, { now: () => t });
+    await expect(c.generateJson(request, { retry: true })).rejects.toMatchObject({ code: 'AI_QUOTA_EXHAUSTED' });
+    expect(sdk.models.generateContent).toHaveBeenCalledTimes(1);
+    expect(logs.join('\n')).toContain('cupo del día agotado');
+    t = 59 * 60_000;
+    await expect(c.generateJson(request)).rejects.toMatchObject({ code: 'AI_UNAVAILABLE' });
+    t = 61 * 60_000;
+    sdk.models.generateContent.mockResolvedValueOnce({ text: '{"tags":[]}' });
+    expect(await c.generateJson(request)).toEqual({ tags: [] });
+  });
+
+  it('toAiError traduce timeout, 429 (minuto o día), 503 y otros', () => {
     expect(toAiError(Object.assign(new Error(), { name: 'TimeoutError' })).code).toBe('AI_TIMEOUT');
     expect(toAiError(httpError(429)).code).toBe('AI_RATE_LIMITED');
+    expect(toAiError(Object.assign(new Error('GenerateRequestsPerDayPerProjectPerModel-FreeTier'), { status: 429 })).code).toBe('AI_QUOTA_EXHAUSTED');
     expect(toAiError(httpError(503)).code).toBe('AI_OVERLOADED');
     expect(toAiError(new Error('x')).code).toBe('AI_ERROR');
   });
