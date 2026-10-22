@@ -100,6 +100,8 @@ function VectorBasemap({ onReady, onFail }) {
 
 // Mapa base de todos los mapas de la app. data-basemap = loading | vector | raster (el filtro oscuro de map.css solo
 // aplica al respaldo raster). La atribución obligatoria queda siempre visible en cada modo.
+// `isolate` (isolation: isolate) crea un contexto de apilamiento propio: los z-index internos de Leaflet y MapLibre
+// (panes 200–700, controles 800–1000) quedan contenidos y no tapan modales, toasts, cabeceras ni la barra de acción.
 export function MapBase({ center = MEDELLIN, zoom = DEFAULT_ZOOM, className, label, lockOnTouch = true, children }) {
   const coarse = useMediaQuery('(pointer: coarse)');
   const [unlocked, setUnlocked] = useState(false);
@@ -111,7 +113,7 @@ export function MapBase({ center = MEDELLIN, zoom = DEFAULT_ZOOM, className, lab
       role="region"
       aria-label={label}
       data-basemap={basemap}
-      className={cn('relative overflow-hidden rounded-card border border-white/[0.06]', className)}
+      className={cn('relative isolate overflow-hidden rounded-card border border-white/[0.06]', className)}
     >
       <MapContainer center={[center.lat, center.lng]} zoom={zoom} maxZoom={TILES_MAX_ZOOM} scrollWheelZoom={false} className="h-full w-full">
         {basemap === 'raster' ? (

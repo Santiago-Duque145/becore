@@ -190,3 +190,32 @@ describe('Cerca de mí con eventos sin ubicación', () => {
     expect(sorted[0].distanceKm).toBeLessThan(0.1);
   });
 });
+
+describe('apilamiento: el mapa no tapa los overlays', () => {
+  const read = async (path) => (await import('node:fs/promises')).readFile(new URL(path, import.meta.url), 'utf8');
+
+  it('el contenedor común de los mapas (MapBase) está aislado con isolation: isolate', async () => {
+    const code = await read('../components/map/MapBase.jsx');
+    const region = code.match(/role="region"[\s\S]*?className=\{cn\('([^']+)'/);
+    expect(region[1].split(' ')).toEqual(expect.arrayContaining(['relative', 'isolate']));
+  });
+
+  it('todos los mapas pasan por MapBase (nadie más usa MapContainer)', async () => {
+    const { readdir } = await import('node:fs/promises');
+    const { sep } = await import('node:path');
+    const dir = new URL('../components/', import.meta.url);
+    const files = (await readdir(dir, { recursive: true })).filter((f) => f.endsWith('.jsx'));
+    const users = [];
+    for (const file of files.map((f) => f.split(sep).join('/'))) {
+      if ((await read(`../components/${file}`)).includes('<MapContainer')) users.push(file);
+    }
+    expect(users).toEqual(['map/MapBase.jsx']);
+  });
+
+  it('diálogos, vista previa de avatar y toasts se dibujan en <body> con un portal', async () => {
+    expect(await read('../components/ui/BodyPortal.jsx')).toContain('createPortal(children, document.body)');
+    for (const file of ['Modal.jsx', 'AvatarPreview.jsx', 'ToastProvider.jsx']) {
+      expect(await read(`../components/ui/${file}`), file).toMatch(/<BodyPortal>/);
+    }
+  });
+});
