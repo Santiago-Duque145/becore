@@ -34,7 +34,9 @@ cancelan su asistencia; el sistema impide el sobrecupo, envía recordatorios por
 | Repositorio | GitHub, ramas `main` / `develop` / `feature/*` |
 
 Librerías **permitidas** además de las anteriores: `cors`, `helmet`, `morgan`, `nodemailer`, `node-cron`,
-`concurrently`, `react-hook-form`, `@hookform/resolvers`, `lucide-react`, `sonner`.
+`concurrently`, `react-hook-form`, `@hookform/resolvers`, `lucide-react`, `sonner`, `leaflet`, `react-leaflet`,
+`maplibre-gl` y `@maplibre/maplibre-gl-leaflet` (mapa vectorial con los colores de la marca; se cargan en diferido,
+solo al abrir un mapa).
 Herramientas de desarrollo permitidas: `vitest`, `supertest`, `@vitest/coverage-v8`, `eslint`, `prettier`,
 `supabase` (CLI), `autocannon` (solo con `npx`).
 **No instales ninguna otra librería sin preguntar primero** y explicar en una frase por qué hace falta.
