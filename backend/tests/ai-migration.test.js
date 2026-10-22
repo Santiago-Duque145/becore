@@ -42,3 +42,14 @@ describe('migración ai_recommendations', () => {
     expect(code).not.toMatch(/gender|age_range|data_consent/);
   });
 });
+
+describe('migración recommendation_source (IA3)', () => {
+  it('recommendation_events.source: gemini, template o rules, obligatorio', async () => {
+    const src = (await readFile(new URL('../../supabase/migrations/20261022170000_recommendation_source.sql', import.meta.url), 'utf8')).replace(
+      /--.*$/gm,
+      '',
+    );
+    expect(src).toMatch(/add column source text not null check \(source in \('gemini', 'template', 'rules'\)\)/);
+    expect(src).not.toMatch(/create policy|publication|gender|age_range/);
+  });
+});

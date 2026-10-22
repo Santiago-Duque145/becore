@@ -8,6 +8,7 @@ import {
 } from '../repositories/profiles.repository.js';
 import { findPreferencesByUserId, upsertPreferences } from '../repositories/preferences.repository.js';
 import { scheduleProfileIndex } from './ai/indexing.service.js';
+import { deleteCachedRecommendations } from '../repositories/ai.repository.js';
 import { AppError } from '../utils/app-error.js';
 
 const onboardingAlreadyCompleted = () =>
@@ -60,9 +61,11 @@ export async function acceptDataConsent(user, answers) {
   return getMe(updated);
 }
 
-// Guarda los gustos y programa su embedding (IA2, en segundo plano). Solo gustos: nunca nombre, sexo ni edad.
+// Guarda los gustos, borra su "Para ti" guardado (IA3: ya no corresponde) y programa su embedding (IA2, en segundo
+// plano). Solo gustos: nunca nombre, sexo ni edad.
 async function savePreferences(userId, answers) {
   const preferences = await upsertPreferences(userId, toPreferencesRow(answers));
+  await deleteCachedRecommendations(userId);
   scheduleProfileIndex(userId, preferences);
   return preferences;
 }

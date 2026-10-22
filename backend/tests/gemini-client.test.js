@@ -1,13 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 import { z } from 'zod';
-import { AiError, createGeminiClient, gemini, toAiError } from '../src/services/ai/geminiClient.js';
+import { AiError, createGeminiClient, gemini, parseModelList, toAiError } from '../src/services/ai/geminiClient.js';
 
-const config = { enabled: true, textModel: 'gemini-test', embeddingModel: 'embedding-test' };
+const config = { enabled: true, textModels: ['texto-a', 'texto-b', 'texto-c'], embeddingModel: 'embedding-test' };
 const vector = (n = 768) => Array.from({ length: n }, () => 0.01);
 const schema = { zodSchema: z.object({ tags: z.array(z.string()).max(4) }), jsonSchema: { type: 'object' } };
 const request = { system: 'sistema', prompt: '<datos>evento</datos>', ...schema };
 
-// SDK falso: cada método recibe el body y devuelve lo que diga `impl`
+// SDK falso: generate recibe el body (con body.model) y responde según el modelo
 function fakeSdk({ generate, embed } = {}) {
   return {
     models: {
@@ -16,10 +16,17 @@ function fakeSdk({ generate, embed } = {}) {
     },
   };
 }
-const httpError = (status) => Object.assign(new Error(`HTTP ${status}`), { status });
+const httpError = (status, message = `HTTP ${status}`) => Object.assign(new Error(message), { status });
+const quotaError = () => httpError(429, '{"quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier"}');
 // Se queda colgado hasta que el AbortSignal del cliente lo corte
 const hang = (body) =>
   new Promise((_, reject) => body.config.abortSignal.addEventListener('abort', () => reject(body.config.abortSignal.reason)));
+// Falla en los modelos indicados y responde bien en los demás
+const failOn = (failures) => async (body) => {
+  if (failures[body.model]) throw failures[body.model]();
+  return { text: `{"tags":["${body.model}"]}` };
+};
+const models = (sdk) => sdk.models.generateContent.mock.calls.map(([body]) => body.model);
 
 function client(sdk, extra = {}) {
   const logs = [];
@@ -27,7 +34,7 @@ function client(sdk, extra = {}) {
   return { c, logs };
 }
 
-describe('apagado y respaldo', () => {
+describe('apagado', () => {
   it('con AI_ENABLED=false o sin clave no llama a Gemini: AI_DISABLED', async () => {
     const sdk = fakeSdk();
     const off = createGeminiClient({ sdk, config: { ...config, enabled: false } });
@@ -40,47 +47,86 @@ describe('apagado y respaldo', () => {
     expect(gemini.enabled).toBe(false);
     await expect(gemini.embedText('x')).rejects.toMatchObject({ code: 'AI_DISABLED' });
   });
+
+  it('GEMINI_TEXT_MODELS: lista separada por comas, sin espacios ni vacíos', () => {
+    expect(parseModelList(' gemini-3.6-flash, gemini-3-flash-preview ,,gemini-3.5-flash ')).toEqual([
+      'gemini-3.6-flash',
+      'gemini-3-flash-preview',
+      'gemini-3.5-flash',
+    ]);
+    expect(parseModelList(undefined)).toEqual([]);
+  });
 });
 
-describe('generateJson', () => {
-  it('manda instrucción de sistema, datos, esquema JSON, modelo y un AbortSignal; devuelve lo validado con Zod', async () => {
+describe('generateJson con cadena de modelos', () => {
+  it('usa el primero de la cadena con instrucción de sistema, esquema JSON y AbortSignal; devuelve { data, model }', async () => {
     const sdk = fakeSdk();
     const { c } = client(sdk);
-    expect(await c.generateJson(request)).toEqual({ tags: ['football'] });
+    expect(await c.generateJson(request)).toEqual({ data: { tags: ['football'] }, model: 'texto-a' });
     const body = sdk.models.generateContent.mock.calls[0][0];
-    expect(body.model).toBe('gemini-test');
-    expect(body.contents).toBe('<datos>evento</datos>');
+    expect(body).toMatchObject({ model: 'texto-a', contents: '<datos>evento</datos>' });
     expect(body.config).toMatchObject({ systemInstruction: 'sistema', responseMimeType: 'application/json', responseJsonSchema: { type: 'object' } });
     expect(body.config.abortSignal).toBeInstanceOf(AbortSignal);
   });
 
-  it('JSON roto o que no cumple el esquema Zod → AI_INVALID_OUTPUT, sin reintentar', async () => {
-    for (const text of ['no es json', '{"tags":["a","b","c","d","e"]}', '']) {
-      const sdk = fakeSdk({ generate: async () => ({ text }) });
-      const { c } = client(sdk);
-      await expect(c.generateJson(request, { retry: true })).rejects.toMatchObject({ code: 'AI_INVALID_OUTPUT' });
-      expect(sdk.models.generateContent).toHaveBeenCalledTimes(1);
-    }
-  });
-
-  it('timeout: el AbortSignal corta la llamada → AI_TIMEOUT', async () => {
-    const { c } = client(fakeSdk({ generate: hang }));
-    await expect(c.generateJson(request, { timeoutMs: 20 })).rejects.toMatchObject({ code: 'AI_TIMEOUT' });
-  });
-
-  it('en segundo plano reintenta 1 vez ante 503 y responde si el segundo intento sale bien', async () => {
-    let calls = 0;
-    const sdk = fakeSdk({ generate: async () => (++calls === 1 ? Promise.reject(httpError(503)) : { text: '{"tags":[]}' }) });
+  it('429 o cupo agotado en uno → pasa al siguiente', async () => {
+    const sdk = fakeSdk({ generate: failOn({ 'texto-a': () => httpError(429), 'texto-b': quotaError }) });
     const { c } = client(sdk);
-    expect(await c.generateJson(request, { retry: true })).toEqual({ tags: [] });
-    expect(calls).toBe(2);
+    expect(await c.generateJson(request)).toEqual({ data: { tags: ['texto-c'] }, model: 'texto-c' });
+    expect(models(sdk)).toEqual(['texto-a', 'texto-b', 'texto-c']);
   });
 
-  it('sin retry (petición del usuario) no reintenta', async () => {
-    const sdk = fakeSdk({ generate: async () => Promise.reject(httpError(429)) });
+  it('503, timeout y JSON inválido también pasan al siguiente', async () => {
+    const sdk = fakeSdk({
+      generate: async (body) => {
+        if (body.model === 'texto-a') throw httpError(503);
+        if (body.model === 'texto-b') return { text: 'no es json' };
+        return { text: '{"tags":[]}' };
+      },
+    });
     const { c } = client(sdk);
-    await expect(c.generateJson(request)).rejects.toMatchObject({ code: 'AI_RATE_LIMITED' });
-    expect(sdk.models.generateContent).toHaveBeenCalledTimes(1);
+    expect((await c.generateJson(request)).model).toBe('texto-c');
+    const slow = fakeSdk({ generate: async (body) => (body.model === 'texto-a' ? hang(body) : { text: '{"tags":[]}' }) });
+    expect((await client(slow).c.generateJson(request, { timeoutMs: 20 })).model).toBe('texto-b');
+  });
+
+  it('si todos fallan lanza el último error (y quien llama usa la plantilla)', async () => {
+    const sdk = fakeSdk({ generate: async () => Promise.reject(httpError(503)) });
+    await expect(client(sdk).c.generateJson(request)).rejects.toMatchObject({ code: 'AI_OVERLOADED' });
+    expect(sdk.models.generateContent).toHaveBeenCalledTimes(3);
+  });
+
+  it('el freno es por modelo: un modelo con cupo agotado se salta 1 h sin llamarlo; los otros siguen', async () => {
+    let t = 0;
+    const sdk = fakeSdk({ generate: failOn({ 'texto-a': quotaError }) });
+    const { c, logs } = client(sdk, { now: () => t });
+    expect((await c.generateJson(request)).model).toBe('texto-b');
+    expect(logs.join('\n')).toContain('texto-a: cupo del día agotado');
+    sdk.models.generateContent.mockClear();
+    t = 30 * 60_000;
+    expect((await c.generateJson(request)).model).toBe('texto-b');
+    expect(models(sdk)).toEqual(['texto-b']); // texto-a en pausa: ni se intenta
+    t = 61 * 60_000;
+    sdk.models.generateContent.mockClear();
+    sdk.models.generateContent.mockImplementation(async (body) => ({ text: `{"tags":["${body.model}"]}` }));
+    expect((await c.generateJson(request)).model).toBe('texto-a');
+  });
+
+  it('3 fallos en 60 s pausan ese modelo 5 min', async () => {
+    const sdk = fakeSdk({ generate: failOn({ 'texto-a': () => httpError(503) }) });
+    const { c } = client(sdk, { now: () => 0 });
+    for (let i = 0; i < 3; i++) await c.generateJson(request);
+    sdk.models.generateContent.mockClear();
+    await c.generateJson(request);
+    expect(models(sdk)).toEqual(['texto-b']);
+  });
+
+  it('los logs solo llevan operación, modelo, código y duración: nunca el prompt ni el mensaje de Google', async () => {
+    const leaky = Object.assign(new Error('Tu prompt <datos>evento</datos> es inválido'), { status: 400 });
+    const { c, logs } = client(fakeSdk({ generate: async () => Promise.reject(leaky) }));
+    await expect(c.generateJson(request)).rejects.toBeInstanceOf(AiError);
+    expect(logs.join('\n')).toMatch(/\[ai\] json texto-a falló: AI_ERROR/);
+    expect(logs.join('\n')).not.toMatch(/datos|evento|sistema/);
   });
 });
 
@@ -94,62 +140,34 @@ describe('embedText', () => {
       contents: 'title: none | text: Partido',
       config: { outputDimensionality: 768 },
     });
+    expect(c.embeddingModel).toBe('embedding-test');
   });
 
   it('un vector de otro tamaño → AI_INVALID_OUTPUT', async () => {
     const { c } = client(fakeSdk({ embed: async () => ({ embeddings: [{ values: vector(3072) }] }) }));
     await expect(c.embedText('x')).rejects.toMatchObject({ code: 'AI_INVALID_OUTPUT' });
   });
+
+  it('en segundo plano reintenta 1 vez ante 503', async () => {
+    let calls = 0;
+    const sdk = fakeSdk({ embed: async () => (++calls === 1 ? Promise.reject(httpError(503)) : { embeddings: [{ values: vector() }] }) });
+    expect(await client(sdk).c.embedText('x', { retry: true })).toHaveLength(768);
+    expect(calls).toBe(2);
+  });
+
+  it('el cupo de texto agotado no frena los embeddings (otro modelo)', async () => {
+    const sdk = fakeSdk({ generate: async () => Promise.reject(quotaError()) });
+    const { c } = client(sdk);
+    await expect(c.generateJson(request)).rejects.toMatchObject({ code: 'AI_QUOTA_EXHAUSTED' });
+    expect(await c.embedText('x')).toHaveLength(768);
+  });
 });
 
-describe('cortacircuito y logs', () => {
-  it('3 fallos en 60 s pausan la IA 5 min (AI_UNAVAILABLE sin llamar) y luego vuelve', async () => {
-    let t = 0;
-    const sdk = fakeSdk({ generate: async () => Promise.reject(httpError(503)) });
-    const { c } = client(sdk, { now: () => t });
-    for (let i = 0; i < 3; i++) await expect(c.generateJson(request)).rejects.toMatchObject({ code: 'AI_OVERLOADED' });
-    await expect(c.generateJson(request)).rejects.toMatchObject({ code: 'AI_UNAVAILABLE' });
-    expect(sdk.models.generateContent).toHaveBeenCalledTimes(3);
-    t = 5 * 60_000 + 1;
-    sdk.models.generateContent.mockResolvedValueOnce({ text: '{"tags":[]}' });
-    expect(await c.generateJson(request)).toEqual({ tags: [] });
-  });
-
-  it('los logs solo llevan operación, modelo, código y duración: nunca el prompt ni el mensaje de Google', async () => {
-    const leaky = Object.assign(new Error('Tu prompt <datos>evento</datos> es inválido'), { status: 400 });
-    const { c, logs } = client(fakeSdk({ generate: async () => Promise.reject(leaky) }));
-    await expect(c.generateJson(request)).rejects.toBeInstanceOf(AiError);
-    expect(logs.join('\n')).toMatch(/\[ai\] json gemini-test falló: AI_ERROR/);
-    expect(logs.join('\n')).not.toMatch(/datos|evento|sistema/);
-  });
-
-  it('el cortacircuito es por modelo: si el de texto se pausa, los embeddings siguen', async () => {
-    const sdk = fakeSdk({ generate: async () => Promise.reject(httpError(503)) });
-    const { c } = client(sdk);
-    for (let i = 0; i < 3; i++) await expect(c.generateJson(request)).rejects.toMatchObject({ code: 'AI_OVERLOADED' });
-    await expect(c.generateJson(request)).rejects.toMatchObject({ code: 'AI_UNAVAILABLE' });
-    expect(await c.embedText('title: none | text: x')).toHaveLength(768);
-  });
-
-  it('cupo del día agotado (429 PerDay): no reintenta y pausa ese modelo 1 h', async () => {
-    let t = 0;
-    const quota = Object.assign(new Error('{"quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier"}'), { status: 429 });
-    const sdk = fakeSdk({ generate: async () => Promise.reject(quota) });
-    const { c, logs } = client(sdk, { now: () => t });
-    await expect(c.generateJson(request, { retry: true })).rejects.toMatchObject({ code: 'AI_QUOTA_EXHAUSTED' });
-    expect(sdk.models.generateContent).toHaveBeenCalledTimes(1);
-    expect(logs.join('\n')).toContain('cupo del día agotado');
-    t = 59 * 60_000;
-    await expect(c.generateJson(request)).rejects.toMatchObject({ code: 'AI_UNAVAILABLE' });
-    t = 61 * 60_000;
-    sdk.models.generateContent.mockResolvedValueOnce({ text: '{"tags":[]}' });
-    expect(await c.generateJson(request)).toEqual({ tags: [] });
-  });
-
-  it('toAiError traduce timeout, 429 (minuto o día), 503 y otros', () => {
+describe('toAiError', () => {
+  it('traduce timeout, 429 (minuto o día), 503 y otros', () => {
     expect(toAiError(Object.assign(new Error(), { name: 'TimeoutError' })).code).toBe('AI_TIMEOUT');
     expect(toAiError(httpError(429)).code).toBe('AI_RATE_LIMITED');
-    expect(toAiError(Object.assign(new Error('GenerateRequestsPerDayPerProjectPerModel-FreeTier'), { status: 429 })).code).toBe('AI_QUOTA_EXHAUSTED');
+    expect(toAiError(quotaError()).code).toBe('AI_QUOTA_EXHAUSTED');
     expect(toAiError(httpError(503)).code).toBe('AI_OVERLOADED');
     expect(toAiError(new Error('x')).code).toBe('AI_ERROR');
   });

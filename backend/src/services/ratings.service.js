@@ -3,6 +3,7 @@ import * as attendanceRepo from '../repositories/attendance.repository.js';
 import * as eventsRepo from '../repositories/events.repository.js';
 import { RATING_TAGS, RATING_WINDOW_DAYS } from '../constants/ratings.js';
 import { AppError } from '../utils/app-error.js';
+import { deleteCachedRecommendations } from '../repositories/ai.repository.js';
 
 const DAY_MS = 24 * 3600 * 1000;
 
@@ -33,7 +34,9 @@ async function assertCanRate(event, userId) {
 export async function rate(user, eventId, input) {
   const event = await findEvent(eventId);
   await assertCanRate(event, user.id);
-  return ratingsRepo.upsertRating({ eventId, userId: user.id, ...input });
+  const rating = await ratingsRepo.upsertRating({ eventId, userId: user.id, ...input });
+  await deleteCachedRecommendations(user.id); // IA3: las calificaciones cambian el bonus de afinidad
+  return rating;
 }
 
 export async function getMine(user, eventId) {

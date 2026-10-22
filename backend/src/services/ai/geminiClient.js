@@ -2,7 +2,9 @@ import { GoogleGenAI } from '@google/genai';
 import { env } from '../../config/env.js';
 
 // Cliente único de Gemini (docs/specs/ai.md §3 y §7). Solo el backend llama a Gemini.
-// - Toda llamada tiene timeout (AbortSignal) y, si se pide, 1 reintento ante 429/503/red (segundo plano).
+// - Toda llamada tiene timeout (AbortSignal). Embeddings: 1 reintento si se pide (segundo plano).
+// - Texto: CADENA de modelos (GEMINI_TEXT_MODELS). Si uno da 429, cupo agotado, 503, timeout o JSON inválido, o está en
+//   pausa, se pasa al siguiente. Cada modelo de la capa gratuita tiene su propio cupo diario.
 // - La salida JSON se valida con Zod: Gemini no aplica minLength/maxLength/uniqueItems del esquema.
 // - Cortacircuito POR MODELO: 3 fallos en 60 s → ese modelo se salta 5 min; cupo diario agotado → 1 h. Un modelo con
 //   problemas (p. ej. el de texto) no apaga al otro (el de embeddings tiene su propio cupo).
@@ -22,6 +24,13 @@ const EMBEDDING_DIMENSIONS = 768;
 const RETRY_DELAY_MS = 2000;
 const BREAKER = { failures: 3, windowMs: 60_000, pauseMs: 5 * 60_000, quotaPauseMs: 60 * 60_000 };
 const RETRIABLE = new Set(['AI_TIMEOUT', 'AI_RATE_LIMITED', 'AI_OVERLOADED', 'AI_ERROR']);
+
+// "a, b ,c" → ['a', 'b', 'c'] (GEMINI_TEXT_MODELS)
+export const parseModelList = (value) =>
+  String(value ?? '')
+    .split(',')
+    .map((model) => model.trim())
+    .filter(Boolean);
 
 // Error del SDK → código propio (sin copiar el mensaje de Google, que puede repetir el contenido enviado)
 export function toAiError(error) {
@@ -77,8 +86,12 @@ export function createGeminiClient({ sdk, config, now = Date.now, log = console.
     }
   }
 
+  const textModels = config.textModels ?? [];
+
   return {
     enabled,
+    textModels,
+    embeddingModel: config.embeddingModel,
 
     // Vector de 768 dimensiones (gemini-embedding-2 ya lo devuelve normalizado). El texto lleva su prefijo de tarea (§5.2).
     async embedText(text, { timeoutMs = 10_000, retry = false } = {}) {
@@ -99,35 +112,46 @@ export function createGeminiClient({ sdk, config, now = Date.now, log = console.
       );
     },
 
-    // JSON con esquema (responseJsonSchema) validado con Zod. system va como instrucción de sistema, prompt con los datos.
-    async generateJson({ system, prompt, jsonSchema, zodSchema }, { timeoutMs = 10_000, retry = false } = {}) {
-      return call(
-        'json',
-        config.textModel,
-        async (abortSignal) => {
-          const response = await sdk.models.generateContent({
-            model: config.textModel,
-            contents: prompt,
-            config: {
-              systemInstruction: system,
-              responseMimeType: 'application/json',
-              responseJsonSchema: jsonSchema,
-              thinkingConfig: { thinkingLevel: 'MINIMAL' },
-              abortSignal,
+    // JSON con esquema (responseJsonSchema) validado con Zod, probando la cadena de modelos en orden.
+    // → { data, model } con el modelo que respondió. Si ninguno responde, lanza el último error.
+    async generateJson({ system, prompt, jsonSchema, zodSchema }, { timeoutMs = 10_000 } = {}) {
+      if (!enabled) throw new AiError('AI_DISABLED');
+      let lastError = new AiError('AI_UNAVAILABLE');
+      for (const model of textModels) {
+        try {
+          const data = await call(
+            'json',
+            model,
+            async (abortSignal) => {
+              const response = await sdk.models.generateContent({
+                model,
+                contents: prompt,
+                config: {
+                  systemInstruction: system,
+                  responseMimeType: 'application/json',
+                  responseJsonSchema: jsonSchema,
+                  thinkingConfig: { thinkingLevel: 'MINIMAL' },
+                  abortSignal,
+                },
+              });
+              let parsed;
+              try {
+                parsed = JSON.parse(response?.text ?? '');
+              } catch {
+                throw new AiError('AI_INVALID_OUTPUT');
+              }
+              const result = zodSchema.safeParse(parsed);
+              if (!result.success) throw new AiError('AI_INVALID_OUTPUT');
+              return result.data;
             },
-          });
-          let parsed;
-          try {
-            parsed = JSON.parse(response?.text ?? '');
-          } catch {
-            throw new AiError('AI_INVALID_OUTPUT');
-          }
-          const result = zodSchema.safeParse(parsed);
-          if (!result.success) throw new AiError('AI_INVALID_OUTPUT');
-          return result.data;
-        },
-        { timeoutMs, retry },
-      );
+            { timeoutMs, retry: false },
+          );
+          return { data, model };
+        } catch (error) {
+          lastError = error; // cualquier fallo de un modelo → el siguiente de la cadena
+        }
+      }
+      throw lastError;
     },
   };
 }
@@ -140,5 +164,5 @@ if (aiOn && !env.GEMINI_API_KEY) console.warn('[ai] AI_ENABLED=true pero falta G
 
 export const gemini = createGeminiClient({
   sdk: aiOn && env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: env.GEMINI_API_KEY }) : null,
-  config: { enabled: aiOn, textModel: env.GEMINI_TEXT_MODEL, embeddingModel: env.GEMINI_EMBEDDING_MODEL },
+  config: { enabled: aiOn, textModels: parseModelList(env.GEMINI_TEXT_MODELS), embeddingModel: env.GEMINI_EMBEDDING_MODEL },
 });

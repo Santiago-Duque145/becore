@@ -1,10 +1,11 @@
 import { supabaseAdmin } from '../config/supabase.js';
 
 // event_ai y user_ai (migración 20261022160000): solo el backend las lee y escribe. Los embeddings nunca se devuelven
-// al cliente: aquí solo se escriben, y de event_ai solo se leen las etiquetas.
+// al cliente: se leen únicamente para calcular la similitud dentro del backend (recommendations/hybrid.js).
 
-// pgvector por PostgREST: el vector viaja como texto '[0.1,0.2,…]'
+// pgvector por PostgREST: el vector viaja como texto '[0.1,0.2,…]' en los dos sentidos
 const toVector = (values) => `[${values.join(',')}]`;
+const fromVector = (text) => (typeof text === 'string' ? JSON.parse(text) : (text ?? null));
 
 function unwrap({ data, error }) {
   if (error) throw error;
@@ -33,16 +34,16 @@ export async function findEventTags(eventId) {
 // Los borradores se etiquetan al publicarse; los cancelados no se recomiendan.
 export const AI_EVENT_STATUSES = ['published', 'in_progress', 'finished'];
 
-// Backfill: eventos sin fila en event_ai o sin embedding
-export async function listEventsMissingAi() {
+// Backfill: eventos sin embedding (o todos con all = true, p. ej. si cambió el texto del embedding)
+export async function listEventsForAi({ all = false } = {}) {
   const events = unwrap(
     await supabaseAdmin
       .from('events')
-      .select('id, title, description, category, event_ai(embedding)')
+      .select('id, title, description, category, event_ai(updated_at, embedding)')
       .in('status', AI_EVENT_STATUSES),
   );
   return events
-    .filter((e) => !e.event_ai || e.event_ai.embedding == null)
+    .filter((e) => all || !e.event_ai || e.event_ai.embedding == null)
     .map(({ id, title, description, category }) => ({ id, title, description, category }));
 }
 
@@ -58,4 +59,75 @@ export async function listPreferencesMissingAi() {
       userId: p.user_id,
       prefs: { interests: p.interests, days: p.days, timeSlots: p.time_slots, motivations: p.motivations, zone: p.zone },
     }));
+}
+
+// ---------- IA3 · "Para ti" ----------
+
+// Etiquetas y embedding de varios eventos: { [eventId]: { tags, embedding } } (solo backend)
+export async function findEventAiByIds(eventIds) {
+  if (!eventIds.length) return {};
+  const rows = unwrap(await supabaseAdmin.from('event_ai').select('event_id, tags, embedding').in('event_id', eventIds));
+  return Object.fromEntries(rows.map((r) => [r.event_id, { tags: r.tags, embedding: fromVector(r.embedding) }]));
+}
+
+export async function findUserEmbedding(userId) {
+  const row = unwrap(await supabaseAdmin.from('user_ai').select('embedding').eq('user_id', userId).maybeSingle());
+  return fromVector(row?.embedding);
+}
+
+// Caché de "Para ti" (ai_recommendations). Solo la vigente: { variant, items, expiresAt } o null
+export async function findCachedRecommendations(userId) {
+  const row = unwrap(
+    await supabaseAdmin
+      .from('ai_recommendations')
+      .select('variant, items, expires_at')
+      .eq('user_id', userId)
+      .gt('expires_at', new Date().toISOString())
+      .maybeSingle(),
+  );
+  return row ? { variant: row.variant, items: row.items, expiresAt: row.expires_at } : null;
+}
+
+export async function saveCachedRecommendations(userId, { variant, items, ttlMs }) {
+  const now = Date.now();
+  unwrap(
+    await supabaseAdmin.from('ai_recommendations').upsert(
+      {
+        user_id: userId,
+        variant,
+        items,
+        generated_at: new Date(now).toISOString(),
+        expires_at: new Date(now + ttlMs).toISOString(),
+      },
+      { onConflict: 'user_id' },
+    ),
+  );
+}
+
+// Al cambiar los gustos o calificar, el orden guardado ya no sirve
+export async function deleteCachedRecommendations(userId) {
+  unwrap(await supabaseAdmin.from('ai_recommendations').delete().eq('user_id', userId));
+}
+
+// recommendation_events: [{ userId, eventId, variant, action, source }]
+export async function insertRecommendationEvents(rows) {
+  if (!rows.length) return;
+  unwrap(
+    await supabaseAdmin.from('recommendation_events').insert(
+      rows.map((r) => ({ user_id: r.userId, event_id: r.eventId, variant: r.variant, action: r.action, source: r.source })),
+    ),
+  );
+}
+
+// Bonus por calificaciones: categorías y etiquetas de los eventos que el usuario calificó con ≥ minStars
+export async function findLikedSignals(userId, minStars = 4) {
+  const rated = unwrap(
+    await supabaseAdmin.from('event_ratings').select('event_id').eq('user_id', userId).gte('stars', minStars),
+  ).map((r) => r.event_id);
+  if (!rated.length) return { categories: [], tags: [] };
+  const events = unwrap(await supabaseAdmin.from('events').select('category, event_ai(tags)').in('id', rated));
+  return {
+    categories: [...new Set(events.map((e) => e.category))],
+    tags: [...new Set(events.flatMap((e) => e.event_ai?.tags ?? []))],
+  };
 }

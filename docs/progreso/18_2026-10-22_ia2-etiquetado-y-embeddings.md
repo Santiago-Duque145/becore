@@ -93,3 +93,56 @@ Con **20 peticiones al día por modelo** no alcanza para etiquetar los eventos n
 cada 6 h por usuario (el día del partido serían decenas de usuarios). Las opciones están en `docs/specs/ai.md` §13:
 etiquetas con embeddings, cadena de modelos de respaldo, facturación solo para texto, o re-ordenado más espaciado y
 solo en la variante `ai`. Se decide antes de IA3.
+
+## 5. Cambio en IA3: etiquetas con embeddings, sin el modelo de texto (rama `feature/ia-3`)
+
+Decisión del usuario (22 oct) para no gastar el cupo de texto: las etiquetas salen de comparar el embedding del evento
+con el de cada uno de los 18 gustos. Ya no hay prompt de etiquetado ni llamada al modelo de texto al publicar un evento.
+
+**Cómo funciona:**
+- **Cada gusto como búsqueda:** se describe en `INTEREST_QUERIES` (`ai/prompts.js`), por ejemplo
+  `task: search result | query: Juegos de mesa: ajedrez, cartas, parqués y noches de juegos`.
+- **Caché de los 18 embeddings:** se calculan una vez y quedan en memoria y en
+  `backend/.cache/interest-embeddings.json`, fuera de git. La clave depende del modelo y de los textos, así que si
+  cambian se recalculan.
+- **Embedding del evento:** pasa a ser `title: … | text: {categoría}. {descripción}`, sin etiquetas, porque ahora
+  las etiquetas salen de él.
+
+**Cómo se eligió el umbral:**
+1. Se armaron 32 eventos con sus gustos esperados puestos a mano:
+   - los 10 reales (por ejemplo, "previa verdolaga" → fútbol y "Clase trabajo de Grado" → ninguno);
+   - 22 ficticios que cubren los 18 gustos, con 3 que no encajan en ninguno: feria de emprendimiento, junta de
+     acción comunal y vacunación de mascotas.
+2. Se calcularon con `gemini-embedding-2` las similitudes de cada evento con los 18 gustos (50 llamadas al modelo de
+   embeddings, ninguna al de texto):
+   - gustos correctos: mín. 0,623 · mediana 0,732 · máx. 0,809;
+   - gustos incorrectos: mediana 0,611 · p95 0,664 · máx. 0,703.
+3. Se probaron umbrales de 0,30 a 0,70 combinados con márgenes respecto al mejor gusto (0,02–0,10 o sin margen), con
+   un máximo de 4 etiquetas.
+
+| Umbral | Margen | Precisión | Recall | F1 | Exactos |
+|---|---|---|---|---|---|
+| **0,68** (elegido) | **0,04** | **1,00** | **0,78** | **0,875** | **24 / 32** |
+| 0,66 | 0,02 | 0,91 | 0,83 | 0,870 | 24 / 32 |
+| 0,67 | 0,04 | 0,97 | 0,78 | 0,862 | 24 / 32 |
+| 0,69 | 0,04 | 1,00 | 0,75 | 0,857 | 24 / 32 |
+
+Se eligió 0,68 con margen 0,04:
+- **Mejor F1 y ninguna etiqueta equivocada.** En las recomendaciones es peor un gusto mal asignado que uno que falte.
+- **Estable:** entre 0,66 y 0,69 el F1 se mantiene sobre 0,85, así que no depende de un valor exacto.
+
+**Dónde falla, siempre por omisión:**
+- "Torneo de ajedrez relámpago": juegos de mesa sacó 0,666, justo bajo el umbral. Antes, el modelo de texto sí lo
+  etiquetaba.
+- "previa verdolaga": hay que saber que "verdolaga" es de fútbol.
+- Segundas etiquetas que faltan, como "aire libre" en el cine o el voleibol de playa, o "música" en la clase de salsa.
+
+**Límite:** son pocos eventos; hay que revisar el umbral cuando haya más eventos reales.
+
+**Backfill con datos reales** (`npm run ai:backfill -- --all`, solo modelo de embeddings, el 22 oct):
+- 10 de 10 eventos recalculados;
+- 7 con etiquetas: 5v5 → fútbol, baloncesto → baloncesto, cine al aire libre → cine, ciclopaseo → ciclismo, danza
+  urbana → danza, "Polas y fútbol" → fútbol, Avengers → cine;
+- 3 sin etiquetas: el ajedrez, la clase y "previa verdolaga".
+
+El resultado es igual al del experimento. No se gastó cupo de texto.

@@ -1,17 +1,12 @@
 import * as aiRepo from '../../repositories/ai.repository.js';
 import { gemini } from './geminiClient.js';
-import {
-  TAGGING_JSON_SCHEMA,
-  TAGGING_SYSTEM,
-  eventEmbeddingText,
-  profileEmbeddingText,
-  taggingPrompt,
-  taggingResultSchema,
-} from './prompts.js';
+import { getInterestVectors, tagsFromEmbedding } from './interest-tags.js';
+import { eventEmbeddingText, profileEmbeddingText } from './prompts.js';
 
-// IA2 (docs/specs/ai.md §3): etiquetas y embedding de eventos, embedding de perfiles. Siempre en segundo plano: la API
-// responde primero y esto corre después (setImmediate). Si Gemini falla, no se escribe nada (o solo las etiquetas) y
-// `npm run ai:backfill` lo completa. Nunca lanza hacia quien lo programa.
+// IA2/IA3 (docs/specs/ai.md §3): embedding y etiquetas de eventos, embedding de perfiles. Solo el modelo de embeddings:
+// las etiquetas salen de comparar el embedding del evento con el de los 18 gustos (interest-tags.js), sin gastar el
+// cupo del modelo de texto. Siempre en segundo plano: la API responde primero y esto corre después (setImmediate).
+// Si Gemini falla no se escribe nada y `npm run ai:backfill` lo completa. Nunca lanza hacia quien lo programa.
 
 const BACKGROUND = { timeoutMs: 20_000, retry: true };
 
@@ -19,20 +14,12 @@ const BACKGROUND = { timeoutMs: 20_000, retry: true };
 export const AI_EVENT_FIELDS = ['title', 'description', 'category'];
 export const touchesAiFields = (patch) => AI_EVENT_FIELDS.some((field) => patch[field] !== undefined);
 
-// → { tags, embedded } o lanza AiError si no se pudo etiquetar
-export async function indexEvent(event, { client = gemini, repo = aiRepo } = {}) {
-  const { tags } = await client.generateJson(
-    { system: TAGGING_SYSTEM, prompt: taggingPrompt(event), jsonSchema: TAGGING_JSON_SCHEMA, zodSchema: taggingResultSchema },
-    BACKGROUND,
-  );
-  let embedding = null;
-  try {
-    embedding = await client.embedText(eventEmbeddingText(event, tags), BACKGROUND);
-  } catch {
-    // las etiquetas sirven solas; el embedding queda NULL y lo completa el backfill
-  }
+// → { tags } o lanza AiError si no se pudo calcular el embedding
+export async function indexEvent(event, { client = gemini, repo = aiRepo, interestVectors = getInterestVectors } = {}) {
+  const embedding = await client.embedText(eventEmbeddingText(event), BACKGROUND);
+  const tags = tagsFromEmbedding(embedding, await interestVectors(client, client.embeddingModel));
   await repo.upsertEventAi(event.id, { tags, embedding });
-  return { tags, embedded: Boolean(embedding) };
+  return { tags };
 }
 
 export async function indexProfile(userId, prefs, { client = gemini, repo = aiRepo } = {}) {
@@ -41,10 +28,10 @@ export async function indexProfile(userId, prefs, { client = gemini, repo = aiRe
 }
 
 // Programa el trabajo después de responder. Con la IA apagada no hace nada.
-function later(label, work, { client = gemini, schedule = setImmediate } = {}) {
+export function later(label, work, { client = gemini, schedule = setImmediate } = {}) {
   if (!client.enabled) return false;
   schedule(() =>
-    work().catch((error) => console.warn(`[ai] ${label} quedó pendiente para el backfill: ${error.code ?? 'AI_ERROR'}`)),
+    work().catch((error) => console.warn(`[ai] ${label} quedó pendiente: ${error.code ?? 'AI_ERROR'}`)),
   );
   return true;
 }
