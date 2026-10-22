@@ -113,6 +113,22 @@ function logShown(userId, variant, picked, repo) {
   repo.insertRecommendationEvents(rows).catch((error) => console.warn(`[ai] no se registró "mostrado": ${error.code ?? 'error'}`));
 }
 
+// Por qué "Para ti" vino vacío (solo se calcula en ese caso), para que el frontend muestre el estado adecuado:
+// no_preferences · no_events (no hay próximos de otros organizadores) · all_confirmed (ya confirmó todos los que tienen
+// cupo) · no_matches (hay eventos, pero ninguno encaja o los que quedan están llenos)
+export async function explainEmpty(user) {
+  if (!(await findPreferencesByUserId(user.id))) return 'no_preferences';
+  const upcoming = await eventsRepo.listRecommendationCandidates({ excludeOrganizerId: user.id });
+  if (!upcoming.length) return 'no_events';
+  const attendances = await findUserAttendances(
+    user.id,
+    upcoming.map((e) => e.id),
+  );
+  const confirmed = new Set(attendances.filter((a) => a.status === 'confirmed').map((a) => a.eventId));
+  const open = upcoming.filter((e) => !confirmed.has(e.id) && e.confirmedCount < e.capacity);
+  return confirmed.size > 0 && open.length === 0 ? 'all_confirmed' : 'no_matches';
+}
+
 export async function getRecommendations(user, limit, deps = {}) {
   const repo = deps.repo ?? aiRepo;
   const prefs = await findPreferencesByUserId(user.id);

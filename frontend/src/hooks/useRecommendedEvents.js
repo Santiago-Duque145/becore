@@ -7,7 +7,11 @@ import { listRecommendedEvents } from '../services/events.api.js';
 export const recommendedQueryOptions = () =>
   queryOptions({
     queryKey: queryKeys.recommendedEvents,
-    queryFn: async () => (await listRecommendedEvents(6)).data,
+    // → { events, emptyReason }: emptyReason solo viene cuando no hay recomendaciones (all_confirmed, no_matches…)
+    queryFn: async () => {
+      const body = await listRecommendedEvents(6);
+      return { events: body.data, emptyReason: body.meta?.emptyReason ?? null };
+    },
   });
 
 // enabled: Descubre solo lo pide cuando se muestra (sin filtro, búsqueda ni mapa).

@@ -170,3 +170,18 @@ describe('listActivity', () => {
     await expect(service.listActivity(owner, 'ev-1', 10)).resolves.toEqual([]);
   });
 });
+
+describe('IA4: confirmar desde "Para ti" cuenta para la prueba A/B', () => {
+  it('después de confirmar busca si se le mostró y, si falla el registro, la confirmación no se entera', async () => {
+    const { findLatestShown, insertRecommendationEvents } = await import('../src/repositories/ai.repository.js');
+    findLatestShown.mockResolvedValueOnce({ variant: 'ai', source: 'template' });
+    insertRecommendationEvents.mockRejectedValueOnce({ code: '42P01' });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    repo.confirmAttendance.mockResolvedValue(5);
+    expect(await service.confirm(user, 'ev-1')).toEqual({ confirmedCount: 5, myAttendance: { status: 'confirmed', checkedIn: false } });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(findLatestShown).toHaveBeenCalledWith('par-1', 'ev-1', expect.any(String));
+    expect(warn).toHaveBeenCalledWith('[ai] no se registró "confirmado": 42P01');
+    warn.mockRestore();
+  });
+});

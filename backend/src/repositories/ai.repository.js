@@ -131,3 +131,46 @@ export async function findLikedSignals(userId, minStars = 4) {
     tags: [...new Set(events.flatMap((e) => e.event_ai?.tags ?? []))],
   };
 }
+
+// ---------- IA4 · clics, confirmados y métricas ----------
+
+// Último "mostrado" de ese evento a ese usuario desde sinceIso: { variant, source } o null
+export async function findLatestShown(userId, eventId, sinceIso) {
+  const row = unwrap(
+    await supabaseAdmin
+      .from('recommendation_events')
+      .select('variant, source')
+      .eq('user_id', userId)
+      .eq('event_id', eventId)
+      .eq('action', 'shown')
+      .gte('created_at', sinceIso)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  );
+  return row ?? null;
+}
+
+// Para las métricas: todas las filas con el correo del organizador del evento (para excluir la demo)
+export async function listRecommendationEventsForMetrics() {
+  const rows = unwrap(
+    await supabaseAdmin
+      .from('recommendation_events')
+      .select('user_id, event_id, variant, source, action, events(organizer:profiles!organizer_id(email))'),
+  );
+  return rows.map((r) => ({
+    userId: r.user_id,
+    eventId: r.event_id,
+    variant: r.variant,
+    source: r.source,
+    action: r.action,
+    organizerEmail: r.events?.organizer?.email ?? null,
+  }));
+}
+
+// Estrellas que dieron los usuarios a esos eventos: [{ userId, eventId, stars }]
+export async function listRatingsFor(eventIds) {
+  if (!eventIds.length) return [];
+  const rows = unwrap(await supabaseAdmin.from('event_ratings').select('user_id, event_id, stars').in('event_id', eventIds));
+  return rows.map((r) => ({ userId: r.user_id, eventId: r.event_id, stars: r.stars }));
+}

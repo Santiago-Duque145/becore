@@ -1,13 +1,16 @@
 import * as eventsService from '../services/events.service.js';
-import { getRecommendations } from '../services/recommendations/index.js';
+import { explainEmpty, getRecommendations } from '../services/recommendations/index.js';
 
 export async function listEvents(req, res) {
   const { data, meta } = await eventsService.listEvents(req.user, req.validatedQuery);
   res.json({ data, meta });
 }
 
+// meta.emptyReason solo cuando la lista viene vacía (es aditivo: data sigue siendo el mismo arreglo)
 export async function listRecommended(req, res) {
-  res.json({ data: await getRecommendations(req.user, req.validatedQuery.limit) });
+  const data = await getRecommendations(req.user, req.validatedQuery.limit);
+  if (data.length) return res.json({ data });
+  res.json({ data, meta: { emptyReason: await explainEmpty(req.user) } });
 }
 
 export async function createEvent(req, res) {

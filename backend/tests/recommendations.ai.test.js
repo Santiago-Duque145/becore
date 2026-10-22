@@ -10,8 +10,9 @@ vi.mock('../src/repositories/preferences.repository.js', () => ({ findPreference
 vi.mock('../src/services/notifications.service.js', () => ({ notify: vi.fn() }));
 
 import { listRecommendationCandidates } from '../src/repositories/events.repository.js';
+import { findUserAttendances } from '../src/repositories/attendance.repository.js';
 import { findPreferencesByUserId } from '../src/repositories/preferences.repository.js';
-import { getRecommendations, mergeWithCache, refreshAiCache, CACHE_TTL_MS } from '../src/services/recommendations/index.js';
+import { explainEmpty, getRecommendations, mergeWithCache, refreshAiCache, CACHE_TTL_MS } from '../src/services/recommendations/index.js';
 import { HYBRID_THRESHOLD, hybridScore, rankHybrid, scaleSimilarity } from '../src/services/recommendations/hybrid.js';
 import { FALLBACK_REASON, templateReason } from '../src/services/recommendations/reasons.js';
 import { picksFromResponse, rerankPrompt, rerankResultSchema } from '../src/services/recommendations/rerank.js';
@@ -225,5 +226,35 @@ describe('getRecommendations · variante "ai"', () => {
     expect(await getRecommendations(user, 6, { variant: 'rules', repo })).toHaveLength(2);
     await new Promise((r) => setTimeout(r, 0));
     warn.mockRestore();
+  });
+});
+
+describe('explainEmpty: por qué "Para ti" vino vacío', () => {
+  it('sin gustos → no_preferences', async () => {
+    findPreferencesByUserId.mockResolvedValue(null);
+    expect(await explainEmpty(user)).toBe('no_preferences');
+  });
+
+  it('sin eventos próximos de otros → no_events', async () => {
+    findPreferencesByUserId.mockResolvedValue(prefs);
+    listRecommendationCandidates.mockResolvedValue([]);
+    expect(await explainEmpty(user)).toBe('no_events');
+  });
+
+  it('ya confirmó todo lo que tiene cupo → all_confirmed', async () => {
+    findPreferencesByUserId.mockResolvedValue(prefs);
+    listRecommendationCandidates.mockResolvedValue([ev('a'), ev('b'), ev('lleno', { confirmedCount: 10 })]);
+    findUserAttendances.mockResolvedValue([
+      { eventId: 'a', status: 'confirmed' },
+      { eventId: 'b', status: 'confirmed' },
+    ]);
+    expect(await explainEmpty(user)).toBe('all_confirmed');
+  });
+
+  it('quedan eventos abiertos que no encajan → no_matches', async () => {
+    findPreferencesByUserId.mockResolvedValue(prefs);
+    listRecommendationCandidates.mockResolvedValue([ev('a'), ev('b')]);
+    findUserAttendances.mockResolvedValue([{ eventId: 'a', status: 'confirmed' }]);
+    expect(await explainEmpty(user)).toBe('no_matches');
   });
 });

@@ -1,5 +1,6 @@
 import { forwardRef, useId } from 'react';
-import { CalendarIcon, UsersIcon } from '../../components/icons/index.js';
+import { Link } from 'react-router';
+import { CalendarIcon, SparklesIcon, UsersIcon } from '../../components/icons/index.js';
 import { Checkbox, Chip, Field, Input, OptionCard } from '../../components/ui/index.js';
 import { AvatarPicker } from '../../components/preferences/AvatarPicker.jsx';
 import { DemographicsFields } from '../../components/preferences/DemographicsFields.jsx';
@@ -224,6 +225,15 @@ export function ZoneStep({ state, dispatch, titleRef }) {
       </Field>
       <p className="mt-2 mb-3 text-xs font-semibold text-ink-muted">Tu foto (opcional)</p>
       <AvatarPicker compact />
+      <p className="mt-6 flex gap-2 rounded-field border border-accent/20 bg-accent/10 px-3.5 py-3 text-xs leading-relaxed text-ink-muted">
+        <SparklesIcon size={16} className="mt-px shrink-0 text-accent-soft" />
+        <span>
+          Usamos IA para recomendarte eventos: solo con tus gustos, nunca con tus datos personales.{' '}
+          <Link to="/privacidad" className="focus-ring hit-area rounded font-semibold text-accent-soft underline-offset-2 hover:underline">
+            Cómo usamos tus datos
+          </Link>
+        </span>
+      </p>
     </>
   );
 }

@@ -49,7 +49,7 @@ export default function DescubrePage() {
   const isPending = listPending || (showParaTi && recommended.isPending);
   const paraTi = showParaTi && !isPending ? recommended.data : null;
   // LCP: la primera portada visible (la de "Para ti" si hay, si no la primera de la lista) se pide con prioridad alta
-  const paraTiFirst = paraTi?.length > 0;
+  const paraTiFirst = paraTi?.events?.length > 0;
 
   // En el mapa se cargan todos los eventos de una vez (sin "Ver más")
   useEffect(() => {
@@ -154,7 +154,7 @@ export default function DescubrePage() {
           </div>
         )}
 
-        <ParaTiCarousel events={paraTi} priorityFirst />
+        <ParaTiCarousel events={paraTi?.events} emptyReason={paraTi?.emptyReason} priorityFirst />
 
         {isError && <ErrorState message={error.message} onRetry={refetch} />}
 

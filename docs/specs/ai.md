@@ -267,16 +267,17 @@ que los eventos nuevos entran por ahí.
 | Método | Ruta | Quién | Cambio |
 |---|---|---|---|
 | GET | `/events/recommended` | todos | **Sin cambios** de contrato. Por dentro: variante, caché, híbrido, plantilla y re-ordenado en segundo plano. Registra `shown` con su origen (§10). |
-| POST | `/recommendations/feedback` | todos | Nuevo (IA4). Body `{ eventId: uuid, action: 'clicked' }`. 204. Solo si el evento se le mostró al usuario en los últimos 7 días; si no, 204 sin registrar (no es un error). |
-| GET | `/admin/ai-metrics` | organizador | Nuevo (IA4). `{ data: { rules: Metrics, ai: Metrics } }`. `Metrics = { users, shown, clicked, confirmed, ctr, confirmRate, avgRating }`. |
+| POST | `/recommendations/feedback` | todos | IA4 (hecho). Body `{ eventId: uuid, action: 'clicked' }`. Siempre 204. Solo registra si el evento se le mostró en "Para ti" en los últimos 7 días; hereda la variante y el origen de ese "mostrado". Un segundo clic del mismo usuario y evento no se registra (índice único). El frontend lo manda al abrir una tarjeta de "Para ti", sin esperar. |
+| GET | `/admin/ai-metrics` | organizador | IA4 (hecho). `{ data: { rules: Metrics, ai: Metrics & { bySource: { gemini: Metrics, template: Metrics } }, excludedDemoRows } }`. `Metrics = { users, shown, clicked, confirmed, ctr, confirmRate, avgRating, ratings }`. Mostrados, abiertos y confirmados se cuentan como pares distintos (usuario, evento). Las tasas son `null` sin mostrados. Excluye los eventos de la cuenta de demostración (`DEMO_ORGANIZER_EMAIL`). |
 | POST | `/events/:id/ratings/summary` | dueño | Nuevo (IA6). 409 `NOT_ENOUGH_COMMENTS` con < 3 comentarios. |
 
-`confirmed` lo registra el backend al confirmar asistencia, si el evento se le mostró en "Para ti" en los últimos 7 días.
+`confirmed` lo registra el backend al confirmar asistencia (`attendance.service.js`, sin esperar: si falla, la confirmación no se entera), si el evento se le mostró en "Para ti" en los últimos 7 días. `avgRating` es el promedio de las estrellas que esas personas dieron a los eventos que confirmaron desde "Para ti".
 
 ## 10. Prueba A/B (IA4)
 
 - **Variante:** `sha256(user_id + AB_SALT)`, primer byte par → `rules`, impar → `ai`. Es determinista: la misma persona
   siempre ve la misma variante. `rules` = R5 tal cual; `ai` = IA3. Implementada en IA3 (`recommendations/variant.js`).
+  La sal vive solo en `backend/.env`: con una sal conocida se sabría de antemano la variante de cada cuenta.
 - **Origen de cada tarjeta mostrada** (`recommendation_events.source`, desde IA3): `gemini`, `template` o `rules`. En el
   análisis se puede separar, dentro de la variante "ai", lo que de verdad pasó por Gemini de lo que salió de la
   plantilla.
@@ -303,7 +304,7 @@ que los eventos nuevos entran por ahí.
 
 `GEMINI_API_KEY`, `GEMINI_TEXT_MODELS` (lista separada por comas, defecto
 `gemini-3.6-flash,gemini-3-flash-preview,gemini-3.5-flash`), `GEMINI_EMBEDDING_MODEL` (defecto `gemini-embedding-2`),
-`AI_ENABLED` (defecto `false`) y `AB_SALT` (defecto `becore-ab-2026`). Una variable vacía en `.env` toma el valor por
+`AI_ENABLED` (defecto `false`) y `AB_SALT` (**sin valor por defecto**: obligatoria con `AI_ENABLED=true`, si falta el backend no arranca y lo dice; con la IA apagada y sin sal, todos ven "rules"). Una variable vacía en `.env` toma el valor por
 defecto. `GEMINI_TEXT_MODEL` (singular, de IA1) ya no se lee. `GEMINI_IMAGE_MODEL` y `AI_IMAGES_ENABLED` quedan en
 `.env.example` como reservadas para el trabajo futuro (IA5); el código no las lee. `env.js` las valida como opcionales. Con `AI_ENABLED=true`
 y sin clave, el backend arranca con un aviso y se comporta como `false`. La clave **solo** vive en `backend/.env`.

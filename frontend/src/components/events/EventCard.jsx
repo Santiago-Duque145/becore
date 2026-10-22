@@ -15,11 +15,12 @@ import { StatusBadges } from './EventBadges.jsx';
 // cupo y acción. Sin distancia ni avatares (la API no trae asistentes por evento).
 // El enlace al detalle y el botón de asistencia son hermanos: no se anidan controles interactivos.
 // preview: vista previa del formulario de evento, sin enlace ni acciones reales (como la ve un participante)
-export function EventCard({ event, reason, className, preview = false, priority = false }) {
+// onOpen: se llama al abrir el detalle desde la tarjeta ("Para ti" lo usa para contar el clic de la prueba A/B)
+export function EventCard({ event, reason, className, preview = false, priority = false, onOpen }) {
   const going = event.myAttendance?.status === 'confirmed';
   const Body = preview ? 'div' : Link;
   // La categoría viaja al detalle para que su pantalla de carga use el ícono animado de la categoría (P7)
-  const bodyProps = preview ? {} : { to: `/eventos/${event.id}`, state: { category: event.category } };
+  const bodyProps = preview ? {} : { to: `/eventos/${event.id}`, state: { category: event.category }, onClick: onOpen };
   return (
     <article
       className={cn(
