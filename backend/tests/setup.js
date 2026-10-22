@@ -38,6 +38,7 @@ vi.mock('../src/repositories/ai.repository.js', async (importOriginal) => ({
 // IA7 · search_events y match_event_embeddings: las pruebas no tocan la base real
 vi.mock('../src/repositories/search.repository.js', () => ({
   matchEventEmbeddings: vi.fn(async () => []),
+  findEventTagsByIds: vi.fn(async () => ({})),
   insertSearchEvent: vi.fn(async () => {}),
   markSearchOpened: vi.fn(async () => {}),
 }));

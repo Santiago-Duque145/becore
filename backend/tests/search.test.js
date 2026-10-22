@@ -87,12 +87,12 @@ function setup({ enabled = true, matches = [], tags = {}, embed } = {}) {
   const events = { listEvents: vi.fn(async ({ category }) => ({ rows: ALL.filter((e) => !category || e.category === category) })) };
   const search = {
     matchEventEmbeddings: vi.fn(async () => matches),
+    findEventTagsByIds: vi.fn(async () => tags),
     insertSearchEvent: vi.fn(async () => {}),
     markSearchOpened: vi.fn(async () => {}),
   };
-  const eventAi = vi.fn(async () => tags);
   const withAttendance = vi.fn(async (_u, list) => list.map((e) => ({ ...e, myAttendance: null })));
-  const service = createSearchService({ client, events, search, eventAi, withAttendance, schedule: (fn) => fn() });
+  const service = createSearchService({ client, events, search, withAttendance, schedule: (fn) => fn() });
   return { service, client, events, search };
 }
 
@@ -104,7 +104,7 @@ describe('searchEvents', () => {
         { eventId: 'e-yoga', similarity: 0.6 },
         { eventId: 'e-cine', similarity: 0.55 },
       ],
-      tags: { 'e-fut': { tags: ['football'] } },
+      tags: { 'e-fut': ['football'] },
     });
     const res = await service.searchEvents(user, { q: 'fútbol el sábado en la tarde' });
     expect(res.data.map((e) => e.id)).toEqual(['e-fut']);

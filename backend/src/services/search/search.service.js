@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import * as eventsRepo from '../../repositories/events.repository.js';
 import * as searchRepo from '../../repositories/search.repository.js';
-import { findEventAiByIds } from '../../repositories/ai.repository.js';
 import { gemini } from '../ai/geminiClient.js';
 import { toEventsWithAttendance } from '../events.service.js';
 import { detectIntent } from './intent.js';
@@ -31,7 +30,6 @@ export function createSearchService({
   client = gemini,
   events = eventsRepo,
   search = searchRepo,
-  eventAi = findEventAiByIds,
   withAttendance = toEventsWithAttendance,
   now = Date.now,
   schedule = setImmediate,
@@ -85,14 +83,16 @@ export function createSearchService({
   }
 
   async function semantic(query, vector, candidates) {
-    const matches = await search.matchEventEmbeddings(vector, MATCH_CANDIDATES);
+    const [matches, tags] = await Promise.all([
+      search.matchEventEmbeddings(vector, MATCH_CANDIDATES),
+      search.findEventTagsByIds(candidates.map((e) => e.id)),
+    ]);
     const similarity = new Map(matches.map((m) => [m.eventId, m.similarity]));
-    const ai = await eventAi(candidates.map((e) => e.id));
     const intent = detectIntent(query);
     return candidates
       .map((event) => ({
         event,
-        score: scoreEvent({ q: query, intent, event, tags: ai[event.id]?.tags ?? [], similarity: similarity.get(event.id) ?? null }),
+        score: scoreEvent({ q: query, intent, event, tags: tags[event.id] ?? [], similarity: similarity.get(event.id) ?? null }),
       }))
       .filter((r) => r.score >= SEARCH_THRESHOLD)
       .sort((a, b) => b.score - a.score || new Date(a.event.startsAt) - new Date(b.event.startsAt))
@@ -110,8 +110,8 @@ export function createSearchService({
     // → { data: Event[], meta: { mode, total, searchId } }
     async searchEvents(user, { q, category }) {
       const query = scrubQuery(q);
-      const candidates = await upcoming(category);
-      const vector = query.length >= 2 ? await queryVector(user.id, query) : null;
+      // En paralelo: los eventos próximos y el embedding de la consulta
+      const [candidates, vector] = await Promise.all([upcoming(category), query.length >= 2 ? queryVector(user.id, query) : null]);
       let mode = vector ? 'semantic' : 'classic';
       let found;
       if (vector) {

@@ -13,6 +13,13 @@ export async function matchEventEmbeddings(vector, limit = 50) {
   return (rows ?? []).map((r) => ({ eventId: r.event_id, similarity: Number(r.similarity) }));
 }
 
+// Solo las etiquetas (sin el vector, que pesa ~10 KB por evento): { [eventId]: tags }
+export async function findEventTagsByIds(eventIds) {
+  if (!eventIds.length) return {};
+  const rows = unwrap(await supabaseAdmin.from('event_ai').select('event_id, tags').in('event_id', eventIds));
+  return Object.fromEntries(rows.map((r) => [r.event_id, r.tags]));
+}
+
 // row: { id, queryText, mode, resultsCount } (sin datos de la persona)
 export async function insertSearchEvent({ id, queryText, mode, resultsCount }) {
   unwrap(await supabaseAdmin.from('search_events').insert({ id, query_text: queryText, mode, results_count: resultsCount }));
