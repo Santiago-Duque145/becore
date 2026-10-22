@@ -70,9 +70,10 @@ describe('getRecommendations · variante "rules" (R5 tal cual)', () => {
     ]);
     const result = await getRecommendations(user, 6, { variant: 'rules' });
     expect(result.map((e) => [e.id, e.reason])).toEqual([
-      ['cultura', 'Porque te gusta la cultura'],
-      ['finde', 'Encaja con tus fines de semana'],
+      ['cultura', 'Plan cultural el sábado, como te gusta'],
+      ['finde', 'El sábado, justo en tu horario'],
     ]);
+    expect(result.map((e) => e.reasonKind)).toEqual(['check', 'check']);
     expect(result[0]).toMatchObject({ availableSpots: 8, isFull: false, myAttendance: null });
     expect(result[0]).not.toHaveProperty('organizerId');
   });

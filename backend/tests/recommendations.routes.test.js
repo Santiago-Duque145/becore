@@ -64,7 +64,7 @@ describe('GET /api/v1/events/recommended', () => {
     const res = await auth(request(app).get('/api/v1/events/recommended'));
     expect(res.status).toBe(200);
     expect(repo.findEventById).not.toHaveBeenCalled();
-    expect(res.body.data).toEqual([expect.objectContaining({ id: 'e1', reason: 'Porque te gusta el deporte', availableSpots: 7 })]);
+    expect(res.body.data).toEqual([expect.objectContaining({ id: 'e1', reason: expect.stringMatching(/^Deporte/), reasonKind: 'check', availableSpots: 7 })]);
   });
 
   it('sin preferencias → lista vacía', async () => {

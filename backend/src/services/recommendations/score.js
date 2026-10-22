@@ -6,19 +6,12 @@
 // | franja ∈ prefs.timeSlots (<12 / <18 / resto)       | +1     |
 // | prefs.zone aparece en events.location (sin tildes) | +1     |
 //
-// Día y hora se leen en America/Bogota. reason es la señal más fuerte; si empatan en puntos,
-// gana la que va primero en SIGNALS (zona, luego días, luego franja).
+// Día y hora se leen en America/Bogota. reason (P8) se arma con todas las señales que coincidieron (phrases.js):
+// "Deporte el sábado en la tarde, como te gusta". El puntaje no cambia.
+
+import { CATEGORY_NOUNS, phrase, weekdayOf } from './phrases.js';
 
 const TIME_ZONE = 'America/Bogota';
-
-const CATEGORY_REASONS = {
-  sport: 'Porque te gusta el deporte',
-  culture: 'Porque te gusta la cultura',
-  recreation: 'Porque te gusta la recreación',
-};
-const DAY_REASONS = { weekdays: 'Encaja con tus días entre semana', weekends: 'Encaja con tus fines de semana' };
-const SLOT_REASONS = { morning: 'Encaja con tus mañanas', afternoon: 'Encaja con tus tardes', evening: 'Encaja con tus noches' };
-const ZONE_REASON = 'Es en tu zona';
 
 const bogotaParts = new Intl.DateTimeFormat('en-US', {
   timeZone: TIME_ZONE,
@@ -45,41 +38,33 @@ export const normalizeText = (text) =>
     .toLowerCase()
     .trim();
 
-const SIGNALS = [
-  {
-    points: 3,
-    match: (event, prefs) => prefs.categories?.includes(event.category) && CATEGORY_REASONS[event.category],
-  },
-  {
+const SIGNALS = {
+  category: { points: 3, match: (event, prefs) => Boolean(prefs.categories?.includes(event.category) && CATEGORY_NOUNS[event.category]) },
+  zone: {
     points: 1,
     match: (event, prefs) => {
       const zone = normalizeText(prefs.zone);
-      return zone && normalizeText(event.location).includes(zone) && ZONE_REASON;
+      return Boolean(zone) && normalizeText(event.location).includes(zone);
     },
   },
-  {
-    points: 1,
-    match: (event, prefs, when) => prefs.days?.includes(when.day) && DAY_REASONS[when.day],
-  },
-  {
-    points: 1,
-    match: (event, prefs, when) => prefs.timeSlots?.includes(when.slot) && SLOT_REASONS[when.slot],
-  },
-];
+  day: { points: 1, match: (event, prefs, when) => Boolean(prefs.days?.includes(when.day)) },
+  slot: { points: 1, match: (event, prefs, when) => Boolean(prefs.timeSlots?.includes(when.slot)) },
+};
 
 // → { score, reason } (reason null si score es 0)
 export function scoreEvent(event, prefs) {
   if (!prefs) return { score: 0, reason: null };
   const when = bogotaDayAndSlot(event.startsAt);
-  let score = 0;
-  let best = null;
-  for (const signal of SIGNALS) {
-    const reason = signal.match(event, prefs, when);
-    if (!reason) continue;
-    score += signal.points;
-    if (!best || signal.points > best.points) best = { points: signal.points, reason };
-  }
-  return { score, reason: best?.reason ?? null };
+  const hit = Object.fromEntries(Object.entries(SIGNALS).map(([key, signal]) => [key, signal.match(event, prefs, when)]));
+  const score = Object.entries(SIGNALS).reduce((sum, [key, signal]) => sum + (hit[key] ? signal.points : 0), 0);
+  if (!score) return { score: 0, reason: null };
+  const reason = phrase({
+    like: hit.category ? CATEGORY_NOUNS[event.category] : null,
+    weekday: hit.day ? weekdayOf(event.startsAt) : null,
+    slot: hit.slot ? when.slot : null,
+    inZone: hit.zone,
+  });
+  return { score, reason };
 }
 
 // Orden: puntaje desc, luego starts_at asc (y id para que el orden sea estable). Excluye puntaje 0.

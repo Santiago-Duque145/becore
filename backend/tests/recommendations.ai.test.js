@@ -15,7 +15,7 @@ import { findPreferencesByUserId } from '../src/repositories/preferences.reposit
 import { explainEmpty, getRecommendations, mergeWithCache, refreshAiCache, CACHE_TTL_MS } from '../src/services/recommendations/index.js';
 import { HYBRID_THRESHOLD, hybridScore, rankHybrid, scaleSimilarity } from '../src/services/recommendations/hybrid.js';
 import { FALLBACK_REASON, templateReason } from '../src/services/recommendations/reasons.js';
-import { picksFromResponse, rerankPrompt, rerankResultSchema } from '../src/services/recommendations/rerank.js';
+import { picksFromResponse, rerankPrompt, RERANK_SYSTEM, rerankResultSchema } from '../src/services/recommendations/rerank.js';
 import { abVariant } from '../src/services/recommendations/variant.js';
 import { AiError } from '../src/services/ai/geminiClient.js';
 import { leaks } from './ai-indexing.test.js';
@@ -63,20 +63,20 @@ describe('variante A/B', () => {
 });
 
 describe('frase por plantilla (sin Gemini)', () => {
-  it('gusto + día + franja: "Porque te gusta el fútbol y es un sábado en la tarde"', () => {
-    expect(templateReason(ev('a'), prefs, ['football'])).toBe('Porque te gusta el fútbol y es un sábado en la tarde');
+  it('gusto + día + franja: "Fútbol el sábado en la tarde, como te gusta"', () => {
+    expect(templateReason(ev('a'), prefs, ['football'])).toBe('Fútbol el sábado en la tarde, como te gusta');
   });
 
   it('sin etiqueta que coincida usa la categoría; sin día que coincida, solo la franja', () => {
     expect(templateReason(ev('a', { startsAt: TUE_8PM }), { ...prefs, timeSlots: ['evening'] }, [])).toBe(
-      'Porque te gusta el deporte y es en la noche',
+      'Deporte en la noche, como te gusta',
     );
   });
 
   it('solo horario, solo zona o nada: nunca queda vacía', () => {
     const none = { categories: [], interests: [], days: ['weekends'], timeSlots: [], zone: null };
-    expect(templateReason(ev('a', { category: 'culture' }), none, [])).toBe('Encaja con tu horario: es un sábado');
-    expect(templateReason(ev('a', { category: 'other', startsAt: TUE_8PM }), { ...none, days: [], zone: 'belén' }, [])).toBe('Es en tu zona');
+    expect(templateReason(ev('a', { category: 'culture' }), none, [])).toBe('El sábado, justo en tu horario');
+    expect(templateReason(ev('a', { category: 'other', startsAt: TUE_8PM }), { ...none, days: [], zone: 'belén' }, [])).toBe('Queda en tu zona');
     expect(templateReason(ev('a', { category: 'other', startsAt: TUE_8PM }), { ...none, days: [] }, [])).toBe(FALLBACK_REASON);
   });
 });
@@ -115,19 +115,45 @@ describe('re-ordenado con Gemini: prompt y respuesta', () => {
     const { prompt, aliases } = rerankPrompt({ ...prefs, ...user }, ranked);
     expect([...aliases.entries()]).toEqual([['c1', '11111111-aaaa'], ['c2', '22222222-bbbb']]);
     expect(prompt).toMatch(/^<datos>\nGustos: Le gustan: Fútbol\./);
-    expect(prompt).toContain('c1 · Deporte · fin de semana, tarde · Partido · sin etiquetas · Cancha de Belén');
+    expect(prompt).toContain('c1 · Deporte · sábado, tarde · Partido · sin etiquetas · Cancha de Belén');
     expect(prompt).not.toMatch(/11111111|22222222/);
     expect(leaks(prompt)).toEqual([]);
     expect(prompt).not.toContain('Organizador Real');
   });
 
-  it('descarta alias inventados y repetidos; la frase se valida con Zod (máx. 80)', () => {
+  it('el sistema pide frases cercanas de máx. 60 caracteres, con ejemplo concreto y sin prometer', () => {
+    expect(RERANK_SYSTEM).toContain('máximo 60 caracteres');
+    expect(RERANK_SYSTEM).toContain('Fútbol el sábado en la tarde, como te gusta');
+    expect(RERANK_SYSTEM).toContain('te va a encantar');
+  });
+
+  it('descarta alias inventados y repetidos; una frase de más de 60 queda en null (la pone la plantilla)', () => {
     const aliases = new Map([['c1', 'ev-1'], ['c2', 'ev-2']]);
     expect(picksFromResponse([{ alias: 'c2', reason: 'B' }, { alias: 'c9', reason: 'X' }, { alias: 'c2', reason: 'otra' }, { alias: 'c1', reason: 'A' }], aliases)).toEqual([
       { eventId: 'ev-2', reason: 'B' },
       { eventId: 'ev-1', reason: 'A' },
     ]);
-    expect(rerankResultSchema.safeParse({ items: [{ alias: 'c1', reason: 'x'.repeat(81) }] }).success).toBe(false);
+    expect(picksFromResponse([{ alias: 'c1', reason: 'x'.repeat(61) }, { alias: 'c2', reason: 'x'.repeat(60) }], aliases)).toEqual([
+      { eventId: 'ev-1', reason: null },
+      { eventId: 'ev-2', reason: 'x'.repeat(60) },
+    ]);
+    expect(rerankResultSchema.safeParse({ items: [{ alias: 'c1', reason: 'x'.repeat(61) }] }).success).toBe(true);
+    expect(rerankResultSchema.safeParse({ items: [{ alias: 'c1', reason: 'x'.repeat(201) }] }).success).toBe(false);
+  });
+
+  it('refreshAiCache: una frase larga conserva el orden de Gemini con la frase de la plantilla (origen template)', async () => {
+    const ranked = rankHybrid([ev('a'), ev('b')], prefs, {});
+    const generateJson = vi.fn(async () => ({
+      data: { items: [{ alias: 'c2', reason: 'x'.repeat(70) }, { alias: 'c1', reason: 'Fútbol el sábado, como te gusta' }] },
+      model: 'gemini-3.6-flash',
+    }));
+    const repo = fakeRepo();
+    await refreshAiCache('u-ai', prefs, ranked, { client: enabledClient(generateJson), repo });
+    const [, saved] = repo.saveCachedRecommendations.mock.calls[0];
+    expect(saved.items.slice(0, 2).map((i) => [i.eventId, i.source, i.reason.length <= 60])).toEqual([
+      [ranked[1].event.id, 'template', true],
+      [ranked[0].event.id, 'gemini', true],
+    ]);
   });
 });
 
@@ -182,9 +208,10 @@ describe('getRecommendations · variante "ai"', () => {
     const repo = fakeRepo();
     const result = await getRecommendations(user, 6, { variant: 'ai', repo, client: enabledClient(), schedule });
     expect(result.map((e) => [e.id, e.reason])).toEqual([
-      ['a', 'Porque te gusta el deporte y es un sábado en la tarde'],
-      ['b', 'Encaja con tu horario: es un sábado en la tarde'],
+      ['a', 'Deporte el sábado en la tarde, como te gusta'],
+      ['b', 'El sábado en la tarde, justo en tu horario'],
     ]);
+    expect(result.map((e) => e.reasonKind)).toEqual(['spark', 'spark']);
     expect(schedule).toHaveBeenCalledTimes(1); // segundo plano: el usuario no esperó a Gemini
     expect(repo.insertRecommendationEvents).toHaveBeenCalledWith([
       { userId: 'u-ai', eventId: 'a', variant: 'ai', action: 'shown', source: 'template' },
@@ -200,8 +227,9 @@ describe('getRecommendations · variante "ai"', () => {
     const result = await getRecommendations(user, 6, { variant: 'ai', repo, client: enabledClient(), schedule });
     expect(result.map((e) => [e.id, e.reason])).toEqual([
       ['b', 'Frase de Gemini'],
-      ['a', 'Porque te gusta el deporte y es un sábado en la tarde'],
+      ['a', 'Deporte el sábado en la tarde, como te gusta'],
     ]);
+    expect(result.map((e) => e.reasonKind)).toEqual(['spark', 'spark']);
     expect(schedule).not.toHaveBeenCalled();
     expect(repo.insertRecommendationEvents.mock.calls[0][0].map((r) => r.source)).toEqual(['gemini', 'template']);
   });

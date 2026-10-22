@@ -69,7 +69,12 @@ export async function refreshAiCache(userId, prefs, ranked, { client = gemini, r
   const top = ranked.slice(0, RERANK_CANDIDATES);
   const { picks, model } = await rerankWithGemini(client, prefs, top);
   const byId = new Map(top.map((item) => [item.event.id, item]));
-  const items = picks.map(({ eventId, reason }) => ({ eventId, score: byId.get(eventId).score, reason, source: 'gemini' }));
+  const items = picks.map(({ eventId, reason }) => {
+    const item = byId.get(eventId);
+    // Frase demasiado larga de Gemini (reason null): se queda su orden, con la frase de la plantilla
+    if (!reason) return { eventId, score: item.score, reason: templateReason(item.event, prefs, item.tags), source: 'template' };
+    return { eventId, score: item.score, reason, source: 'gemini' };
+  });
   // El resto del top 15, en orden híbrido, para poder completar la lista si algún elegido deja de ser candidato
   for (const item of top) {
     if (items.some((i) => i.eventId === item.event.id)) continue;
@@ -142,5 +147,7 @@ export async function getRecommendations(user, limit, deps = {}) {
     user,
     picked.map((p) => p.event),
   );
-  return events.map((event, i) => ({ ...event, reason: picked[i].reason }));
+  // reasonKind (P8) solo elige el ícono de la insignia: destello si la frase viene de la variante "ai" (Gemini o su
+  // plantilla), check si viene de reglas. La pantalla nunca dice "IA" ni el nombre de la variante.
+  return events.map((event, i) => ({ ...event, reason: picked[i].reason, reasonKind: picked[i].source === 'rules' ? 'check' : 'spark' }));
 }

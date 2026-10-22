@@ -32,17 +32,17 @@ describe('scoreEvent', () => {
   it('categoría: +3 con su reason', () => {
     expect(scoreEvent(event({ category: 'sport' }), { ...noPrefs, categories: ['sport'] })).toEqual({
       score: 3,
-      reason: 'Porque te gusta el deporte',
+      reason: 'Deporte, de lo que más te gusta',
     });
     expect(scoreEvent(event({ category: 'culture' }), { ...noPrefs, categories: ['culture'] }).reason).toBe(
-      'Porque te gusta la cultura',
+      'Plan cultural, de lo que más te gusta',
     );
   });
 
   it('día: +1 (sábado = fines de semana)', () => {
     expect(scoreEvent(event(), { ...noPrefs, days: ['weekends'] })).toEqual({
       score: 1,
-      reason: 'Encaja con tus fines de semana',
+      reason: 'El sábado, justo en tu horario',
     });
     expect(scoreEvent(event(), { ...noPrefs, days: ['weekdays'] }).score).toBe(0);
   });
@@ -50,29 +50,32 @@ describe('scoreEvent', () => {
   it('franja: +1', () => {
     expect(scoreEvent(event({ startsAt: TUE_7PM }), { ...noPrefs, timeSlots: ['evening'] })).toEqual({
       score: 1,
-      reason: 'Encaja con tus noches',
+      reason: 'En la noche, justo en tu horario',
     });
   });
 
   it('zona: +1 sin importar tildes ni mayúsculas; vacía no cuenta', () => {
     const e = event({ location: 'Parque de BELÉN, Medellín' });
-    expect(scoreEvent(e, { ...noPrefs, zone: 'belen' })).toEqual({ score: 1, reason: 'Es en tu zona' });
+    expect(scoreEvent(e, { ...noPrefs, zone: 'belen' })).toEqual({ score: 1, reason: 'Queda en tu zona' });
     expect(scoreEvent(e, { ...noPrefs, zone: '   ' }).score).toBe(0);
     expect(scoreEvent(e, { ...noPrefs, zone: 'Laureles' }).score).toBe(0);
   });
 
-  it('suma todas las señales y la reason es la más fuerte', () => {
+  it('suma todas las señales y la frase junta lo que coincidió (día real, en hora de Bogotá)', () => {
     const prefs = { categories: ['sport'], days: ['weekends'], timeSlots: ['morning'], zone: 'Belén' };
     expect(scoreEvent(event({ category: 'sport', location: 'Cancha de Belén' }), prefs)).toEqual({
       score: 6,
-      reason: 'Porque te gusta el deporte',
+      reason: 'Deporte el sábado en la mañana, como te gusta',
     });
+    expect(scoreEvent(event({ category: 'sport', startsAt: TUE_7PM }), { ...prefs, days: ['weekdays'], timeSlots: ['evening'] }).reason).toBe(
+      'Deporte el martes en la noche, como te gusta',
+    );
   });
 
-  it('empate de señales de 1 punto: zona, luego días, luego franja', () => {
+  it('el horario va antes que la zona; la zona sola también tiene frase', () => {
     const prefs = { categories: [], days: ['weekends'], timeSlots: ['morning'], zone: 'belen' };
-    expect(scoreEvent(event({ location: 'Belén' }), prefs).reason).toBe('Es en tu zona');
-    expect(scoreEvent(event(), prefs).reason).toBe('Encaja con tus fines de semana');
+    expect(scoreEvent(event({ location: 'Belén' }), prefs).reason).toBe('El sábado en la mañana, justo en tu horario');
+    expect(scoreEvent(event({ location: 'Belén' }), { ...noPrefs, zone: 'belen' }).reason).toBe('Queda en tu zona');
   });
 
   it('"other" nunca suma por categoría', () => {
