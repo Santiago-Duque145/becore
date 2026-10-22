@@ -200,6 +200,28 @@
   }
 }
 
+/* P8 · Insignia de la razón de "Para ti": turquesa translúcido sobre el panel y borde degradado sutil
+   (accent → accent-soft). El fondo es opaco (mezcla con panel) para que el contraste del texto no dependa de lo de atrás:
+   accent-soft sobre esta mezcla ≈ 9:1. */
+@utility reason-badge {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(color-mix(in oklab, var(--color-accent) 14%, var(--color-panel)), color-mix(in oklab, var(--color-accent) 14%, var(--color-panel))) padding-box,
+    linear-gradient(90deg, color-mix(in oklab, var(--color-accent) 75%, transparent), color-mix(in oklab, var(--color-accent-soft) 45%, transparent)) border-box;
+}
+
+/* P8 · Entrada de insignias y mensajes de las tarjetas: opacidad + escala, una vez al montar */
+@theme {
+  --animate-badge-in: badge-in 220ms var(--ease-out-soft) both;
+
+  @keyframes badge-in {
+    from {
+      opacity: 0;
+      transform: scale(0.92);
+    }
+  }
+}
+
 /* Enfoque visible común a todos los controles (skill §4, Accesibilidad) */
 @utility focus-ring {
   outline: none;

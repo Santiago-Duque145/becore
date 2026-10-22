@@ -2,6 +2,7 @@ import { useId } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { AlertCircleIcon, CalendarIcon } from '../components/icons/index.js';
 import { RateBanner } from '../components/events/RateBanner.jsx';
+import { CardHighlight } from '../components/events/CardHighlight.jsx';
 import { AppointmentList } from '../components/appointments/AppointmentList.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 import { Badge, Chip, EmptyState, ErrorState, LinkButton, Skeleton } from '../components/ui/index.js';
@@ -58,6 +59,7 @@ function MyEventItem({ event }) {
           <span className="block truncate text-[11.5px] text-ink-muted">
             {formatTime(event.startsAt)} · {event.location}
           </span>
+          <CardHighlight event={event} mine className="mt-1.5" />
         </span>
         <Badge tone={status.tone} className="shrink-0">
           {status.label}

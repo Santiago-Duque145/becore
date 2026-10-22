@@ -6,6 +6,7 @@ import { formatDate } from '../../lib/format.js';
 import { formatDistance } from '../../lib/geo.js';
 import { boundsOf, eventPoint, hasCoordinates } from '../../lib/map.js';
 import { LinkButton } from '../ui/index.js';
+import { CardHighlight } from '../events/CardHighlight.jsx';
 import { MapBase } from './MapBase.jsx';
 import { eventPinIcon, userDotIcon } from './pins.js';
 
@@ -40,6 +41,7 @@ export function EventPopupCard({ event }) {
       <Link to={`/eventos/${event.id}`} className="focus-ring rounded text-sm leading-snug font-semibold !text-ink">
         {event.title}
       </Link>
+      <CardHighlight event={event} className="self-start" />
       <p className="text-xs !text-ink-muted first-letter:uppercase">{formatDate(event.startsAt)}</p>
       {Number.isFinite(event.distanceKm) && <p className="text-xs !text-ink-muted">{formatDistance(event.distanceKm)}</p>}
       <p className="text-xs !text-ink">

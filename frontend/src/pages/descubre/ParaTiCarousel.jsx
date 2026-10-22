@@ -73,6 +73,7 @@ export function ParaTiCarousel({ events, emptyReason = null, priorityFirst = fal
             <EventCard
               event={event}
               reason={event.reason}
+              reasonKind={event.reasonKind}
               priority={priorityFirst && index === 0}
               onOpen={countClick(event.id)}
               className="h-full"

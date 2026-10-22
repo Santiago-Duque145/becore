@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { formatDate } from '../../lib/format.js';
 import { formatDistance } from '../../lib/geo.js';
 import { hasCoordinates } from '../../lib/map.js';
+import { CardHighlight } from '../../components/events/CardHighlight.jsx';
 
 // Lo mismo que muestra el mapa, como lista: sirve a quien no usa el mapa (lector de pantalla, teclado)
 // e incluye los eventos que no tienen ubicación marcada.
@@ -20,6 +21,7 @@ export function MapEventList({ events, selectedId, onSelect }) {
                 {Number.isFinite(event.distanceKm) && ` · ${formatDistance(event.distanceKm)}`}
                 {!hasCoordinates(event) && ' · sin ubicación en el mapa'}
               </p>
+              <CardHighlight event={event} className="mt-1" />
             </div>
             {onSelect && hasCoordinates(event) && (
               <button
