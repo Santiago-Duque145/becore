@@ -130,7 +130,7 @@ Eventos candidatos: `status = 'published'`, `starts_at > now()`, `confirmed_coun
 | Franja coincide con `time_slots` (morning < 12:00 ≤ afternoon < 18:00 ≤ evening) | +1 |
 | `zone` no vacía y aparece (sin tildes, minúsculas) en `events.location` | +1 |
 
-Orden: puntaje desc, luego `starts_at` asc. Se excluyen puntaje 0. Cada evento trae `reason` en texto: la señal más fuerte ("Porque te gusta el deporte", "Es en tu zona", "Encaja con tus fines de semana").
+Orden: puntaje desc, luego `starts_at` asc. Se excluyen puntaje 0. Cada evento trae `reason` en texto: desde P8, todo lo que coincidió en una frase de máximo 60 caracteres ("Deporte el sábado en la tarde, como te gusta", "Queda en tu zona"; `ai.md` §5.6).
 UI en Descubre: carrusel horizontal "Para ti" encima del listado, tarjetas como las del mockup + `reason` en 11.5 px `accent-soft`. Sin preferencias o sin resultados: no mostrar la sección (no un vacío).
 
 Pruebas (Vitest): función pura `scoreEvent(event, prefs)` con casos de cada señal y del desempate.

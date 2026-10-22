@@ -137,7 +137,7 @@ muestra nada si falla o si algún conteo es 0.
 | GET | `/events/search` | todos | query `q` 2–200, `category` opcional | `{ data: Event[], meta: { mode: 'semantic' \| 'classic', total, searchId } }`, máx. 30, ver abajo (IA7) |
 | POST | `/events/draft` | organizador | `{ text }` 10–500 | 200 siempre: `{ data: { draft: {…} \| null, reason? } }` (IA8, ver abajo) |
 | POST | `/events/search/:searchId/open` | todos | `{ eventId }` | 204 siempre: marca el primer resultado abierto de esa búsqueda (IA7) |
-| GET | `/events/recommended` | todos | query `limit` 1–20 (defecto 6) | `(Event & { reason })[]` "Para ti", ver abajo. Si viene vacío, además `meta.emptyReason`: `no_preferences`, `no_events`, `all_confirmed` o `no_matches` |
+| GET | `/events/recommended` | todos | query `limit` 1–20 (defecto 6) | `(Event & { reason, reasonKind })[]` "Para ti", ver abajo (`reasonKind`: `spark` \| `check`, solo elige el ícono; P8). Si viene vacío, además `meta.emptyReason`: `no_preferences`, `no_events`, `all_confirmed` o `no_matches` |
 | POST | `/events` | org | ver "Crear" | 201 `Event` |
 | GET | `/events/:id` | todos | — | `Event & { tags: string[] }`: `tags` son los gustos que Gemini asignó (IA2, `docs/specs/ai.md`), `[]` si aún no tiene. Nunca incluye embeddings |
 | PATCH | `/events/:id` | dueño | mismos campos de crear, todos opcionales (mínimo uno) | `Event` |
@@ -155,8 +155,9 @@ muestra nada si falla o si algún conteo es 0.
 **"Para ti" — `GET /events/recommended`** (`auth-onboarding.md` §8, `services/recommendations/`):
 sin preferencias guardadas devuelve `[]`. Candidatos: `published`, `starts_at > now()`, con cupo, que el usuario no organiza
 ni tiene confirmados. Puntaje por reglas en hora de Bogotá (categoría +3; día, franja y zona +1 cada uno); se
-excluyen los de puntaje 0 y se ordena por puntaje desc y luego `startsAt` asc. `reason` es la señal más fuerte
-("Porque te gusta el deporte", "Es en tu zona", "Encaja con tus fines de semana"…). Va antes de `/events/:id` en el router.
+excluyen los de puntaje 0 y se ordena por puntaje desc y luego `startsAt` asc. Desde P8, `reason` junta
+todo lo que coincidió, en máximo 60 caracteres ("Deporte el sábado en la tarde, como te gusta", "Queda en tu zona"; ver
+`ai.md` §5.6). Va antes de `/events/:id` en el router.
 
 **Búsqueda en lenguaje natural — `GET /events/search`** (IA7, `services/search/`, `docs/specs/ai.md` §15): busca entre los
 eventos próximos visibles (`published` e `in_progress`), con la categoría si viene. `mode: 'semantic'`: embedding de la
@@ -236,7 +237,10 @@ La carpeta de cada archivo es el id de quien lo sube; una ruta ajena responde 40
 - `PUT /me/avatar-preset` `{ preset }` → uno de los 12 ids (`goleador`, `corredora`, `ciclista`, `nadador`, `bailarina`,
   `guitarrista`, `pintor`, `fotografa`, `lectora`, `jardinero`, `ajedrecista`, `actriz`). Reemplaza la foto subida.
 - `DELETE /me/avatar` → quita foto y avatar elegido.
-- `POST /events/cover-upload-url` (organizador) → igual que el de avatar, en el bucket `event-covers`.
+- `POST /events/cover-upload-url` (organizador) → igual que el de avatar, en el bucket `event-covers`. Con
+  `withOriginal: true` (P8) devuelve además `original: { path, token }`: la misma ruta con `-original` antes de la
+  extensión, para guardar el original (≤ 2400 px) con el que el editor vuelve a encuadrar. Solo se confirma `coverPath`;
+  la ruta del original se deduce de ella (sin columna nueva).
 - `POST/PATCH /events` aceptan `coverPath` (ruta subida por el propio organizador; `null` en PATCH quita la portada).
 - `Profile` suma `avatarUrl` y `avatarPreset`. `Event` suma `coverUrl` y `confirmedPreview: [{ name, avatarUrl, avatarPreset }]`
   (hasta 3 confirmados, solo nombre de pila) en listas, detalle y recomendados.
