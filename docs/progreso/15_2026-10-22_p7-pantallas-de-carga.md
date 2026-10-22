@@ -47,7 +47,7 @@ Sin librerías nuevas. La entrada del bundle no cambia (174,6 kB, 56,7 gz).
 | Qué | Resultado |
 |---|---|
 | `npm run lint` | sin errores |
-| `npm test` | backend 321/321, frontend 304/304 (nuevas: `loader-timing.test.js`, `loaders.test.jsx`) |
+| `npm test` | backend 322/322, frontend 304/304 (nuevas: `loader-timing.test.js`, `loaders.test.jsx`) |
 | `npm run build -w frontend` | compila sin avisos |
 | Edge 390 y 1440 px, `/dev/ui` | sin scroll horizontal; capturas en `capturas-15/` |
 | Edge, animaciones en curso | solo las de P7 + `enter` y `pulse` del punto en vivo; con movimiento reducido, ninguna |
@@ -65,6 +65,25 @@ Una prueba revisa que los keyframes de los loaders solo animen `transform` y `op
   más rápido); el `BrandLoader` va en las rutas de pantalla completa. Como ese fallback de `Suspense` desaparece en cuanto
   llega el código, ahí solo aplican los 300 ms, no los 500 ms mínimos.
 - Recreación usa el árbol (el ícono de la categoría en toda la app) en vez de una hoja o brújula.
+
+Revisado y aprobado el 2026-10-22: el trazo con `stroke-dashoffset`, el skeleton entre rutas dentro del AppShell y
+`/auth/callback` sin aviso de "tardando".
+
+## Reintentar del onboarding: el guardado es idempotente
+
+A los 8 s, "Reintentar" reenvía `PUT /me/onboarding` aunque la primera petición siga en curso. Se dejó así porque el
+guardado no puede duplicar nada (revisado en `me.service.js` y en los repositorios):
+
+- **Gustos:** `user_preferences` tiene `user_id` como clave primaria y `upsertPreferences` hace `upsert` con
+  `onConflict: 'user_id'`: siempre queda una sola fila por usuario, con las respuestas de la última petición (son las
+  mismas en las dos).
+- **Perfil:** `completeOnboarding` del repositorio hace `update … where onboarding_completed_at is null`. La primera
+  petición que llega fija rol y fecha; la segunda no encuentra la fila (devuelve `null`), lee el perfil actual y responde
+  con él si el rol coincide (409 si no). Si la segunda llega cuando la primera ya terminó, entra por la rama de
+  "onboarding ya completo": solo reescribe los gustos. En ningún caso hay dos `onboarding_completed_at` distintos.
+- **Pruebas:** ya cubrían el upsert por `user_id` (`onboarding.repository.test.js`), el filtro `is null` y las dos
+  carreras (`me.service.test.js`). Se agregó la del reenvío con el onboarding ya completo: no llama a
+  `completeOnboarding` ni a `updateProfile`, solo al upsert de gustos.
 
 ## Pendiente
 
