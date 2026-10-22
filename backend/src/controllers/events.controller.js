@@ -1,5 +1,6 @@
 import * as eventsService from '../services/events.service.js';
 import { explainEmpty, getRecommendations } from '../services/recommendations/index.js';
+import { searchService } from '../services/search/search.service.js';
 
 export async function listEvents(req, res) {
   const { data, meta } = await eventsService.listEvents(req.user, req.validatedQuery);
@@ -11,6 +12,18 @@ export async function listRecommended(req, res) {
   const data = await getRecommendations(req.user, req.validatedQuery.limit);
   if (data.length) return res.json({ data });
   res.json({ data, meta: { emptyReason: await explainEmpty(req.user) } });
+}
+
+// IA7: semántica si la IA responde; si no, clásica (meta.mode lo dice)
+export async function searchEvents(req, res) {
+  const { data, meta } = await searchService.searchEvents(req.user, req.validatedQuery);
+  res.json({ data, meta });
+}
+
+// Registro sin esperar: siempre 204
+export function recordSearchOpen(req, res) {
+  searchService.recordOpen(req.params.searchId, req.body.eventId);
+  res.status(204).end();
 }
 
 export async function createEvent(req, res) {
