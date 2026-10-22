@@ -277,6 +277,7 @@ que los eventos nuevos entran por ahí.
 
 - **Variante:** `sha256(user_id + AB_SALT)`, primer byte par → `rules`, impar → `ai`. Es determinista: la misma persona
   siempre ve la misma variante. `rules` = R5 tal cual; `ai` = IA3. Implementada en IA3 (`recommendations/variant.js`).
+  La sal vive solo en `backend/.env`: con una sal conocida se sabría de antemano la variante de cada cuenta.
 - **Origen de cada tarjeta mostrada** (`recommendation_events.source`, desde IA3): `gemini`, `template` o `rules`. En el
   análisis se puede separar, dentro de la variante "ai", lo que de verdad pasó por Gemini de lo que salió de la
   plantilla.
@@ -303,7 +304,7 @@ que los eventos nuevos entran por ahí.
 
 `GEMINI_API_KEY`, `GEMINI_TEXT_MODELS` (lista separada por comas, defecto
 `gemini-3.6-flash,gemini-3-flash-preview,gemini-3.5-flash`), `GEMINI_EMBEDDING_MODEL` (defecto `gemini-embedding-2`),
-`AI_ENABLED` (defecto `false`) y `AB_SALT` (defecto `becore-ab-2026`). Una variable vacía en `.env` toma el valor por
+`AI_ENABLED` (defecto `false`) y `AB_SALT` (**sin valor por defecto**: obligatoria con `AI_ENABLED=true`, si falta el backend no arranca y lo dice; con la IA apagada y sin sal, todos ven "rules"). Una variable vacía en `.env` toma el valor por
 defecto. `GEMINI_TEXT_MODEL` (singular, de IA1) ya no se lee. `GEMINI_IMAGE_MODEL` y `AI_IMAGES_ENABLED` quedan en
 `.env.example` como reservadas para el trabajo futuro (IA5); el código no las lee. `env.js` las valida como opcionales. Con `AI_ENABLED=true`
 y sin clave, el backend arranca con un aviso y se comporta como `false`. La clave **solo** vive en `backend/.env`.
