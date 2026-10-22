@@ -37,7 +37,7 @@ export function AvatarCropModal({ file, name, onConfirm, onChangeImage, onCancel
   }
 
   return (
-    <Modal open={Boolean(file)} title="Encuadra tu foto" onClose={onCancel} className="max-h-[94dvh] overflow-y-auto">
+    <Modal open={Boolean(file)} title="Encuadra tu foto" onClose={onCancel} className="max-h-[94dvh] overflow-y-auto md:max-w-lg">
       <p className="mb-3 text-sm text-ink-muted">Deja tu cara dentro del círculo.</p>
       {src && <ImageCropper src={src} shape="circle" label="Encuadre de tu foto de perfil" onChange={handleChange} onReady={setImage} />}
       <div className="mt-4 flex items-center gap-3" aria-hidden="true">
