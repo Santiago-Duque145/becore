@@ -1,12 +1,13 @@
 # Spec · Inteligencia artificial con Gemini (Fase 3)
 
-Fuente de verdad de la Fase 3 (`docs/PLAN.md` §6). Se lee antes de IA1–IA6. Escrita en IA0 (2026-10-22), sin código.
+Fuente de verdad de la Fase 3 (`docs/PLAN.md` §6). Se lee antes de IA1–IA6. Escrita en IA0 (2026-10-22), sin código;
+actualizada en IA1 con las mediciones reales de Gemini (§2) y la decisión de re-ordenar en segundo plano (§3).
 
 ## 1. Alcance y decisión
 
 - **Qué entra:** recomendaciones híbridas para "Para ti" (embeddings + reglas de R5 + re-ordenado con un LLM), la
-  prueba A/B que las valida, la portada generada con IA (IA5, opcional por costo) y el resumen de reseñas para el
-  organizador (IA6).
+  prueba A/B que las valida y el resumen de reseñas para el organizador (IA6). La portada generada con IA (IA5) pasó a
+  **trabajo futuro** (§14): no se activa facturación y las portadas siguen subiéndolas los usuarios.
 - **Proveedor:** API de Gemini (Google), solo desde el backend Express. El frontend nunca llama a Gemini.
 - **Aprobación:** la IA entra al alcance con el visto bueno del director (ver `CLAUDE.md` §9).
 - **Qué no cambia:** el contrato de `GET /api/v1/events/recommended` (`(Event & { reason })[]`). Si la IA está apagada
@@ -18,15 +19,24 @@ Fuente de verdad de la Fase 3 (`docs/PLAN.md` §6). Se lee antes de IA1–IA6. E
 |---|---|---|---|
 | Texto (etiquetas, re-ordenado, resúmenes) | `GEMINI_MODEL` | `gemini-3.5-flash-lite` | Estable, el más barato y rápido de la serie 3.5, con capa gratuita. Respaldo: `gemini-3.1-flash-lite` (estable, también gratuito). |
 | Embeddings | `GEMINI_EMBEDDING_MODEL` | `gemini-embedding-2` | Con capa gratuita. Se usa con `outputDimensionality: 768`: el modelo normaliza solo las dimensiones recortadas. **No acepta `task_type`**: la tarea va como prefijo del texto (§5). La página de modelos lo nombra `gemini-embedding-2-preview`; la de embeddings y la de precios, `gemini-embedding-2`. IA1 lo confirma con una llamada real. |
-| Imágenes (IA5) | `GEMINI_IMAGE_MODEL` | `gemini-3.1-flash-lite-image` | **Sin capa gratuita** (US$0,0336 por imagen de 1K). Alternativa del mismo precio: `gemini-nano-banana-2.1`. Requiere facturación activa. |
 
-- **SDK:** `@google/genai` (`npm install @google/genai -w backend`, en IA1). El paquete viejo `@google/generative-ai`
+- **Confirmado en IA1 con llamadas reales (2026-10-22, clave del proyecto, capa gratuita):**
+  - `gemini-embedding-2` y `gemini-embedding-2-preview` existen; se usa el estable `gemini-embedding-2`. Devuelve
+    768 dimensiones con norma 1,0000 en ~0,5 s.
+  - `gemini-3.5-flash-lite` (versión `3.5-flash-lite-07-2026`) responde JSON válido con `responseJsonSchema`, pero tarda
+    **5–12 s** incluso con `thinkingLevel: 'MINIMAL'`, y devolvió **503 "high demand"** en 3 de 15 llamadas.
+    `thinkingBudget: 0` no lo acepta (400).
+  - `gemini-3.1-flash-lite` devolvió **503 en las 6 llamadas**.
+  - Conclusión: hoy no se puede esperar a Gemini dentro de una petición del usuario (ver §3).
+- **SDK:** `@google/genai` 2.30.0 (instalado en IA1). El paquete viejo `@google/generative-ai`
   está obsoleto desde el 30 nov 2025.
 - **API:** Google recomienda la nueva Interactions API (`ai.interactions.create`, salida JSON con
   `response_format: [{ type: 'text', mime_type: 'application/json', schema }]`) para desarrollos nuevos.
   `ai.models.generateContent` (con `config.responseMimeType` + `responseSchema`) "sigue con soporte completo".
-  Los embeddings van con `ai.models.embedContent`. IA1 elige la que funcione con la versión instalada del SDK. Solo
-  cambia dentro de `geminiClient.js`.
+  Los embeddings van con `ai.models.embedContent`. **Decisión de IA1:** `ai.models.generateContent` con
+  `config.systemInstruction`, `responseMimeType: 'application/json'`, `responseJsonSchema`,
+  `thinkingConfig: { thinkingLevel: 'MINIMAL' }` y `abortSignal`, que en el SDK 2.30 tiene tipos completos y soporte
+  pleno. Pasar a Interactions solo cambiaría `geminiClient.js`.
 - **Esquemas JSON:** Gemini aplica `minItems`/`maxItems` pero **ignora** `minLength`, `maxLength` y `uniqueItems`. Por
   eso toda respuesta se valida además con **Zod** en el backend.
 - **Capa gratuita:** Google usa lo que se le envía para mejorar sus productos. Con facturación activa no. Eso se dice en
@@ -43,11 +53,15 @@ Calificaciones ≥ 4 (P2)    ──► categorías y tags de esos eventos = bonu
 GET /api/v1/events/recommended
   0. ¿Hay caché vigente en ai_recommendations para el usuario y su variante? → se responde con ella (< 2 s)
   1. Candidatos por reglas (R5): publicados, futuros, con cupo, no organizados ni confirmados por el usuario
-  2. Puntaje híbrido de cada candidato (§6)
-  3. Top 15 → Gemini re-ordena y elige 6 con su razón en español (JSON validado con Zod)
-  4. Se guarda en caché 6 h y se responde con el mismo contrato de hoy
-  Respaldo: AI_ENABLED=false, sin embeddings, error, JSON inválido o > 3 s → orden por puntaje híbrido (o por reglas
-  si no hay embeddings) con las razones de las reglas
+  2. Puntaje híbrido de cada candidato (§6) → se responde YA con el top 6 híbrido (razones de las reglas)
+  3. En segundo plano (sin que el usuario espere): top 15 → Gemini re-ordena y elige 6 con su razón en español
+     (JSON validado con Zod) → se guarda en caché 6 h. La próxima visita ya ve el orden de la IA
+  Respaldo: AI_ENABLED=false, sin embeddings, error o JSON inválido → orden por puntaje híbrido (o por reglas si no
+  hay embeddings) con las razones de las reglas
+
+Decisión de IA1 (mediciones de §2): el plan original esperaba a Gemini hasta 3 s dentro de la petición. Con 5–12 s y
+503 frecuentes en la capa gratuita, eso fallaría casi siempre. **La petición nunca espera a Gemini**: responde con caché
+o con el orden híbrido, y el re-ordenado se calcula en segundo plano (al no haber caché y cuando se invalida).
 ```
 
 La API **nunca espera** a Gemini al crear o editar un evento ni al guardar gustos. El etiquetado y los embeddings se
@@ -58,7 +72,7 @@ Código (IA1–IA3), dentro de `backend/src/services/`:
 
 | Archivo | Responsabilidad |
 |---|---|
-| `ai/geminiClient.js` | Cliente único: `embedText(text)`, `generateJson(prompt, jsonSchema, zodSchema, { timeoutMs })`, `generateImage(prompt)`. Timeout, 1 reintento solo en segundo plano, logs sin datos personales. |
+| `ai/geminiClient.js` | Cliente único (IA1): `embedText(text, { timeoutMs, retry })` y `generateJson({ system, prompt, jsonSchema, zodSchema }, { timeoutMs, retry })`. Timeout, 1 reintento solo en segundo plano, cortacircuito, logs sin datos personales. Sin `generateImage` (IA5 es trabajo futuro). |
 | `ai/prompts.js` | Los prompts de §5, como funciones puras que reciben solo datos permitidos (§8). |
 | `ai/tagging.js` | Etiquetas y embedding de un evento. |
 | `ai/profile-embedding.js` | Texto del perfil y su embedding. |
@@ -195,11 +209,9 @@ Solo comentarios y tags de calificaciones de un evento (≥ 3 comentarios), **si
 Salida `{ "summary": string }` de 2–3 frases: qué gustó y qué mejorar. Los comentarios pueden traer nombres escritos
 por la gente: el prompt pide no repetir nombres propios de personas.
 
-### 5.5 Portada (IA5)
+### 5.5 Portada (IA5): trabajo futuro
 
-Desde título, categoría, lugar y descripción: ilustración plana, paleta de la marca (azul profundo #0D1B2A, turquesa
-#14B8A6, amarillo, naranja y verde de la skill), formato horizontal, **sin personas reconocibles y sin texto dentro de la
-imagen**. Máx. 3 por evento al día, registro de uso y respaldo a la portada por categoría.
+Ver §14.
 
 ## 6. Puntaje híbrido (IA3)
 
@@ -223,8 +235,8 @@ híbrido = min(1, 0.5 · similitud + 0.5 · reglas + bonus)
 | Caso | Qué pasa |
 |---|---|
 | `AI_ENABLED=false` o sin `GEMINI_API_KEY` | No se llama a Gemini. "Para ti" = híbrido sin LLM (o reglas si no hay embeddings). |
-| Re-ordenado tarda > 3 s | Se aborta la llamada y se responde con el orden híbrido. No se guarda en caché (se reintenta en la próxima visita). |
-| Error de red, 429, 5xx o JSON que no pasa Zod | Igual que el anterior. Se registra `console.warn('[ai] rerank fallback: <código>')`, sin datos del usuario. |
+| Re-ordenado lento o con 503 | No afecta al usuario: la petición ya respondió con el orden híbrido. La llamada en segundo plano tiene timeout de 20 s y 1 reintento; si falla, no se guarda caché y se intenta en la próxima visita. |
+| Error de red, 429, 5xx o JSON que no pasa Zod | Igual que el anterior. Se registra `[ai] json <modelo> falló: <código> (<ms>, intento n)`, sin datos del usuario. |
 | Alias inventados o repetidos | Se descartan y se completa con el orden híbrido. |
 | Etiquetas o embedding fallan (segundo plano) | 1 reintento a los 2 s. Si vuelve a fallar, queda en `NULL`/`{}` y lo cubre `ai:backfill`. |
 | Varios fallos seguidos | Tras 3 fallos en 60 s, la IA se salta durante 5 min ("cortacircuito" en memoria). |
@@ -257,7 +269,6 @@ vuelve a filtrar con las reglas de candidatos (un evento lleno o confirmado no s
 | GET | `/events/recommended` | todos | **Sin cambios** de contrato. Por dentro: caché, híbrido, re-ordenado, respaldo. Registra `shown` (§10). |
 | POST | `/recommendations/feedback` | todos | Nuevo (IA4). Body `{ eventId: uuid, action: 'clicked' }`. 204. Solo si el evento se le mostró al usuario en los últimos 7 días; si no, 204 sin registrar (no es un error). |
 | GET | `/admin/ai-metrics` | organizador | Nuevo (IA4). `{ data: { rules: Metrics, ai: Metrics } }`. `Metrics = { users, shown, clicked, confirmed, ctr, confirmRate, avgRating }`. |
-| POST | `/events/:id/cover/generate` | dueño | Nuevo (IA5), solo con `AI_IMAGES_ENABLED=true`. 429 `AI_LIMIT_REACHED` al pasar de 3 por evento al día. |
 | POST | `/events/:id/ratings/summary` | dueño | Nuevo (IA6). 409 `NOT_ENOUGH_COMMENTS` con < 3 comentarios. |
 
 `confirmed` lo registra el backend al confirmar asistencia, si el evento se le mostró en "Para ti" en los últimos 7 días.
@@ -287,13 +298,22 @@ vuelve a filtrar con las reglas de candidatos (un evento lleno o confirmado no s
 
 ## 12. Variables de entorno (`backend/.env.example`, ya existen vacías)
 
-`GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_EMBEDDING_MODEL`, `GEMINI_IMAGE_MODEL`, `AI_ENABLED` (defecto `false`),
-`AI_IMAGES_ENABLED` (defecto `false`). IA4 agrega `AB_SALT`. `env.js` las valida como opcionales. Con `AI_ENABLED=true`
+`GEMINI_API_KEY`, `GEMINI_MODEL` (defecto `gemini-3.5-flash-lite`), `GEMINI_EMBEDDING_MODEL` (defecto
+`gemini-embedding-2`) y `AI_ENABLED` (defecto `false`). Una variable vacía en `.env` toma el valor por defecto.
+`GEMINI_IMAGE_MODEL` y `AI_IMAGES_ENABLED` quedan en `.env.example` como reservadas para el trabajo futuro (IA5); el
+código no las lee. IA4 agrega `AB_SALT`. `env.js` las valida como opcionales. Con `AI_ENABLED=true`
 y sin clave, el backend arranca con un aviso y se comporta como `false`. La clave **solo** vive en `backend/.env`.
 
 ## 13. Pendientes de decisión
 
-- Fecha del visto bueno del director para la Fase 3 (va en `CLAUDE.md` §9).
-- Activar facturación para IA5 (imágenes). Sin facturación, IA5 se queda en "portada por categoría".
-- Confirmar con una llamada real el nombre exacto del modelo de embeddings (`gemini-embedding-2` o
-  `gemini-embedding-2-preview`) y si la versión del SDK trae la Interactions API.
+- Visto bueno del director: **solicitado por correo el 22 oct 2026, pendiente** (`CLAUDE.md` §9).
+- Facturación: **no se activa** (decisión del 22 oct). IA5 pasa a trabajo futuro (§14).
+
+## 14. Trabajo futuro
+
+- **IA5 · Portada generada con IA.** Los modelos de imágenes de Gemini no tienen capa gratuita (US$0,0336 por imagen de
+  1K con `gemini-3.1-flash-lite-image` o `gemini-nano-banana-2.1`), y el proyecto no activa facturación. Las portadas
+  las siguen subiendo los usuarios (P3), con la portada por categoría como respaldo, y el botón "Generar con IA" del
+  formulario sigue deshabilitado. Si se retoma: prompt desde título, categoría, lugar y descripción; ilustración plana
+  con la paleta de la marca; formato horizontal; sin personas reconocibles ni texto dentro de la imagen; máx. 3 por
+  evento al día con registro de uso; endpoint `POST /events/:id/cover/generate` detrás de `AI_IMAGES_ENABLED`.

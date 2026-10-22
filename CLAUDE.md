@@ -151,8 +151,9 @@ requerir algo de esta lista, detente y pregunta.
 > consentimiento de datos (`docs/progreso/05_*`).
 
 > **Nota 2026-10-22 — Fase 3, inteligencia artificial con Gemini:** la IA entra al alcance con el visto bueno del
-> director (fecha: **por confirmar**). Se usa la **API de Gemini** (SDK `@google/genai`) solo desde el backend, para
-> recomendaciones híbridas de "Para ti" con prueba A/B, portada generada (IA5, requiere facturación) y resumen de reseñas.
+> director (**solicitado por correo el 22 oct 2026, pendiente**). Se usa la **API de Gemini** (SDK `@google/genai`) solo desde el backend, para
+> recomendaciones híbridas de "Para ti" con prueba A/B y resumen de reseñas. La portada generada con IA (IA5) es trabajo
+> futuro: no se activa facturación y las portadas las siguen subiendo los usuarios.
 > Reglas: `GEMINI_API_KEY` solo en `backend/.env`; a Gemini nunca se le envía nombre, correo, IDs de usuario, sexo ni
 > edad; toda llamada tiene timeout, salida validada con Zod y respaldo sin IA ("Para ti" sigue con las reglas de R5).
 > Siguen fuera: chatbot y chat interno. Detalle en `docs/specs/ai.md` y `docs/PLAN.md` §6.

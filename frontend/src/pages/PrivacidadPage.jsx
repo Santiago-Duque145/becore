@@ -38,7 +38,8 @@ const SECTIONS = [
     body: (
       <p>
         Para recomendar eventos podemos apoyarnos en IA (Gemini, de Google). Nunca le enviamos tu nombre ni tu correo, y
-        tampoco tu sexo ni tu edad: solo tus gustos y los datos de los eventos.
+        tampoco tu sexo ni tu edad: solo tus gustos y los datos de los eventos. Usamos la versión gratuita de Gemini, así
+        que Google puede usar esos gustos y eventos (sin nada que te identifique) para mejorar sus productos.
       </p>
     ),
   },
