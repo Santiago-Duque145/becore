@@ -9,6 +9,7 @@ import notificationsRoutes from './notifications.routes.js';
 import dashboardRoutes from './dashboard.routes.js';
 import ratingsRoutes from './ratings.routes.js';
 import geocodeRoutes from './geocode.routes.js';
+import recommendationsRoutes from './recommendations.routes.js';
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use('/', notificationsRoutes);
 router.use('/', dashboardRoutes);
 router.use('/', ratingsRoutes);
 router.use('/', geocodeRoutes);
+router.use('/', recommendationsRoutes);
 
 export default router;

@@ -267,11 +267,11 @@ que los eventos nuevos entran por ahí.
 | Método | Ruta | Quién | Cambio |
 |---|---|---|---|
 | GET | `/events/recommended` | todos | **Sin cambios** de contrato. Por dentro: variante, caché, híbrido, plantilla y re-ordenado en segundo plano. Registra `shown` con su origen (§10). |
-| POST | `/recommendations/feedback` | todos | Nuevo (IA4). Body `{ eventId: uuid, action: 'clicked' }`. 204. Solo si el evento se le mostró al usuario en los últimos 7 días; si no, 204 sin registrar (no es un error). |
-| GET | `/admin/ai-metrics` | organizador | Nuevo (IA4). `{ data: { rules: Metrics, ai: Metrics } }`. `Metrics = { users, shown, clicked, confirmed, ctr, confirmRate, avgRating }`. |
+| POST | `/recommendations/feedback` | todos | IA4 (hecho). Body `{ eventId: uuid, action: 'clicked' }`. Siempre 204. Solo registra si el evento se le mostró en "Para ti" en los últimos 7 días; hereda la variante y el origen de ese "mostrado". Un segundo clic del mismo usuario y evento no se registra (índice único). El frontend lo manda al abrir una tarjeta de "Para ti", sin esperar. |
+| GET | `/admin/ai-metrics` | organizador | IA4 (hecho). `{ data: { rules: Metrics, ai: Metrics & { bySource: { gemini: Metrics, template: Metrics } }, excludedDemoRows } }`. `Metrics = { users, shown, clicked, confirmed, ctr, confirmRate, avgRating, ratings }`. Mostrados, abiertos y confirmados se cuentan como pares distintos (usuario, evento). Las tasas son `null` sin mostrados. Excluye los eventos de la cuenta de demostración (`DEMO_ORGANIZER_EMAIL`). |
 | POST | `/events/:id/ratings/summary` | dueño | Nuevo (IA6). 409 `NOT_ENOUGH_COMMENTS` con < 3 comentarios. |
 
-`confirmed` lo registra el backend al confirmar asistencia, si el evento se le mostró en "Para ti" en los últimos 7 días.
+`confirmed` lo registra el backend al confirmar asistencia (`attendance.service.js`, sin esperar: si falla, la confirmación no se entera), si el evento se le mostró en "Para ti" en los últimos 7 días. `avgRating` es el promedio de las estrellas que esas personas dieron a los eventos que confirmaron desde "Para ti".
 
 ## 10. Prueba A/B (IA4)
 

@@ -29,5 +29,8 @@ vi.mock('../src/repositories/ai.repository.js', async (importOriginal) => ({
   deleteCachedRecommendations: vi.fn(async () => {}),
   insertRecommendationEvents: vi.fn(async () => {}),
   findLikedSignals: vi.fn(async () => ({ categories: [], tags: [] })),
+  findLatestShown: vi.fn(async () => null),
+  listRecommendationEventsForMetrics: vi.fn(async () => []),
+  listRatingsFor: vi.fn(async () => []),
   listPreferencesMissingAi: vi.fn(async () => []),
 }));

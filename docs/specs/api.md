@@ -132,6 +132,8 @@ muestra nada si falla o si algún conteo es 0.
 | Método | Ruta | Acceso | Body / Query | Respuesta |
 |---|---|---|---|---|
 | GET | `/events` | todos | ver "Filtros" | `{ data: Event[], meta: { total, page, pageSize } }` |
+| POST | `/recommendations/feedback` | todos | `{ eventId, action: 'clicked' }` | 204 siempre (prueba A/B, `ai.md` §9) |
+| GET | `/admin/ai-metrics` | org | — | métricas de la prueba A/B por variante y origen (`ai.md` §9) |
 | GET | `/events/recommended` | todos | query `limit` 1–20 (defecto 6) | `(Event & { reason })[]` "Para ti", ver abajo. Si viene vacío, además `meta.emptyReason`: `no_preferences`, `no_events`, `all_confirmed` o `no_matches` |
 | POST | `/events` | org | ver "Crear" | 201 `Event` |
 | GET | `/events/:id` | todos | — | `Event & { tags: string[] }`: `tags` son los gustos que Gemini asignó (IA2, `docs/specs/ai.md`), `[]` si aún no tiene. Nunca incluye embeddings |

@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { gemini } from '../src/services/ai/geminiClient.js';
 import { indexEvent } from '../src/services/ai/indexing.service.js';
+import { DEMO_ORGANIZER_EMAIL } from '../src/constants/demo.js';
 
 // 10 eventos de demostración del 25 oct al 15 nov de 2026 para la sustentación (3–6 nov). NINGUNO cae el 31 de oct
 // (día del partido): ese día no debe haber eventos de demo. Procedimiento en docs/specs/plan-validacion.md: aplicar,
@@ -17,7 +18,7 @@ import { indexEvent } from '../src/services/ai/indexing.service.js';
 //      npm run seed:demo -w backend -- --apply     → crea la cuenta y los eventos, y los etiqueta
 //      npm run seed:demo -w backend -- --remove    → plan de borrado; con --remove --apply, borra
 
-const DEMO_EMAIL = 'organizador.demo@becore.test';
+const DEMO_EMAIL = DEMO_ORGANIZER_EMAIL;
 const DEMO_NAME = 'Barrio Activo';
 const DEMO_PASSWORD = 'BeCore2026!'; // la misma de las cuentas del seed
 

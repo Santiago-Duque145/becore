@@ -16,4 +16,5 @@ export const queryKeys = {
   notifications: ['notifications', 'list'],
   unreadCount: ['notifications', 'unread-count'],
   publicStats: ['public', 'stats'],
+  aiMetrics: ['admin', 'ai-metrics'],
 };

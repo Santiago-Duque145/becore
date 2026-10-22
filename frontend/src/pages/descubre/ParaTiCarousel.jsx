@@ -2,6 +2,7 @@ import { useId } from 'react';
 import { EventCard, EventCardSkeleton } from '../../components/events/EventCard.jsx';
 import { CheckIcon, SparklesIcon } from '../../components/icons/index.js';
 import { EmptyState, LinkButton, Skeleton } from '../../components/ui/index.js';
+import { sendRecommendationClick } from '../../services/recommendations.api.js';
 
 // "Para ti" (auth-onboarding §8): carrusel horizontal con la razón de cada recomendación.
 // Los datos los pide DescubrePage, que no pinta la lista hasta saber si hay "Para ti": así el carrusel nunca aparece
@@ -9,6 +10,11 @@ import { EmptyState, LinkButton, Skeleton } from '../../components/ui/index.js';
 // - all_confirmed / no_matches → estado vacío amable con una acción (la sección no desaparece);
 // - no_preferences / no_events / error → no se muestra (no hay nada útil que decir aquí; la lista de abajo lo cubre).
 const ROW = '-mx-[22px] flex gap-3.5 px-[22px] pb-1 md:mx-0 md:px-0';
+
+// IA4: abrir una tarjeta de "Para ti" cuenta como clic en la prueba A/B. Sin esperar ni avisar si falla: no es del usuario.
+const countClick = (eventId) => () => {
+  sendRecommendationClick(eventId).catch(() => {});
+};
 const ITEM = 'w-[270px] shrink-0 md:w-[300px]';
 
 export const PARA_TI_EMPTY = {
@@ -64,7 +70,13 @@ export function ParaTiCarousel({ events, emptyReason = null, priorityFirst = fal
       <ul className={`${ROW} snap-x snap-mandatory overflow-x-auto scroll-px-[22px] md:scroll-px-0`}>
         {events.map((event, index) => (
           <li key={event.id} className={`${ITEM} snap-start`}>
-            <EventCard event={event} reason={event.reason} priority={priorityFirst && index === 0} className="h-full" />
+            <EventCard
+              event={event}
+              reason={event.reason}
+              priority={priorityFirst && index === 0}
+              onOpen={countClick(event.id)}
+              className="h-full"
+            />
           </li>
         ))}
       </ul>

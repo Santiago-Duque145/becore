@@ -40,13 +40,13 @@
 | **18** | 2 | Cerrar los sprints: interfaz de citas (F2-1) y README, validación, p90 y tags (F2-2) |
 | **18 – 19** | 2b | **M1: la app en el celular con HTTPS** (base para ubicación, QR e instalación) |
 | **19 – 22** | 2b | Pedidos del profesor P1–P4, mapa con distancia (P6) y correos con marca + código (P5) |
-| **23 – 27** | 3 | IA con Gemini (IA0–IA6) |
+| **22 – 27** | 3 | IA con Gemini: IA0–IA4, búsqueda en lenguaje natural (IA7) y asistente para crear eventos (IA8); IA6 si sobra tiempo |
 | **28** | — | Solo bugs, extras si sobra tiempo, ensayo de la demo |
 | **29** | 4 | **Congelamiento `v1.0`** |
 | **30 – 31** | 4 | Preparar y hacer el partido de validación |
 | **1 nov** | 4 | Consolidar resultados para la presentación |
 
-**Si hay que recortar**, en este orden: extras del día 28 → IA6 → IA5 → P4. Lo último en salir es la calificación (P2) y la recomendación híbrida (IA3).
+**Si hay que recortar**, en este orden: extras del día 28 → IA6 → IA8 → IA7.  IA5 (portada con IA) pasó a trabajo futuro: no se activa facturación. Lo último en salir es la calificación (P2) y la recomendación híbrida (IA3).
 
 **Pendiente del director:** visto bueno a la integración de IA **antes del 24**. Si no aprueba, la Fase 3 se reduce a mantener el "Para ti" por reglas.
 
@@ -84,7 +84,8 @@ En Claude Code se cambia con `/model` al iniciar cada sesión. Fable 5.1 solo si
 | IA2 · etiquetado y embeddings | Opus 5.5 | Prompts y procesos en segundo plano |
 | IA3 · recomendación híbrida | **Fable 5.1** (o Opus 5.5) | La pieza más compleja y la más evaluada |
 | IA4 · prueba A/B y métricas | Opus 5.5 | Medición correcta para la sustentación |
-| IA5 · portada con IA | Sonnet 5.5 | Se apoya en P3 y en el cliente de IA1 |
+| IA7 · búsqueda en lenguaje natural | Opus 5.5 | Toca búsqueda, embeddings y UI del buscador |
+| IA8 · asistente para crear eventos | Opus 5.5 | Prompt con JSON validado, cupo y UX del formulario |
 | IA6 · resumen de reseñas | Sonnet 5.5 | Una función acotada |
 | Día 28 · bugs y ensayo | Opus 5.5 | Depuración entre capas |
 | Revisión de cada PR | Opus 5.5 en sesión nueva | Una sesión que no escribió el código revisa mejor |
@@ -207,6 +208,24 @@ Lee la skill becore-ui y CLAUDE.md (toda escritura pasa por la API; el frontend 
 7. Tests: permisos de subida (solo el organizador del evento sube su portada; cada usuario su avatar), validación de tipos.
 ```
 
+### P3b · Vista previa de fotos de perfil (Sonnet 5.5)
+
+```
+Lee la skill becore-ui y el componente Avatar actual (P3).
+
+1. Al tocar cualquier avatar (el propio en Perfil y la barra, el del organizador en el detalle, y los de "quiénes van"), se abre una vista previa:
+   - diálogo modal a pantalla completa en móvil y centrado en escritorio, fondo oscuro con scrim y desenfoque;
+   - la imagen grande (máx. 320 px en móvil, 400 px en escritorio, redonda), con animación de zoom desde el avatar tocado (solo transform y opacity; sin animación con prefers-reduced-motion);
+   - debajo, solo el nombre de pila y el rol (Organizador / Participante). Nunca correo ni otros datos.
+   - Si el usuario no tiene foto, se muestra su avatar preset o sus iniciales en grande.
+2. Se cierra con: botón X (con aria-label), tecla Escape, toque fuera de la imagen y, en móvil, deslizando hacia abajo. Al cerrar, el foco vuelve al avatar que lo abrió.
+3. Accesible: role="dialog", aria-modal, aria-label "Foto de {nombre}", foco atrapado, el avatar clicable es un <button> con aria-label "Ver foto de {nombre}".
+4. En la fila de "quiénes van" (avatares solapados + "+N"): tocarla abre una hoja/lista con todos los confirmados (avatar + nombre de pila); tocar uno abre la vista previa. Respeta la privacidad: solo nombre de pila y foto, y solo para eventos que el usuario puede ver.
+5. En Perfil, la vista previa de la foto propia incluye el botón "Cambiar foto" que lleva al selector de P3.
+6. La imagen grande usa la misma URL ya comprimida (sin pedir otra versión) y muestra un Skeleton redondo mientras carga.
+7. Tests: abre/cierra con teclado y Escape, devuelve el foco, no expone datos además del nombre de pila y el rol.
+```
+
 ### P4 · Compartir y agregar al calendario
 
 ```
@@ -260,7 +279,7 @@ Lee la skill becore-ui, docs/mockups/desktop-panel-organizador.html, docs/mockup
 0. Alcance: en CLAUDE.md §8 registra (fecha 2026-10-1X) que, por pedido del director, el mapa de eventos entra al alcance con Leaflet + teselas libres, y la ubicación del dispositivo solo para calcular distancias en el navegador (nunca se envía ni se guarda). Siguen fuera: Google Maps API y la "estela convergente".
 0b. Distancia (usa el hook useGeolocation de M1): botón "Cerca de mí" en Descubre; al aceptar, las tarjetas muestran "a 1,8 km" y se puede ordenar por cercanía; en el modo mapa aparece un punto con "Tú estás aquí". Si se niega el permiso o no hay HTTPS, todo funciona igual sin distancias.
 1. Librerías (justifícalas en el informe): leaflet y react-leaflet. Todas las vistas con mapa se cargan de forma diferida (React.lazy) para no inflar el bundle inicial. Comprueba el tamaño antes y después.
-2. Teselas: OpenStreetMap estándar (CARTO empezó a pedir clave), con la atribución "© OpenStreetMap contributors" visible y oscurecidas con un filtro CSS solo en la capa de teselas. URL en una sola constante (TILES_URL en lib/map.js).
+2. Teselas: estilo oscuro coherente con la marca (por ejemplo, CARTO "dark_all" o similar libre para uso no comercial), con la atribución obligatoria visible. URL de teselas en una variable VITE_MAP_TILES_URL con valor por defecto; si fallan, mostrar el mapa estándar de OpenStreetMap.
 3. Migración: events.latitude y events.longitude numeric NULL, con checks de rango (lat −90..90, lng −180..180) y ambos nulos o ambos con valor. Pruébala en transacción revertida, aplícala y dilo en el PR.
 4. Crear/editar evento: además del texto de "lugar", un selector de ubicación en mapa centrado en Medellín. El organizador hace clic o arrastra el pin. Buscador opcional con Nominatim (OpenStreetMap) llamado desde el BACKEND (GET /api/v1/geocode?q=…, máximo 1 petición por segundo, User-Agent con el nombre del proyecto y caché en memoria), limitado a Colombia. La ubicación es opcional.
 5. Detalle del evento: mini mapa con el pin (no interactivo en móvil hasta tocarlo) y botón "Cómo llegar" con dos opciones: Google Maps (https://www.google.com/maps/dir/?api=1&destination=lat,lng) y Waze (https://waze.com/ul?ll=lat,lng&navigate=yes). Si el evento no tiene coordenadas, no se muestra.
@@ -370,7 +389,7 @@ En la sustentación se presenta como un **sistema de recomendación híbrido** (
 - `GEMINI_API_KEY` solo en `backend/.env`. El frontend nunca llama a Gemini.
 - A Gemini **nunca** se le envía nombre, correo, IDs de usuario, sexo ni edad.
 - Timeout, respaldo sin IA y salida validada con Zod en toda llamada.
-- Modelos por variable de entorno (`GEMINI_TEXT_MODEL`, `GEMINI_EMBEDDING_MODEL`). Opus confirma los nombres vigentes en la documentación oficial.
+- Modelos por variable de entorno (`GEMINI_MODEL`, `GEMINI_EMBEDDING_MODEL`, `GEMINI_IMAGE_MODEL`). Opus confirma los nombres vigentes en la documentación oficial.
 - Capa gratuita: Google puede usar los datos para mejorar sus productos (se menciona en /privacidad). **La generación de imágenes no tiene capa gratuita**: IA5 requiere activar facturación en la clave (aprox. US$0,03–0,07 por imagen). Con facturación activa, los datos de pago no se usan para entrenar.
 
 ### Sesiones (rama `feature/ia-N`)
@@ -393,8 +412,8 @@ Lee docs/specs/ai.md.
    - índice HNSW sobre events.embedding;
    - RLS: lectura propia, escritura solo Express.
    Pruébala en una transacción revertida y luego aplícala.
-2. backend/src/services/ai/geminiClient.js: cliente único con timeout, 1 reintento, logs sin datos personales; funciones embedText(text) y generateJson(prompt, schema). (generateImage no: IA5 es trabajo futuro.)
-3. backend/.env.example (sin valores): GEMINI_TEXT_MODEL, GEMINI_EMBEDDING_MODEL, AI_ENABLED.
+2. backend/src/services/ai/geminiClient.js: cliente único con timeout, 1 reintento, logs sin datos personales; funciones embedText(text), generateJson(prompt, schema) y generateImage(prompt).
+3. backend/.env.example (sin valores): GEMINI_MODEL, GEMINI_EMBEDDING_MODEL, GEMINI_IMAGE_MODEL, AI_ENABLED, AI_IMAGES_ENABLED.
 4. Tests con el cliente simulado.
 ```
 
@@ -432,7 +451,7 @@ Lee docs/specs/ai.md.
 5. Aviso "Usamos IA para recomendarte eventos" en el paso final del onboarding, con enlace a /privacidad.
 ```
 
-**IA5 · Portada del evento generada con IA** → **trabajo futuro** (2026-10-22: no se activa facturación; las portadas las siguen subiendo los usuarios; ver `docs/specs/ai.md` §14)
+**IA5 · Portada del evento generada con IA** — ❌ trabajo futuro (22 oct: no se activa facturación; las portadas las sube el organizador)
 ```
 Lee docs/specs/ai.md y el trabajo de P3.
 1. Activa el botón "Generar con IA" del formulario de evento solo si AI_IMAGES_ENABLED=true.
@@ -444,6 +463,40 @@ Lee docs/specs/ai.md y el trabajo de P3.
 **IA6 · Resumen de reseñas para el organizador**
 ```
 Con las calificaciones de P2: en el panel del organizador, por evento con ≥ 3 comentarios, botón "Resumir con IA" que devuelve 2–3 frases (qué gustó, qué mejorar). Sin nombres de los participantes en el prompt. Caché hasta que llegue una calificación nueva.
+```
+
+**IA7 · Búsqueda en lenguaje natural** (rama `feature/ia-7`, después de IA4)
+```
+Lee docs/specs/ai.md y CLAUDE.md. Usa la skill becore-ui. Rama feature/ia-7 desde feature/ia-4.
+Objetivo: que el buscador de Descubre entienda frases como "algo tranquilo para el domingo con mi familia" o "fútbol cerca de Belén en la noche".
+1. Backend: GET /api/v1/events/search?q=... (autenticado, Zod: q de 2 a 200 caracteres).
+   - Calcula el embedding de la consulta (solo cupo de embeddings, nunca el de texto) y compara contra event_ai con el índice HNSW, solo eventos publicados y futuros.
+   - Puntaje final = similitud del texto + coincidencia literal en título/lugar (para que buscar "Avengers" siga encontrando "Estreno Avengers Doomsdale") + pequeños refuerzos si la frase menciona un día, una franja o una categoría que coincide con el evento (detección por reglas en español, sin LLM).
+   - Umbral mínimo calibrado con 15–20 consultas de prueba anotadas a mano (documenta cuáles y los resultados en el informe).
+   - Caché de embeddings de consultas normalizadas (minúsculas, sin tildes) por 24 h, y límite por usuario (p. ej. 30 búsquedas/10 min).
+   - Respaldo: si Gemini falla, AI_ENABLED=false o se agota el cupo, búsqueda clásica por texto (ILIKE en título, descripción y lugar). Nunca error 500 por la IA.
+   - A Gemini solo va el texto de la consulta: si contiene un correo o un número de teléfono, se quita antes de enviarlo.
+   - Registra en recommendation_events (o en una tabla search_events) la consulta, el número de resultados, el modo (semantic/classic) y si el usuario abrió algún resultado, sin guardar datos personales.
+2. Frontend: el buscador de Descubre (y el de la barra superior en escritorio) usa este endpoint con debounce de 400 ms. Placeholder que invite a escribir natural: "Prueba: fútbol el sábado en la tarde". Etiqueta discreta "Búsqueda inteligente" cuando el modo fue semántico. Estados de carga, vacío ("No encontramos planes así. Prueba con otras palabras.") y error con la skill.
+3. Los resultados respetan los filtros de categoría y "Más cerca primero".
+4. Pruebas con Gemini simulado: consulta normal, respaldo clásico, limpieza de correo/teléfono, límite por usuario, umbral.
+Al terminar: lint, pruebas, build, informe NN, push, sin PR.
+```
+
+**IA8 · Asistente para crear eventos** (rama `feature/ia-8`, después de IA7)
+```
+Lee docs/specs/ai.md y CLAUDE.md. Usa la skill becore-ui. Rama feature/ia-8 desde feature/ia-7.
+Objetivo: el organizador escribe una frase ("micro el sábado en la tarde en Belén para 12 personas, nivel principiante") y la IA le propone el borrador del evento.
+1. Backend: POST /api/v1/events/draft (solo organizadores, Zod: texto de 10 a 500 caracteres; límite 10 borradores por organizador al día).
+   - Una sola llamada al modelo de texto con la cadena GEMINI_TEXT_MODELS, respuesta en JSON validada con Zod: title (≤ 80), description (2–4 frases en español, tono de la marca), category (enum existente), tags (de los 18 gustos, máx. 4), suggested_duration_minutes, suggested_capacity, place_text y date_hint (texto, p. ej. "sábado en la tarde").
+   - Fecha: el modelo NO inventa fechas. El backend interpreta date_hint con reglas en español (hoy, mañana, el sábado, el 5 de noviembre, en la tarde/noche) relativo a la fecha actual en America/Bogota y propone fecha y hora; si no se puede, la deja vacía.
+   - Lugar: place_text pasa por el geocodificador que ya existe (Nominatim) para proponer coordenadas; el organizador confirma el pin.
+   - Al prompt solo va la frase del organizador, limpiando correos y teléfonos. Nunca su nombre ni su ID.
+   - Respaldo: sin cupo o con error, responde 200 con { draft: null, reason } y el formulario sigue manual.
+   - Registra uso (modelo que respondió, latencia, éxito) sin guardar la frase completa si contiene datos personales.
+2. Frontend: en el formulario de crear evento, arriba, una tarjeta "Describe tu evento en una frase" con botón "Crear borrador con IA". Mientras carga, el loader de P7. Al llegar, rellena los campos (resaltados brevemente) y muestra "Revisa antes de publicar: la IA puede equivocarse". Nada se publica solo; el organizador edita todo. Botón "Deshacer" que vuelve a los valores anteriores. Si no hay cupo: "El asistente no está disponible ahora; puedes llenar el formulario normal."
+3. Pruebas con Gemini simulado: JSON válido, JSON inválido, categoría inventada, fecha relativa, sin cupo, organizador vs participante, límite diario.
+Al terminar: lint, pruebas, build, informe NN, push, sin PR.
 ```
 
 **Opcional (día 28, si sobra tiempo):** "Escribir con IA" para la descripción del evento, lista de espera cuando el cupo se llena, check-in con QR.
@@ -469,6 +522,8 @@ Con las calificaciones de P2: en el panel del organizador, por evento con ≥ 3 
 - [ ] Visto bueno del director para la IA (antes del 24)
 - [ ] P0 consentimiento y demografía · P1 login interactivo · P2 calificación · P3 avatares y portadas · P4 compartir · P5 correos con marca y código · P6 mapa · P7 pantallas de carga
 - [ ] M1 HTTPS en el celular: probado por datos móviles, app instalable, QR de acceso
-- [ ] IA0 → IA4 (IA6 si hay tiempo; IA5 es trabajo futuro, sin facturación)
+- [ ] IA0 → IA4
+- [ ] IA7 búsqueda en lenguaje natural · IA8 asistente para crear eventos
+- [ ] IA6 resumen de reseñas (si sobra tiempo) · IA5 portada con IA → trabajo futuro
 - [ ] `v1.0` el 29 de octubre
 - [ ] Partido del 31 con resultados guardados
