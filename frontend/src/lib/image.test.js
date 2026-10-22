@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fitWithin, MAX_ORIGINAL_BYTES, validateImageFile } from './image.js';
+import { fitWithin, IMAGE_PRESETS, MAX_ORIGINAL_BYTES, validateImageFile, WEBP_QUALITY } from './image.js';
 
 describe('validateImageFile', () => {
   it('rechaza lo que no es imagen', () => {
@@ -18,12 +18,26 @@ describe('validateImageFile', () => {
 });
 
 describe('fitWithin', () => {
-  it('reduce a 1024 px de lado manteniendo la proporción', () => {
-    expect(fitWithin(4000, 2000)).toEqual({ width: 1024, height: 512 });
-    expect(fitWithin(1500, 3000)).toEqual({ width: 512, height: 1024 });
+  const { cover, avatar } = IMAGE_PRESETS;
+
+  it('portada: máximo 1200 px de ancho, manteniendo la proporción', () => {
+    expect(fitWithin(4000, 2000, cover)).toEqual({ width: 1200, height: 600 });
+    expect(fitWithin(1920, 1080, cover)).toEqual({ width: 1200, height: 675 });
+  });
+
+  it('portada vertical: el alto tampoco pasa de 1200 px', () => {
+    expect(fitWithin(1500, 3000, cover)).toEqual({ width: 600, height: 1200 });
+  });
+
+  it('avatar: máximo 256 px de lado', () => {
+    expect(fitWithin(1024, 1024, avatar)).toEqual({ width: 256, height: 256 });
+    expect(fitWithin(3000, 2000, avatar)).toEqual({ width: 256, height: 171 });
   });
 
   it('no agranda las pequeñas', () => {
-    expect(fitWithin(300, 200)).toEqual({ width: 300, height: 200 });
+    expect(fitWithin(300, 200, cover)).toEqual({ width: 300, height: 200 });
+    expect(fitWithin(120, 120, avatar)).toEqual({ width: 120, height: 120 });
   });
+
+  it('WebP con calidad 0,8', () => expect(WEBP_QUALITY).toBe(0.8));
 });

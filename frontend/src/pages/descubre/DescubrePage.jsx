@@ -3,16 +3,17 @@ import { useSearchParams } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useEvents } from '../../hooks/useEvents.js';
 import { useGeolocation } from '../../hooks/useGeolocation.js';
+import { useRecommendedEvents } from '../../hooks/useRecommendedEvents.js';
 import { useMediaQuery } from '../../hooks/useMediaQuery.js';
 import { hasCoordinates, sortByDistance, withDistance } from '../../lib/map.js';
 import { SearchIcon } from '../../components/icons/index.js';
 import { EventCard, EventCardSkeleton } from '../../components/events/EventCard.jsx';
 import { NearMeButton } from '../../components/events/NearMeButton.jsx';
 import { Button, Chip, EmptyState, ErrorState, Input, LinkButton, Skeleton } from '../../components/ui/index.js';
-import { CATEGORY_FILTERS, emptyTitle, matchesSearch } from './descubre-filters.js';
+import { CATEGORY_FILTERS, descubreRequest, emptyTitle, matchesSearch } from './descubre-filters.js';
 import { LiveTicker } from './LiveTicker.jsx';
 import { MapEventList } from './MapEventList.jsx';
-import { ParaTiCarousel } from './ParaTiCarousel.jsx';
+import { ParaTiCarousel, ParaTiSkeleton } from './ParaTiCarousel.jsx';
 import { UpcomingAppointmentsPanel } from './UpcomingAppointmentsPanel.jsx';
 
 // Leaflet pesa: el mapa se descarga solo al entrar en la vista de mapa
@@ -39,11 +40,17 @@ export default function DescubrePage() {
   const showInlineSearch = !isDesktop || isOrganizer;
 
   const mapView = view === 'mapa';
-  const { data, isPending, isError, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useEvents({
-    scope: 'upcoming',
-    ...(category && { category }),
-    ...(mapView && { pageSize: 50 }),
-  });
+  // Misma petición que precarga el arranque (lib/startup-prefetch.js)
+  const { filters, showParaTi } = descubreRequest(params);
+  const recommended = useRecommendedEvents(showParaTi);
+  const { data, isPending: listPending, isError, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useEvents(filters);
+  // CLS: mientras pueda haber "Para ti", la lista no se pinta hasta que llegan las dos respuestas. Así el carrusel nunca
+  // empuja tarjetas ya pintadas, y si viene vacío su skeleton desaparece a la vez que llegan las tarjetas.
+  const isPending = listPending || (showParaTi && recommended.isPending);
+  const paraTi = showParaTi && !isPending ? recommended.data : null;
+  // LCP: la primera portada visible (la de "Para ti" si hay, si no la primera de la lista) se pide con prioridad alta
+  const paraTiFirst = paraTi?.length > 0;
+
   // En el mapa se cargan todos los eventos de una vez (sin "Ver más")
   useEffect(() => {
     if (mapView && hasNextPage && !isFetchingNextPage) fetchNextPage();
@@ -136,15 +143,18 @@ export default function DescubrePage() {
           <NearMeButton geo={geo} />
         </div>
 
-        {!category && !query && !mapView && <ParaTiCarousel />}
-
         {isPending && (
-          <div className="grid gap-3.5 md:grid-cols-2 md:gap-[18px] xl:grid-cols-3" aria-busy="true" aria-label="Cargando eventos">
-            {Array.from({ length: 6 }, (_, i) => (
-              <EventCardSkeleton key={i} />
-            ))}
+          <div aria-busy="true" aria-label="Cargando eventos">
+            {showParaTi && <ParaTiSkeleton />}
+            <div className="grid gap-3.5 md:grid-cols-2 md:gap-[18px] xl:grid-cols-3">
+              {Array.from({ length: 6 }, (_, i) => (
+                <EventCardSkeleton key={i} />
+              ))}
+            </div>
           </div>
         )}
+
+        <ParaTiCarousel events={paraTi} priorityFirst />
 
         {isError && <ErrorState message={error.message} onRetry={refetch} />}
 
@@ -187,9 +197,9 @@ export default function DescubrePage() {
           <>
             <h2 className="sr-only">Próximos eventos</h2>
             <ul className="grid gap-3.5 md:grid-cols-2 md:gap-[18px] xl:grid-cols-3">
-              {events.map((event) => (
+              {events.map((event, index) => (
                 <li key={event.id} className="flex">
-                  <EventCard event={event} className="w-full" />
+                  <EventCard event={event} priority={index === 0 && !paraTiFirst} className="w-full" />
                 </li>
               ))}
             </ul>

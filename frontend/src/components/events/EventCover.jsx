@@ -15,7 +15,12 @@ const COVERS = {
 
 const pill = 'absolute top-2.5 rounded-full bg-bg/65 px-[9px] py-1 text-[11px] leading-none font-bold backdrop-blur-[2px]';
 
-export function EventCover({ event, className }) {
+// Tamaño intrínseco declarado en el <img> (las portadas se suben a ≤ 1200 px de ancho). El espacio lo reserva el alto
+// fijo del contenedor (84/108 px, el del mockup), igual en la tarjeta y en EventCardSkeleton: la foto nunca mueve nada.
+const COVER_SIZE = { width: 1200, height: 600 };
+
+// priority: la primera portada visible de la pantalla (candidata a LCP) se pide ya y con prioridad alta
+export function EventCover({ event, priority = false, className }) {
   const cover = COVERS[event.category] ?? COVERS.other;
   // Mientras baja la portada subida, el ícono animado de la categoría (P7); la foto entra con un fundido
   const [loadedUrl, setLoadedUrl] = useState(null);
@@ -32,7 +37,10 @@ export function EventCover({ event, className }) {
           <img
             src={event.coverUrl}
             alt=""
-            loading="lazy"
+            width={COVER_SIZE.width}
+            height={COVER_SIZE.height}
+            decoding="async"
+            {...(priority ? { fetchpriority: 'high' } : { loading: 'lazy' })}
             onLoad={() => setLoadedUrl(event.coverUrl)}
             onError={() => setLoadedUrl(event.coverUrl)}
             className={cn(

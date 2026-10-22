@@ -91,3 +91,97 @@ guardado no puede duplicar nada (revisado en `me.service.js` y en los repositori
   correrlo desde Chrome DevTools en `/login` y `/descubre` y compararlo con P6.
 - **Celular real a 390 px:** confirmar que la animación no se ve entrecortada (en Edge emulado va fluida).
 - `docs/PLAN.md` §checklist: marcar P7 cuando se pruebe en el celular.
+
+## Rendimiento de Descubre (rama `feature/perf-descubre`, sale de `feature/profe-7`)
+
+Lighthouse móvil del usuario (build de producción, incógnito) **antes**: `/login` 92 / 100 / 100 / 91. `/descubre`:
+Performance **69**, CLS **0,259**, LCP **4,4 s** (FCP 2,3 s, TBT 10 ms, SI 3,1 s). El LCP era la portada de la primera
+tarjeta de "Para ti". Meta: CLS < 0,1, LCP < 2,5 s, Performance ≥ 80.
+
+### Cómo se midió aquí
+
+Lighthouse no está instalado. Se usó Edge sin ventana con el build de producción (`vite preview` en otro puerto, para no
+pisar el `dist` del usuario), a 390×844, CPU 4× más lenta, 150 ms de latencia y 1,6 Mbps (parecido al perfil móvil de
+Lighthouse), con `PerformanceObserver` de `layout-shift` (con sus `sources`) y `largest-contentful-paint`, más los
+tiempos de cada petición. Ninguna cuenta de prueba con contraseña tiene recomendaciones ("Polas y fútbol" es de la
+categoría "Otro"), así que "Para ti" se simuló interceptando `GET /events/recommended` y respondiendo con los dos eventos
+próximos reales, 900 ms después.
+
+### CLS: qué se movía
+
+| Elemento | Antes | Ahora |
+|---|---|---|
+| Bloque de skeletons de la lista (`div.grid`) | bajó de y = 357 a y = 806 al llegar "Para ti": **0,2725** | 0 |
+| Loader de P7 (`FullScreenLoader`, al entrar) | 0,0005 (subpíxel de `animate-enter`) | 0–0,002 |
+| Banner "Aquí verás en vivo…", chip "Ver eventos cerca de mí", ícono por categoría de P7 | 0 | 0 |
+| **Total** | **0,273** (Lighthouse: 0,259) | **0,000–0,002** en 6 corridas |
+
+Causa: "Para ti" se pedía y pintaba por su cuenta. Si llegaba después que la lista, se insertaba encima y empujaba todo.
+
+- **Descubre espera las dos respuestas** cuando puede haber "Para ti" (sin categoría, búsqueda ni mapa). Mientras tanto
+  pinta un skeleton que incluye la fila de "Para ti" (`ParaTiSkeleton`: título y tarjetas de 270/300 px). Al llegar
+  todo, se reemplaza de una vez. Si "Para ti" viene vacío, su skeleton desaparece a la vez que llegan las tarjetas
+  (son nodos nuevos, no se desplaza nada ya pintado). Con filtro o búsqueda, no se espera nada.
+- **`EventCardSkeleton`** copia la estructura de la tarjeta (portada de 84/108 px, título, fecha, fin, lugar, avatares,
+  cupo y botón). Medidas: a 390 px, 310 px de skeleton frente a 315 y 343 px de tarjetas reales (la altura real varía:
+  línea de fin, insignias y avatares son opcionales). A 1440 px, 336 frente a 368. "Para ti" mide 335/361.
+- **Portadas:** el `<img>` lleva `width`/`height` (1200×600) y el espacio lo reserva el **alto fijo del contenedor**
+  (84 px móvil / 108 px escritorio, el del mockup), igual en la tarjeta y en el skeleton. No se cambió a `aspect-ratio`:
+  con el ancho variable de la tarjeta (270 px en "Para ti", 346 px en la lista, ~300 px en la grilla) la portada cambiaría
+  de alto respecto al mockup. El alto fijo reserva lo mismo y la imagen nunca mueve nada.
+- El ícono animado por categoría de P7 va en posición absoluta dentro de la portada: no cambia tamaños al cargar la foto.
+
+### LCP
+
+Cadena antes (local, ms): `/me` 320 → 1457 · se monta Descubre · `/events` 1531 → 2784 · portada 2810 → 3890.
+La lista solo se pedía después de `/me`, porque la página se monta cuando `ProtectedRoute` termina de validar la sesión.
+
+- **Precarga al arrancar** (`lib/startup-prefetch.js`, llamado en `main.jsx`): si se entra directo a `/descubre` y hay
+  una sesión guardada, se empieza a bajar el código de la página y se piden la lista y "Para ti" **en paralelo con
+  `/me`**, con las mismas opciones y claves de caché que la página (`eventsQueryOptions`, `recommendedQueryOptions`,
+  `descubreRequest`). Sin sesión no se pide nada (un 401 cerraría la sesión). No cambia qué se pide ni qué se muestra.
+  Cadena después: `/events` 311 → 1549 en paralelo con `/me` 334 → 943 · portada 1585 → 2664.
+- **Primera portada visible** (la de "Para ti" si hay, si no la primera de la lista): `fetchpriority="high"`, sin
+  `loading="lazy"` y `decoding="async"`. El resto, `loading="lazy"`.
+- **URL de la portada:** ya viene en la misma respuesta de la lista. `cover_url` guarda la URL **pública** del bucket y el
+  backend la devuelve en cada evento. La URL firmada solo se usa para **subir**, no para ver. No hay una petición extra.
+- **Preconexión** al origen de Supabase (`%VITE_SUPABASE_URL%` en `index.html`; una sin CORS para las imágenes y otra con
+  CORS para Auth/Realtime).
+- **Fuentes:** solo tenían `preconnect`. Se precargan Poppins 600 (título "Hola, …") e Inter (variable, texto), subconjunto
+  latin, con las URL que hoy entrega Google Fonts (`v24`/`v20`). Si Google cambia de versión, la precarga deja de servir y
+  el navegador baja la nueva como siempre (no se rompe nada).
+- **Compresión al subir** (`lib/image.js`, ya existía desde P3 con un único tope de 1024 px): ahora por uso, portada
+  ≤ 1200 px de ancho (y de alto, para que una foto vertical no pese de más), avatar ≤ 256 px, WebP calidad 0,8 con
+  canvas. Safari en iPhone no codifica WebP en canvas: ahí sigue cayendo a JPEG con la misma calidad.
+
+**Medición local después** (3 corridas sin la espera artificial de "Para ti"): LCP **2,9–3,0 s** (antes 3,6–4,5 s), CLS 0.
+El resto del LCP es la descarga de la portada (~1,1 s): es un **JPEG de 99 KB** y compite con un avatar JPEG de 85 KB.
+Eso lo resuelve el reprocesado de abajo. El backend también pesa: `/me` y `/events` tardan 0,6–1,3 s cada uno y en dos
+corridas `/me` llegó a 3,5 s (varias consultas seguidas a Supabase). No se tocó (es lógica del backend).
+
+### Imágenes que ya están en Storage: script pendiente de aprobación
+
+`backend/scripts/reprocess-images.js` (`npm run images:reprocess -w backend`). **No se ha ejecutado.**
+
+- Por defecto solo muestra el plan (tamaño antes → después y cuántas filas usan cada archivo). Para escribir hace falta
+  `--apply`, y `--delete-old` para borrar los originales (si no, se conservan).
+- Convierte con el mismo canvas que la app, en un Edge sin ventana controlado con el WebSocket de Node 22 (sin
+  librerías: Node no decodifica imágenes).
+- Sube el WebP con un nombre nuevo en la misma carpeta del usuario y cambia **solo** `events.cover_url` (o
+  `profiles.avatar_url` con `--bucket avatars`) en las filas que usaban el archivo viejo. Al actualizar esas tablas solo
+  corren los disparadores de `updated_at`: no hay avisos ni correos.
+- Solo reemplaza si el WebP pesa menos.
+- Hoy hay 2 portadas (JPEG de 99 KB y WebP de 30 KB) y 2 avatares (JPEG de 198 KB y de 85 KB). Los dos avatares también
+  conviene reprocesarlos: el de 85 KB se descarga junto a la portada en la tarjeta.
+
+### Después (Lighthouse del usuario)
+
+| Página | Performance | CLS | LCP | FCP | TBT | SI |
+|---|---|---|---|---|---|---|
+| `/descubre` antes | 69 | 0,259 | 4,4 s | 2,3 s | 10 ms | 3,1 s |
+| `/descubre` después | _pendiente_ | | | | | |
+| `/login` antes | 92 / 100 / 100 / 91 | | | | | |
+| `/login` después | _pendiente_ | | | | | |
+
+Verificación: `npm run lint` sin errores · `npm test` backend 322/322, frontend 313/313 (nuevas: `startup-prefetch.test.js`,
+presets de `image.test.js`) · el build compila sin avisos; la entrada pasa de 174,6 a 177,7 kB (57,7 gz) por la precarga.

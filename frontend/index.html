@@ -16,6 +16,14 @@
     <title>Be Core</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Perf de Descubre: el origen de Supabase sirve las portadas (imagen, sin CORS) y Auth/Realtime (con CORS) -->
+    <link rel="preconnect" href="%VITE_SUPABASE_URL%" />
+    <link rel="preconnect" href="%VITE_SUPABASE_URL%" crossorigin />
+    <!-- Fuentes del primer pintado (subconjunto latin): Poppins 600 de los títulos e Inter (variable) del texto.
+         Son las URL que hoy entrega el CSS de Google Fonts de abajo; si Google cambia de versión (v24/v20), la precarga
+         solo deja de servir y el navegador baja la nueva como siempre. -->
+    <link rel="preload" as="font" type="font/woff2" href="https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLEj6Z1xlFQ.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
