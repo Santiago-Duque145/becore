@@ -134,6 +134,8 @@ muestra nada si falla o si algún conteo es 0.
 | GET | `/events` | todos | ver "Filtros" | `{ data: Event[], meta: { total, page, pageSize } }` |
 | POST | `/recommendations/feedback` | todos | `{ eventId, action: 'clicked' }` | 204 siempre (prueba A/B, `ai.md` §9) |
 | GET | `/admin/ai-metrics` | org | — | métricas de la prueba A/B por variante y origen (`ai.md` §9) |
+| GET | `/events/search` | todos | query `q` 2–200, `category` opcional | `{ data: Event[], meta: { mode: 'semantic' \| 'classic', total, searchId } }`, máx. 30, ver abajo (IA7) |
+| POST | `/events/search/:searchId/open` | todos | `{ eventId }` | 204 siempre: marca el primer resultado abierto de esa búsqueda (IA7) |
 | GET | `/events/recommended` | todos | query `limit` 1–20 (defecto 6) | `(Event & { reason })[]` "Para ti", ver abajo. Si viene vacío, además `meta.emptyReason`: `no_preferences`, `no_events`, `all_confirmed` o `no_matches` |
 | POST | `/events` | org | ver "Crear" | 201 `Event` |
 | GET | `/events/:id` | todos | — | `Event & { tags: string[] }`: `tags` son los gustos que Gemini asignó (IA2, `docs/specs/ai.md`), `[]` si aún no tiene. Nunca incluye embeddings |
@@ -154,6 +156,14 @@ sin preferencias guardadas devuelve `[]`. Candidatos: `published`, `starts_at > 
 ni tiene confirmados. Puntaje por reglas en hora de Bogotá (categoría +3; día, franja y zona +1 cada uno); se
 excluyen los de puntaje 0 y se ordena por puntaje desc y luego `startsAt` asc. `reason` es la señal más fuerte
 ("Porque te gusta el deporte", "Es en tu zona", "Encaja con tus fines de semana"…). Va antes de `/events/:id` en el router.
+
+**Búsqueda en lenguaje natural — `GET /events/search`** (IA7, `services/search/`, `docs/specs/ai.md` §15): busca entre los
+eventos próximos visibles (`published` e `in_progress`), con la categoría si viene. `mode: 'semantic'`: embedding de la
+consulta contra `event_ai` (índice HNSW) + coincidencia literal en título o lugar + refuerzos por día, franja, categoría
+y gusto que la frase menciona; solo entra lo que pasa el umbral, ordenado por puntaje. `mode: 'classic'` (IA apagada,
+Gemini o la base fallan, o la persona pasó 30 consultas nuevas en 10 min): la frase completa, o todas sus palabras de 3+
+letras, en título, descripción o lugar, sin tildes ni mayúsculas, ordenado por fecha. Nunca responde 500 por la IA. La
+consulta se guarda en `search_events` sin correos, teléfonos ni `user_id`. Va antes de `/events/:id` en el router.
 
 **Crear evento — body:**
 | Campo | Regla |

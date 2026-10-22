@@ -254,6 +254,8 @@ que los eventos nuevos entran por ahí.
 - **Sí se le envía:**
   - de los eventos: título, descripción, categoría, lugar, día y franja, y etiquetas;
   - del usuario: gustos, días, franjas, motivaciones y zona (texto del onboarding), sin nada que lo identifique.
+- **Búsqueda (IA7):** solo el texto de la consulta, después de quitarle correos y números de 7 o más dígitos
+  (`search/query-text.js`), y sin decir quién la escribió. Va al modelo de embeddings, nunca al de texto.
 - Las calificaciones solo se usan localmente (bonus). En IA6, los comentarios van sin autor.
 - Los logs del cliente registran modelo, duración, tokens y código de error. Nunca el prompt ni la respuesta.
 - `/privacidad` (IA3) dice que se usa la capa gratuita de Gemini, en la que Google puede usar lo que se le envía para
@@ -269,6 +271,8 @@ que los eventos nuevos entran por ahí.
 | GET | `/events/recommended` | todos | **Sin cambios** de contrato. Por dentro: variante, caché, híbrido, plantilla y re-ordenado en segundo plano. Registra `shown` con su origen (§10). |
 | POST | `/recommendations/feedback` | todos | IA4 (hecho). Body `{ eventId: uuid, action: 'clicked' }`. Siempre 204. Solo registra si el evento se le mostró en "Para ti" en los últimos 7 días; hereda la variante y el origen de ese "mostrado". Un segundo clic del mismo usuario y evento no se registra (índice único). El frontend lo manda al abrir una tarjeta de "Para ti", sin esperar. |
 | GET | `/admin/ai-metrics` | organizador | IA4 (hecho). `{ data: { rules: Metrics, ai: Metrics & { bySource: { gemini: Metrics, template: Metrics } }, excludedDemoRows } }`. `Metrics = { users, shown, clicked, confirmed, ctr, confirmRate, avgRating, ratings }`. Mostrados, abiertos y confirmados se cuentan como pares distintos (usuario, evento). Las tasas son `null` sin mostrados. Excluye los eventos de la cuenta de demostración (`DEMO_ORGANIZER_EMAIL`). |
+| GET | `/events/search` | todos | IA7 (hecho). Query `q` 2–200 y `category` opcional → `{ data: Event[], meta: { mode, total, searchId } }` (§15). |
+| POST | `/events/search/:searchId/open` | todos | IA7 (hecho). Body `{ eventId }`. Siempre 204. Marca el primer resultado abierto. |
 | POST | `/events/:id/ratings/summary` | dueño | Nuevo (IA6). 409 `NOT_ENOUGH_COMMENTS` con < 3 comentarios. |
 
 `confirmed` lo registra el backend al confirmar asistencia (`attendance.service.js`, sin esperar: si falla, la confirmación no se entera), si el evento se le mostró en "Para ti" en los últimos 7 días. `avgRating` es el promedio de las estrellas que esas personas dieron a los eventos que confirmaron desde "Para ti".
@@ -327,3 +331,44 @@ y sin clave, el backend arranca con un aviso y se comporta como `false`. La clav
   formulario sigue deshabilitado. Si se retoma: prompt desde título, categoría, lugar y descripción; ilustración plana
   con la paleta de la marca; formato horizontal; sin personas reconocibles ni texto dentro de la imagen; máx. 3 por
   evento al día con registro de uso; endpoint `POST /events/:id/cover/generate` detrás de `AI_IMAGES_ENABLED`.
+
+## 15. Búsqueda en lenguaje natural (IA7, hecho el 22 oct)
+
+**Qué hace:** el buscador de Descubre (y el de la barra superior en escritorio) entiende frases como "fútbol el sábado en
+la tarde" o "algo tranquilo el domingo". Desde 2 letras llama a `GET /events/search` (400 ms después de la última
+tecla); con 1 letra sigue filtrando lo ya cargado.
+
+**Modo semántico** (`services/search/`):
+1. `scrubQuery`: quita correos y teléfonos y recorta a 200 caracteres.
+2. Embedding de `task: search result | query: …` (solo el cupo de embeddings). Caché en memoria por consulta
+   normalizada (sin tildes ni mayúsculas): 24 h, máx. 500. Límite: 30 embeddings nuevos por persona cada 10 min; pasado
+   eso, modo clásico (sin error).
+3. En paralelo: `match_event_embeddings(vector, 50)` (función SQL con el índice HNSW, solo `service_role`) y las
+   etiquetas de los eventos próximos.
+4. Puntaje (`search/score.js`):
+   `similitud reescalada + coincidencia literal + refuerzos`, y entra si es ≥ 0,75.
+   - Similitud reescalada: `(coseno − 0,44) / (0,80 − 0,44)`, recortada a 0..1.
+   - Coincidencia literal (+1): la frase completa, o todas sus palabras de 3+ letras sin las de relleno, en el título o
+     el lugar ("Avengers", "Arví").
+   - Refuerzos (`search/intent.js`, reglas en español, sin LLM): día 0,15 (lunes…domingo, "fin de semana", "entre
+     semana"), franja 0,1 ("en la mañana", "tarde", "noche"; "mañana" sola es ambigua y no cuenta), categoría 0,1 y gusto
+     0,25 (sinónimos de cada gusto contra `event_ai.tags`).
+   - Sin refuerzos, un evento entra solo por similitud si pasa ~0,71 cruda, por encima de todo lo no esperado en la
+     calibración.
+5. Hasta 30 resultados, por puntaje y luego por fecha.
+
+**Calibración:** 20 consultas anotadas a mano sobre los 12 eventos próximos del 22 oct. Similitud de los esperados:
+mín. 0,610, mediana 0,680; de los no esperados: mediana 0,606, máx. 0,696. Con estos parámetros: precisión 0,81,
+recall 0,86, F1 0,83, 15 de 20 exactas y las 2 consultas sin respuesta ("clases de piano", "natación") vacías. Detalle
+por consulta en `docs/progreso/21_*`.
+
+**Modo clásico:** la frase completa, o todas sus palabras de 3+ letras, en título, descripción o lugar, sin tildes. Una
+frase natural ("fútbol el sábado en la tarde") normalmente no encuentra nada en este modo.
+
+**Registro:** `search_events` (migración `20261022180000_ai_search.sql`): consulta limpia, modo, número de resultados y
+`opened_event_id` (el primer resultado que se abrió, con `POST /events/search/:searchId/open`). Sin `user_id`; RLS sin
+políticas y sin permisos para `anon`/`authenticated`. No usa `recommendation_events` para no mezclarse con la prueba A/B.
+
+**Frontend:** placeholder "Prueba: fútbol el sábado en la tarde"; etiqueta "Búsqueda inteligente" solo en modo
+semántico; vacío "No encontramos planes así. Prueba con otras palabras." con "Quitar búsqueda"; los resultados
+reemplazan la lista y los pines del mapa; "Más cerca primero" ordena en el navegador.

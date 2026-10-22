@@ -542,7 +542,8 @@ Al terminar: lint, pruebas, build, informe NN, push, sin PR.
 - [ ] P0 consentimiento y demografía · P1 login interactivo · P2 calificación · P3 avatares y portadas · P4 compartir · P5 correos con marca y código · P6 mapa · P7 pantallas de carga
 - [ ] M1 HTTPS en el celular: probado por datos móviles, app instalable, QR de acceso
 - [x] IA0 → IA4 (ramas `feature/ia-0` … `feature/ia-4`, informes 16–20)
-- [ ] IA7 búsqueda en lenguaje natural · IA8 asistente para crear eventos
+- [x] IA7 búsqueda en lenguaje natural (rama `feature/ia-7`, informe 21)
+- [ ] IA8 asistente para crear eventos
 - [ ] IA6 resumen de reseñas (si sobra tiempo) · IA5 portada con IA → trabajo futuro
 - [ ] `v1.0` el 29 de octubre
 - [ ] Partido del 31 con resultados guardados
