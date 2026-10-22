@@ -27,6 +27,7 @@ import { findUserAttendances, listConfirmedPreviewIds } from '../src/repositorie
 import { findAvatarsByIds } from '../src/repositories/profiles.repository.js';
 import { requestRatingsForEvent } from '../src/services/rating-requests.service.js';
 import * as service from '../src/services/events.service.js';
+import { findEventTags } from '../src/repositories/ai.repository.js';
 
 const owner = { id: 'owner-1', role: 'organizer' };
 const other = { id: 'owner-2', role: 'organizer' };
@@ -89,6 +90,16 @@ describe('getEvent', () => {
     findUserAttendances.mockResolvedValue([{ eventId: 'ev-1', status: 'confirmed', checkedIn: false }]);
     const result = await service.getEvent(other, 'ev-1');
     expect(result.myAttendance).toEqual({ status: 'confirmed', checkedIn: false });
+  });
+
+  it('IA2: trae las etiquetas de event_ai y nunca el embedding', async () => {
+    repo.findEventById.mockResolvedValue(baseEvent());
+    findUserAttendances.mockResolvedValue([]);
+    findEventTags.mockResolvedValueOnce(['football', 'music']);
+    const result = await service.getEvent(other, 'ev-1');
+    expect(findEventTags).toHaveBeenCalledWith('ev-1');
+    expect(result.tags).toEqual(['football', 'music']);
+    expect(result).not.toHaveProperty('embedding');
   });
 });
 

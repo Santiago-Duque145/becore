@@ -370,7 +370,7 @@ En la sustentación se presenta como un **sistema de recomendación híbrido** (
 - `GEMINI_API_KEY` solo en `backend/.env`. El frontend nunca llama a Gemini.
 - A Gemini **nunca** se le envía nombre, correo, IDs de usuario, sexo ni edad.
 - Timeout, respaldo sin IA y salida validada con Zod en toda llamada.
-- Modelos por variable de entorno (`GEMINI_MODEL`, `GEMINI_EMBEDDING_MODEL`, `GEMINI_IMAGE_MODEL`). Opus confirma los nombres vigentes en la documentación oficial.
+- Modelos por variable de entorno (`GEMINI_TEXT_MODEL`, `GEMINI_EMBEDDING_MODEL`). Opus confirma los nombres vigentes en la documentación oficial.
 - Capa gratuita: Google puede usar los datos para mejorar sus productos (se menciona en /privacidad). **La generación de imágenes no tiene capa gratuita**: IA5 requiere activar facturación en la clave (aprox. US$0,03–0,07 por imagen). Con facturación activa, los datos de pago no se usan para entrenar.
 
 ### Sesiones (rama `feature/ia-N`)
@@ -393,8 +393,8 @@ Lee docs/specs/ai.md.
    - índice HNSW sobre events.embedding;
    - RLS: lectura propia, escritura solo Express.
    Pruébala en una transacción revertida y luego aplícala.
-2. backend/src/services/ai/geminiClient.js: cliente único con timeout, 1 reintento, logs sin datos personales; funciones embedText(text), generateJson(prompt, schema) y generateImage(prompt).
-3. backend/.env.example (sin valores): GEMINI_MODEL, GEMINI_EMBEDDING_MODEL, GEMINI_IMAGE_MODEL, AI_ENABLED, AI_IMAGES_ENABLED.
+2. backend/src/services/ai/geminiClient.js: cliente único con timeout, 1 reintento, logs sin datos personales; funciones embedText(text) y generateJson(prompt, schema). (generateImage no: IA5 es trabajo futuro.)
+3. backend/.env.example (sin valores): GEMINI_TEXT_MODEL, GEMINI_EMBEDDING_MODEL, AI_ENABLED.
 4. Tests con el cliente simulado.
 ```
 
@@ -432,7 +432,7 @@ Lee docs/specs/ai.md.
 5. Aviso "Usamos IA para recomendarte eventos" en el paso final del onboarding, con enlace a /privacidad.
 ```
 
-**IA5 · Portada del evento generada con IA** (requiere facturación activa en la clave)
+**IA5 · Portada del evento generada con IA** → **trabajo futuro** (2026-10-22: no se activa facturación; las portadas las siguen subiendo los usuarios; ver `docs/specs/ai.md` §14)
 ```
 Lee docs/specs/ai.md y el trabajo de P3.
 1. Activa el botón "Generar con IA" del formulario de evento solo si AI_IMAGES_ENABLED=true.
@@ -469,6 +469,6 @@ Con las calificaciones de P2: en el panel del organizador, por evento con ≥ 3 
 - [ ] Visto bueno del director para la IA (antes del 24)
 - [ ] P0 consentimiento y demografía · P1 login interactivo · P2 calificación · P3 avatares y portadas · P4 compartir · P5 correos con marca y código · P6 mapa · P7 pantallas de carga
 - [ ] M1 HTTPS en el celular: probado por datos móviles, app instalable, QR de acceso
-- [ ] IA0 → IA4 (IA5 e IA6 si hay tiempo y facturación)
+- [ ] IA0 → IA4 (IA6 si hay tiempo; IA5 es trabajo futuro, sin facturación)
 - [ ] `v1.0` el 29 de octubre
 - [ ] Partido del 31 con resultados guardados

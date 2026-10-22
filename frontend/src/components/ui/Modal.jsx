@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef } from 'react';
 import { cn } from '../../lib/cn.js';
+import { BodyPortal } from './BodyPortal.jsx';
 import { FOCUSABLE, nextTabIndex } from '../../lib/focus-trap.js';
 
 const NOOP = () => {}; // estable: un onClose nuevo en cada render volvería a enfocar el panel
@@ -33,28 +34,30 @@ export function Modal({ open, title, children, onClose = NOOP, dismissible = tru
   if (!open) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-[60] flex items-end justify-center bg-bg/80 backdrop-blur-sm md:items-center md:p-4"
-      onClick={(e) => dismissible && e.target === e.currentTarget && onClose()}
-    >
+    <BodyPortal>
       <div
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        tabIndex={-1}
-        className={cn(
-          'pb-safe w-full max-w-md animate-enter rounded-t-sheet border border-line bg-sheet outline-none motion-reduce:animate-none md:rounded-card',
-          className,
-        )}
+        className="fixed inset-0 z-[60] flex items-end justify-center bg-bg/80 backdrop-blur-sm md:items-center md:p-4"
+        onClick={(e) => dismissible && e.target === e.currentTarget && onClose()}
       >
-        <div className="p-6">
-          <h2 id={titleId} className="mb-2 font-display text-lg font-semibold text-ink">
-            {title}
-          </h2>
-          {children}
+        <div
+          ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
+          tabIndex={-1}
+          className={cn(
+            'pb-safe w-full max-w-md animate-enter rounded-t-sheet border border-line bg-sheet outline-none motion-reduce:animate-none md:rounded-card',
+            className,
+          )}
+        >
+          <div className="p-6">
+            <h2 id={titleId} className="mb-2 font-display text-lg font-semibold text-ink">
+              {title}
+            </h2>
+            {children}
+          </div>
         </div>
       </div>
-    </div>
+    </BodyPortal>
   );
 }

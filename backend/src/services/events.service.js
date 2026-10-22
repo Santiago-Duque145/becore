@@ -5,6 +5,8 @@ import { COVER_BUCKET } from '../constants/avatars.js';
 import * as storage from './storage.service.js';
 import { requestRatingsForEvent } from './rating-requests.service.js';
 import { locatePlace } from './geocode.service.js';
+import { scheduleEventIndex, touchesAiFields } from './ai/indexing.service.js';
+import { findEventTags } from '../repositories/ai.repository.js';
 import { notify } from './notifications.service.js';
 import { buildContent } from '../mail/templates.js';
 import { AppError } from '../utils/app-error.js';
@@ -132,6 +134,7 @@ export async function createEvent(user, input) {
     ...cover,
     status: fields.status ?? 'draft',
   });
+  scheduleEventIndex(event); // IA2: etiquetas y embedding en segundo plano (solo si se publica)
   return toEvent(event, null);
 }
 
@@ -155,8 +158,8 @@ export async function listEvents(user, query) {
 
 export async function getEvent(user, id) {
   const event = await findVisibleEvent(user, id);
-  const [result] = await toEventsWithAttendance(user, [event]);
-  return result;
+  const [[result], tags] = await Promise.all([toEventsWithAttendance(user, [event]), findEventTags(id)]);
+  return { ...result, tags }; // gustos que Gemini asignó (IA2); nunca el embedding
 }
 
 export async function updateEvent(user, id, input) {
@@ -178,6 +181,7 @@ export async function updateEvent(user, id, input) {
   }
 
   const updated = await eventsRepo.updateEvent(id, patch);
+  if (touchesAiFields(patch)) scheduleEventIndex(updated);
   if (changedSchedule(event, patch)) await notifyConfirmed(updated, 'event_updated');
   return toEvent(updated, null);
 }
@@ -195,6 +199,7 @@ export async function publishEvent(user, id) {
     throw new AppError(409, 'INVALID_EVENT_TRANSITION', 'Solo un borrador se puede publicar');
   }
   const published = await eventsRepo.updateEvent(id, { status: 'published' });
+  scheduleEventIndex(published);
   return toEvent(published, null);
 }
 

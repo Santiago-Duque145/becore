@@ -7,6 +7,8 @@ import {
   updateProfile,
 } from '../repositories/profiles.repository.js';
 import { findPreferencesByUserId, upsertPreferences } from '../repositories/preferences.repository.js';
+import { scheduleProfileIndex } from './ai/indexing.service.js';
+import { deleteCachedRecommendations } from '../repositories/ai.repository.js';
 import { AppError } from '../utils/app-error.js';
 
 const onboardingAlreadyCompleted = () =>
@@ -59,6 +61,15 @@ export async function acceptDataConsent(user, answers) {
   return getMe(updated);
 }
 
+// Guarda los gustos, borra su "Para ti" guardado (IA3: ya no corresponde) y programa su embedding (IA2, en segundo
+// plano). Solo gustos: nunca nombre, sexo ni edad.
+async function savePreferences(userId, answers) {
+  const preferences = await upsertPreferences(userId, toPreferencesRow(answers));
+  await deleteCachedRecommendations(userId);
+  scheduleProfileIndex(userId, preferences);
+  return preferences;
+}
+
 // PUT /me/onboarding (auth-onboarding.md §7). El rol solo cambia mientras el onboarding esté pendiente.
 export async function completeOnboarding(user, { role, gender, ageRange, consent, ...answers }) {
   // consent: la política se acepta en el primer paso de /bienvenida; la fecha de la primera aceptación no se mueve
@@ -69,12 +80,12 @@ export async function completeOnboarding(user, { role, gender, ageRange, consent
   if (user.onboardingCompletedAt) {
     if (role !== user.role) throw onboardingAlreadyCompleted();
     // Reenvío con el mismo rol: solo se actualizan los gustos (y sexo/edad si llegan)
-    const preferences = await upsertPreferences(user.id, toPreferencesRow(answers));
+    const preferences = await savePreferences(user.id, answers);
     const profile = hasChanges(demographics) ? await updateProfile(user.id, demographics) : null;
     return toMe(profile ?? user, preferences);
   }
 
-  const preferences = await upsertPreferences(user.id, toPreferencesRow(answers));
+  const preferences = await savePreferences(user.id, answers);
   const profile = await markOnboardingCompleted(user.id, role, demographics);
   if (profile) return toMe(profile, preferences);
 
@@ -86,7 +97,7 @@ export async function completeOnboarding(user, { role, gender, ageRange, consent
 
 // PUT /me/preferences: edita los gustos desde Perfil. Nunca toca el rol ni el estado del onboarding.
 export async function updatePreferences(user, answers) {
-  return toMe(user, await upsertPreferences(user.id, toPreferencesRow(answers)));
+  return toMe(user, await savePreferences(user.id, answers));
 }
 
 // ---- Avatar (P3): foto subida con URL firmada o uno de los 12 avatares de la marca ----

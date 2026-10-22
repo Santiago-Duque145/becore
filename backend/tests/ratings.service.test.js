@@ -12,6 +12,7 @@ import * as ratingsRepo from '../src/repositories/ratings.repository.js';
 import * as attendanceRepo from '../src/repositories/attendance.repository.js';
 import * as eventsRepo from '../src/repositories/events.repository.js';
 import { rate, getMine, summary, buildSummary } from '../src/services/ratings.service.js';
+import { deleteCachedRecommendations } from '../src/repositories/ai.repository.js';
 
 const user = { id: 'u1' };
 const input = { stars: 5, tags: ['punctual'], comment: null };
@@ -36,6 +37,11 @@ describe('rate', () => {
     const res = await rate(user, 'e1', input);
     expect(ratingsRepo.upsertRating).toHaveBeenCalledWith({ eventId: 'e1', userId: 'u1', ...input });
     expect(res.stars).toBe(5);
+  });
+
+  it('IA3: calificar borra el "Para ti" guardado de quien califica (cambia el bonus de afinidad)', async () => {
+    await rate(user, 'e1', input);
+    expect(deleteCachedRecommendations).toHaveBeenCalledWith('u1');
   });
 
   it('evento inexistente o borrador → 404', async () => {

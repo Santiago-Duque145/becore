@@ -9,6 +9,7 @@
     "seed": "node --env-file=.env scripts/seed.js",
     "seed:coords": "node --env-file=.env scripts/seed-coordinates.js",
     "images:reprocess": "node --env-file=.env scripts/reprocess-images.js",
+    "ai:backfill": "node --env-file=.env scripts/ai-backfill.js",
     "reminders": "node --env-file=.env scripts/run-reminders.js",
     "mail:test": "node --env-file=.env scripts/test-mail.js",
     "lint": "eslint .",
@@ -24,6 +25,7 @@
     "vitest": "^5.0.3"
   },
   "dependencies": {
+    "@google/genai": "^2.30.0",
     "@supabase/supabase-js": "^2.117.2",
     "cors": "^2.8.6",
     "express": "^5.2.1",

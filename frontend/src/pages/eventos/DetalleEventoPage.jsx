@@ -9,6 +9,7 @@ import { formatLongDay, formatTime } from '../../lib/format.js';
 import { AttendanceButton } from '../../components/events/AttendanceButton.jsx';
 import { DetailCover, DetailSkeleton, InfoRow } from '../../components/events/EventDetailParts.jsx';
 import { EventLocation } from '../../components/events/EventLocation.jsx';
+import { EventTags } from '../../components/events/EventTags.jsx';
 import { AddToCalendarButton } from '../../components/events/AddToCalendarButton.jsx';
 import { ShareEventButton } from '../../components/events/ShareEventButton.jsx';
 import { AvatarStack } from '../../components/events/AvatarStack.jsx';
@@ -94,6 +95,8 @@ export default function DetalleEventoPage() {
         {event.description && (
           <p className="mb-4 text-[13px] leading-[1.55] whitespace-pre-line text-ink/80">{event.description}</p>
         )}
+
+        <EventTags tags={event.tags} className="mb-4" />
 
         <p className="mb-[18px] flex items-center gap-3 text-[11.5px] text-ink-muted">
           <AvatarStack people={event.confirmedPreview} total={event.confirmedCount} eventId={event.id} />

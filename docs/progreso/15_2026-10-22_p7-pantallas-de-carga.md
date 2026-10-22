@@ -156,32 +156,77 @@ La lista solo se pedía después de `/me`, porque la página se monta cuando `Pr
 
 **Medición local después** (3 corridas sin la espera artificial de "Para ti"): LCP **2,9–3,0 s** (antes 3,6–4,5 s), CLS 0.
 El resto del LCP es la descarga de la portada (~1,1 s): es un **JPEG de 99 KB** y compite con un avatar JPEG de 85 KB.
-Eso lo resuelve el reprocesado de abajo. El backend también pesa: `/me` y `/events` tardan 0,6–1,3 s cada uno y en dos
+Eso se resolvió con el reprocesado de abajo (la portada pasó a 27,6 KB y el avatar a 3,3 KB). El backend también pesa: `/me` y `/events` tardan 0,6–1,3 s cada uno y en dos
 corridas `/me` llegó a 3,5 s (varias consultas seguidas a Supabase). No se tocó (es lógica del backend).
 
-### Imágenes que ya están en Storage: script pendiente de aprobación
+### Imágenes que ya estaban en Storage: reprocesadas (2026-10-22)
 
-`backend/scripts/reprocess-images.js` (`npm run images:reprocess -w backend`). **No se ha ejecutado.**
+Script `backend/scripts/reprocess-images.js` (`npm run images:reprocess -w backend`), aprobado por el usuario:
+- Convierte con el mismo canvas que la app, en un Edge sin ventana controlado con el WebSocket de Node 22 (sin librerías:
+  Node no decodifica imágenes).
+- Por defecto solo muestra el plan. `--apply` escribe y `--delete-old` borraría los originales. **No se usó
+  `--delete-old`:** los originales se conservan hasta después del 31 de octubre.
+- Sube el WebP con un nombre nuevo en la misma carpeta y cambia solo `events.cover_url` / `profiles.avatar_url` en las
+  filas que usaban el archivo viejo. Al actualizar esas tablas solo corren los disparadores de `updated_at`: no hay
+  avisos ni correos.
+- El bucket de portadas se llama `event-covers` (el script no acepta `covers`).
 
-- Por defecto solo muestra el plan (tamaño antes → después y cuántas filas usan cada archivo). Para escribir hace falta
-  `--apply`, y `--delete-old` para borrar los originales (si no, se conservan).
-- Convierte con el mismo canvas que la app, en un Edge sin ventana controlado con el WebSocket de Node 22 (sin
-  librerías: Node no decodifica imágenes).
-- Sube el WebP con un nombre nuevo en la misma carpeta del usuario y cambia **solo** `events.cover_url` (o
-  `profiles.avatar_url` con `--bucket avatars`) en las filas que usaban el archivo viejo. Al actualizar esas tablas solo
-  corren los disparadores de `updated_at`: no hay avisos ni correos.
-- Solo reemplaza si el WebP pesa menos.
-- Hoy hay 2 portadas (JPEG de 99 KB y WebP de 30 KB) y 2 avatares (JPEG de 198 KB y de 85 KB). Los dos avatares también
-  conviene reprocesarlos: el de 85 KB se descarga junto a la portada en la tarjeta.
+Se corrió primero el plan de los dos buckets: tocaba solo estas 4 imágenes y una fila por imagen. Después, `--apply`:
 
-### Después (Lighthouse del usuario)
+| Bucket | Fila | Antes | Después | Archivo nuevo |
+|---|---|---|---|---|
+| event-covers | evento "Polas y fútbol" | JPEG 828×817 · **96,9 KB** | WebP 828×817 · **27,6 KB** | `05195682…/64eab873….webp` |
+| event-covers | evento "prueba santiago" | WebP 495×619 · **30,0 KB** | WebP 495×619 · **27,1 KB** | `52e9b658…/74883851….webp` |
+| avatars | perfil de Santiago Duque Gallego | JPEG 768×1024 · **193,5 KB** | WebP 192×256 · **8,5 KB** | `05195682…/b16bd24e….webp` |
+| avatars | perfil de Felipe Jaramillo Vélez | JPEG 576×1024 · **83,2 KB** | WebP 144×256 · **3,3 KB** | `c568c035…/93ae8ba4….webp` |
 
-| Página | Performance | CLS | LCP | FCP | TBT | SI |
-|---|---|---|---|---|---|---|
-| `/descubre` antes | 69 | 0,259 | 4,4 s | 2,3 s | 10 ms | 3,1 s |
-| `/descubre` después | _pendiente_ | | | | | |
-| `/login` antes | 92 / 100 / 100 / 91 | | | | | |
-| `/login` después | _pendiente_ | | | | | |
+Ahorro: 72,2 KB en portadas y 265,0 KB en avatares. Las portadas no cambian de tamaño porque ya medían menos de 1200 px.
+
+**Verificación:**
+- **Base:** las 2 filas de `events` con portada y las 2 de `profiles` con foto apuntan a los WebP nuevos, y cada URL
+  responde 200 `image/webp` con el peso de la tabla. Los 4 originales siguen en Storage y responden 200.
+- **App** (Edge, 390 px, `jugador1@becore.test`):
+  - en Descubre carga la portada nueva de "Polas y fútbol" (con `fetchpriority="high"`) y el avatar nuevo de Felipe en
+    "quiénes van";
+  - en el detalle del evento cargan la portada nueva y el avatar nuevo de Santiago;
+  - sin errores en la consola.
+- **Perfil:** no se pudo abrir el Perfil de esas dos cuentas (no se tienen sus contraseñas). Los mismos archivos cargan
+  en la tarjeta y en el detalle; falta que cada dueño entre a su Perfil y confirme que ve su foto.
+- **Para volver atrás:** las URL anteriores quedaron anotadas. Basta con volver a escribirlas en esas 4 filas.
+
+### Pendiente: latencia del backend
+
+No se tocó en esta rama, por decisión del usuario. En las mediciones locales `GET /me` y `GET /events` tardan 0,6–1,3 s
+cada uno, y en algunas corridas `/me` llegó a 3,5 s y `/events` a 8 s. Las dos hacen varias consultas seguidas a
+Supabase (sesión, perfil, gustos; eventos, asistencia y avatares de confirmados). Después de la precarga, es lo que más
+pesa en el LCP de Descubre junto con la descarga de la portada. Revisar después del congelamiento: juntar consultas,
+pedirlas en paralelo o cachear el perfil.
+
+### Lighthouse del usuario: antes y después
+
+Lighthouse móvil en Chrome DevTools, build de producción (`vite preview`, puerto 4173), ventana de incógnito, cuenta de
+Felipe (tiene "Para ti" con "Polas y fútbol" primero). Una corrida por medición. Capturas en `capturas-15/`:
+`lighthouse-login.png`, `lighthouse-descubre-antes.png` y `lighthouse-descubre-despues.png`.
+
+| Página | Performance | Accesibilidad | Buenas prácticas | SEO | FCP | LCP | TBT | CLS | SI |
+|---|---|---|---|---|---|---|---|---|---|
+| `/login` | 92 | 100 | 100 | 91 | | | | | |
+| `/descubre` antes (09:04) | 69 | | | | 2,3 s | 4,4 s | 10 ms | 0,259 | 3,1 s |
+| `/descubre` después (09:33) | **79** | 100 | 100 | 92 | **3,2 s** | **4,2 s** | 40 ms | **0,049** | 3,2 s |
+
+Frente a la meta:
+- **CLS < 0,1: cumplida.** Bajó de 0,259 a 0,049.
+- **Performance ≥ 80: no se cumplió.** Quedó en 79.
+- **LCP < 2,5 s: no se cumplió.** Bajó solo de 4,4 a 4,2 s.
+
+**Lo que empeoró:** el FCP pasó de 2,3 a 3,2 s y el TBT de 10 a 40 ms. Es lo que frena el puntaje.
+
+**Hipótesis, sin verificar:** las dos precargas de fuentes (Poppins e Inter, ~50 KB cada una con prioridad alta) compiten
+en la red lenta simulada con el CSS y el JS que bloquean el primer pintado. Además, el LCP sigue atado a `/me` y
+`/events`, que tardan ~1 s cada uno (pendiente del backend, arriba).
+
+**Siguiente paso propuesto:** medir sin las dos precargas de fuentes. Si el FCP vuelve a ~2,3 s, quitarlas y dejar
+solo los `preconnect`. No se hizo en esta rama.
 
 Verificación: `npm run lint` sin errores · `npm test` backend 322/322, frontend 313/313 (nuevas: `startup-prefetch.test.js`,
 presets de `image.test.js`) · el build compila sin avisos; la entrada pasa de 174,6 a 177,7 kB (57,7 gz) por la precarga.

@@ -54,10 +54,10 @@ describe('getCandidates', () => {
   });
 });
 
-describe('getRecommendations', () => {
+describe('getRecommendations · variante "rules" (R5 tal cual)', () => {
   it('sin preferencias devuelve [] sin consultar eventos', async () => {
     findPreferencesByUserId.mockResolvedValue(null);
-    expect(await getRecommendations(user, 6)).toEqual([]);
+    expect(await getRecommendations(user, 6, { variant: 'rules' })).toEqual([]);
     expect(listRecommendationCandidates).not.toHaveBeenCalled();
   });
 
@@ -68,7 +68,7 @@ describe('getRecommendations', () => {
       ev('cultura', { category: 'culture' }),
       ev('nada', { category: 'other', startsAt: '2026-11-04T00:00:00.000Z' }),
     ]);
-    const result = await getRecommendations(user, 6);
+    const result = await getRecommendations(user, 6, { variant: 'rules' });
     expect(result.map((e) => [e.id, e.reason])).toEqual([
       ['cultura', 'Porque te gusta la cultura'],
       ['finde', 'Encaja con tus fines de semana'],
@@ -80,6 +80,6 @@ describe('getRecommendations', () => {
   it('respeta el límite', async () => {
     findPreferencesByUserId.mockResolvedValue({ categories: ['sport'], days: [], timeSlots: [], zone: null });
     listRecommendationCandidates.mockResolvedValue(['a', 'b', 'c'].map((id) => ev(id)));
-    expect(await getRecommendations(user, 2)).toHaveLength(2);
+    expect(await getRecommendations(user, 2, { variant: 'rules' })).toHaveLength(2);
   });
 });

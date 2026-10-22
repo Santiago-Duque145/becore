@@ -3,6 +3,7 @@ import { XIcon } from '../icons/index.js';
 import { FOCUSABLE } from '../../lib/focus-trap.js';
 import { dialogKeyAction, restoreFocus, shouldCloseOnSwipe, zoomFrom } from '../../lib/avatar-preview.js';
 import { Avatar } from './Avatar.jsx';
+import { BodyPortal } from './BodyPortal.jsx';
 import { Button } from './Button.jsx';
 import { Skeleton } from './Skeleton.jsx';
 
@@ -110,14 +111,16 @@ export function AvatarPreviewDialog({ person, trigger, onClose }) {
   }
 
   return (
-    <AvatarPreviewView
-      person={person}
-      rootRef={rootRef}
-      imageRef={imageRef}
-      closeRef={closeRef}
-      handlers={{ onClick: onBackdropClick, onPointerDown, onPointerMove, onPointerUp: onPointerEnd, onPointerCancel: onPointerEnd }}
-      onClose={onClose}
-    />
+    <BodyPortal>
+      <AvatarPreviewView
+        person={person}
+        rootRef={rootRef}
+        imageRef={imageRef}
+        closeRef={closeRef}
+        handlers={{ onClick: onBackdropClick, onPointerDown, onPointerMove, onPointerUp: onPointerEnd, onPointerCancel: onPointerEnd }}
+        onClose={onClose}
+      />
+    </BodyPortal>
   );
 }
 
