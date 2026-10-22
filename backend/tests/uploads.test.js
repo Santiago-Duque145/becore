@@ -117,6 +117,18 @@ describe('portadas de evento', () => {
     expect(res.body.data.path).toMatch(/^org-1\/[\w-]+\.png$/);
   });
 
+  it('con withOriginal también da la URL del original, al lado de la portada (P8)', async () => {
+    loginAs(organizer);
+    const res = await auth(request(app).post('/api/v1/events/cover-upload-url')).send({ contentType: 'image/webp', withOriginal: true });
+    expect(res.status).toBe(201);
+    const { path, original } = res.body.data;
+    expect(path).toMatch(/^org-1\/[\w-]+\.webp$/);
+    expect(original.path).toBe(path.replace('.webp', '-original.webp'));
+    expect(original).toHaveProperty('token');
+    const plain = await auth(request(app).post('/api/v1/events/cover-upload-url')).send({ contentType: 'image/webp' });
+    expect(plain.body.data).not.toHaveProperty('original');
+  });
+
   it('crear un evento con la portada de otro organizador → 403', async () => {
     loginAs(organizer);
     const body = {

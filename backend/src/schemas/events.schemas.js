@@ -108,4 +108,5 @@ export const eventIdParamsSchema = z.object({
 
 export const coverUploadSchema = z.object({
   contentType: z.enum(IMAGE_TYPES, { error: 'Sube una imagen WebP, JPEG o PNG' }),
+  withOriginal: z.boolean().optional(), // P8: URL extra para el original (volver a encuadrar)
 });

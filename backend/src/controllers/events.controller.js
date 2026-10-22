@@ -48,7 +48,7 @@ export async function publishEvent(req, res) {
 }
 
 export async function createCoverUpload(req, res) {
-  res.status(201).json({ data: await eventsService.createCoverUpload(req.user, req.body.contentType) });
+  res.status(201).json({ data: await eventsService.createCoverUpload(req.user, req.body.contentType, req.body.withOriginal) });
 }
 
 export async function finishEvent(req, res) {

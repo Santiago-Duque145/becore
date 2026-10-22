@@ -63,9 +63,15 @@ async function confirmedPreviews(events) {
   );
 }
 
-// El organizador sube la imagen a Storage con una URL firmada y envía aquí solo la ruta confirmada
-export const createCoverUpload = (user, contentType) =>
-  storage.createUploadTarget(COVER_BUCKET, user.id, contentType);
+// El organizador sube la imagen a Storage con una URL firmada y envía aquí solo la ruta confirmada.
+// withOriginal (P8): además, una URL para guardar el original al lado de la portada ("-original"), con el que el editor
+// vuelve a encuadrar sin perder calidad. Solo se confirma coverPath; el original se deduce de él.
+export async function createCoverUpload(user, contentType, withOriginal = false) {
+  const target = await storage.createUploadTarget(COVER_BUCKET, user.id, contentType);
+  if (!withOriginal) return target;
+  const original = await storage.createUploadTarget(COVER_BUCKET, user.id, contentType, { path: storage.originalPathFor(target.path) });
+  return { ...target, original: { path: original.path, token: original.token } };
+}
 
 // coverPath: undefined = no tocar, null = quitar la portada, string = ruta subida por este organizador
 function coverPatch(user, coverPath) {
