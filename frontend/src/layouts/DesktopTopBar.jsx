@@ -3,9 +3,11 @@ import { useMyAvatar } from '../hooks/useMyAvatar.js';
 import { BrandMark, PreviewableAvatar, Input } from '../components/ui/index.js';
 import { SearchIcon } from '../components/icons/index.js';
 import { cn } from '../lib/cn.js';
+import { SEARCH_PLACEHOLDER } from '../pages/descubre/descubre-filters.js';
 import { TOP_BAR_LINKS } from './navigation.js';
 
-// Buscador de desktop-descubre (240 px). Escribe ?q= en /descubre, que filtra la lista.
+// Buscador de desktop-descubre (288 px: el mockup pide 240, pero el ejemplo de IA7 no cabría). Escribe ?q= en
+// /descubre, que busca en lenguaje natural desde 2 letras.
 function TopBarSearch() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -25,7 +27,7 @@ function TopBarSearch() {
   }
 
   return (
-    <div role="search" className="w-60">
+    <div role="search" className="w-72">
       <label htmlFor="buscar-eventos" className="sr-only">
         Buscar eventos
       </label>
@@ -33,7 +35,7 @@ function TopBarSearch() {
         id="buscar-eventos"
         type="search"
         icon={SearchIcon}
-        placeholder="Buscar eventos"
+        placeholder={SEARCH_PLACEHOLDER}
         value={value}
         onChange={handleChange}
       />

@@ -14,8 +14,9 @@ export function prefetchInitialRoute({ pathname, search }, deps = defaultDeps) {
   deps.loadPage();
   return deps.getSession().then((session) => {
     if (!session) return false;
-    const { filters, showParaTi } = descubreRequest(new URLSearchParams(search));
-    deps.prefetch(eventsQueryOptions(filters), 'infinite');
+    const { search: apiSearch, filters, showParaTi } = descubreRequest(new URLSearchParams(search));
+    // Con ?q= la página usa los resultados de la búsqueda (IA7): la lista no se usaría
+    if (!apiSearch) deps.prefetch(eventsQueryOptions(filters), 'infinite');
     if (showParaTi) deps.prefetch(recommendedQueryOptions());
     return true;
   });

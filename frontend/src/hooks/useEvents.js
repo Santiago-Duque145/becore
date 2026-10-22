@@ -12,6 +12,7 @@ export const eventsQueryOptions = (filters) =>
     getNextPageParam: ({ meta }) => (meta.page * meta.pageSize < meta.total ? meta.page + 1 : undefined),
   });
 
-export function useEvents(filters) {
-  return useInfiniteQuery(eventsQueryOptions(filters));
+// enabled = false mientras Descubre muestra resultados de búsqueda (IA7)
+export function useEvents(filters, { enabled = true } = {}) {
+  return useInfiniteQuery({ ...eventsQueryOptions(filters), enabled });
 }

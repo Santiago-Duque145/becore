@@ -12,12 +12,13 @@ const keys = (deps) => deps.prefetch.mock.calls.map(([options]) => options.query
 
 describe('descubreRequest: la misma petición en la página y en la precarga', () => {
   it('sin filtros: próximos eventos y "Para ti"', () => {
-    expect(descubreRequest(new URLSearchParams(''))).toEqual({ filters: { scope: 'upcoming' }, showParaTi: true });
+    expect(descubreRequest(new URLSearchParams(''))).toEqual({ search: false, filters: { scope: 'upcoming' }, showParaTi: true });
   });
   it('con categoría, búsqueda o mapa no hay "Para ti"', () => {
-    expect(descubreRequest(new URLSearchParams('cat=sport'))).toEqual({ filters: { scope: 'upcoming', category: 'sport' }, showParaTi: false });
-    expect(descubreRequest(new URLSearchParams('q=cine')).showParaTi).toBe(false);
-    expect(descubreRequest(new URLSearchParams('vista=mapa'))).toEqual({ filters: { scope: 'upcoming', pageSize: 50 }, showParaTi: false });
+    expect(descubreRequest(new URLSearchParams('cat=sport'))).toEqual({ search: false, filters: { scope: 'upcoming', category: 'sport' }, showParaTi: false });
+    expect(descubreRequest(new URLSearchParams('q=cine'))).toMatchObject({ search: true, showParaTi: false });
+    expect(descubreRequest(new URLSearchParams('q=c')).search).toBe(false);
+    expect(descubreRequest(new URLSearchParams('vista=mapa'))).toEqual({ search: false, filters: { scope: 'upcoming', pageSize: 50 }, showParaTi: false });
   });
 });
 
@@ -34,6 +35,12 @@ describe('prefetchInitialRoute', () => {
     const deps = fakeDeps();
     await prefetchInitialRoute({ pathname: '/descubre', search: '?cat=culture' }, deps);
     expect(keys(deps)).toEqual([queryKeys.events({ scope: 'upcoming', category: 'culture' })]);
+  });
+
+  it('con búsqueda (?q=) no precarga la lista: la página usa los resultados de la búsqueda', async () => {
+    const deps = fakeDeps();
+    expect(await prefetchInitialRoute({ pathname: '/descubre', search: '?q=futbol%20el%20sabado' }, deps)).toBe(true);
+    expect(deps.prefetch).not.toHaveBeenCalled();
   });
 
   it('sin sesión no pide nada a la API (un 401 cerraría la sesión)', async () => {
