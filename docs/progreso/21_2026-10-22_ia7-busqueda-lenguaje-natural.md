@@ -147,3 +147,6 @@ Primero tardaba 1,6–4,6 s; se bajó con dos cambios:
 
 - Push de `feature/ia-7` hecho; el PR lo abre el equipo. **La migración ya está aplicada.**
 - IA8 (asistente para crear eventos) cuando se pida.
+- **Día 28 — autenticación (~0,6 s por petición):** cada request consulta a Supabase con `auth.getUser(token)`. Revisar si el
+  backend puede verificar el JWT localmente (firma y expiración) en vez de ir a Supabase en cada petición, conservando la lectura
+  del rol desde `public.profiles`. Solo anotado; no se ha tocado.
