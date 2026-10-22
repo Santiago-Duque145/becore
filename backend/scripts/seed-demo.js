@@ -2,7 +2,10 @@ import { createClient } from '@supabase/supabase-js';
 import { gemini } from '../src/services/ai/geminiClient.js';
 import { indexEvent } from '../src/services/ai/indexing.service.js';
 
-// 10 eventos de demostración para el partido (31 oct) y la sustentación (3–6 nov), del 25 oct al 15 nov de 2026.
+// 10 eventos de demostración del 25 oct al 15 nov de 2026 para la sustentación (3–6 nov). NINGUNO cae el 31 de oct
+// (día del partido): ese día no debe haber eventos de demo. Procedimiento en docs/specs/plan-validacion.md: aplicar,
+// quitarlos la noche del 30 (--remove --apply) y volver a aplicarlos el 1 de nov (solo se crean los que sigan siendo
+// futuros). Reaplicar no duplica: la cuenta se busca por correo y los eventos por título dentro de esa cuenta.
 // MARCA: todos son de una cuenta organizadora creada solo para esto (DEMO_EMAIL). Para excluirlos del análisis del
 // partido basta filtrar por su organizer_id; `--remove` borra sus eventos (y en cascada su event_ai, asistencias y
 // recommendation_events) y la cuenta.
@@ -67,8 +70,8 @@ const EVENTS = [
   {
     title: 'Torneo relámpago de baloncesto 3×3',
     category: 'sport',
-    startsAt: '2026-10-31T15:00:00-05:00',
-    endsAt: '2026-10-31T18:00:00-05:00',
+    startsAt: '2026-11-07T15:00:00-05:00',
+    endsAt: '2026-11-07T18:00:00-05:00',
     location: 'Unidad Deportiva Atanasio Girardot, Medellín',
     latitude: 6.256,
     longitude: -75.588,
@@ -188,17 +191,18 @@ async function ensureDemoOrganizer() {
 async function seed() {
   const existing = await findDemoUser();
   const already = new Set(existing ? (await demoEvents(existing.id)).map((e) => e.title) : []);
+  const now = Date.now();
   console.info(`${apply ? 'APLICANDO' : 'Plan (agrega --apply para escribir)'}:`);
   console.info(`  Organizador: ${DEMO_NAME} <${DEMO_EMAIL}> ${existing ? '(ya existe)' : '(cuenta nueva, rol organizador)'}`);
   for (const e of EVENTS) {
-    const mark = already.has(e.title) ? '= ya existe, se omite' : '+';
+    const mark = already.has(e.title) ? '= ya existe, se omite' : new Date(e.startsAt).getTime() <= now ? '- ya pasó, no se crea' : '+';
     console.info(`  ${mark} ${when(e.startsAt).padEnd(32)} ${e.category.padEnd(10)} cupo ${String(e.capacity).padStart(3)} · «${e.title}» · ${e.location} (${e.latitude}, ${e.longitude})`);
   }
   console.info(`  Etiquetas: con embeddings${gemini.enabled ? '' : ' — IA apagada: quedan para `npm run ai:backfill`'}`);
   if (!apply) return;
 
   const { user } = await ensureDemoOrganizer();
-  for (const e of EVENTS.filter((x) => !already.has(x.title))) {
+  for (const e of EVENTS.filter((x) => !already.has(x.title) && new Date(x.startsAt).getTime() > now)) {
     const { data, error } = await supabase
       .from('events')
       .insert({

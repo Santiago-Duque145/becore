@@ -18,6 +18,7 @@ Objetivo: comprobar con usuarios reales que Be Core permite organizar un partido
 | Portátil | Cargado, `npm run dev` probado, backup del seed (`npm run seed -w backend`). | Santiago |
 | Cuestionario | Crear el SUS (§5) en Google Forms con las 12 preguntas y la hoja de respuestas; enlace corto o QR impreso. | Felipe |
 | Plan B | Si la red falla: video de respaldo y demostración en el portátil; el cuestionario se responde en papel. | Ambos |
+| **Eventos de demostración · noche del 30** | El 31 no puede haber eventos de demo: el partido se mide solo con eventos reales. La noche del 30, desde `becore/`: `npm run seed:demo -w backend -- --remove` (muestra qué borra) y luego `npm run seed:demo -w backend -- --remove --apply`. Borra los 10 eventos de "Barrio Activo" (`organizador.demo@becore.test`), sus asistencias y la cuenta. Comprobar en Descubre que ya no aparecen. Se crearon el 22 oct con `--apply` (ninguno cae el 31). | Santiago |
 
 ## 2. Roles durante la sesión
 
@@ -111,3 +112,8 @@ Fórmula para la hoja de cálculo, con las respuestas del ítem 1 en `B2` hasta 
 2. Calcular SUS, tiempos y asistencia real vs. confirmada.
 3. Listar problemas por frecuencia y severidad; los de severidad alta se corrigen el 1 de noviembre si hay tiempo, el resto queda como trabajo futuro.
 4. Registrar todo en `docs/progreso/04_2026-11-01_validacion-y-cierre.md` y usar los resultados en la presentación (S4-03).
+5. **1 de noviembre · volver a crear los eventos de demostración para la sustentación (3–6 nov):** desde `becore/`,
+   `npm run seed:demo -w backend` (plan) y `npm run seed:demo -w backend -- --apply`. Solo crea los que sigan siendo
+   futuros (los de antes del 1 de nov aparecen como "ya pasó, no se crea"). Reaplicar no duplica: la cuenta se busca por
+   correo y los eventos por título. La cuenta se crea de nuevo, con otro `organizer_id`. Como el 31 no existían eventos
+   de demo, el análisis del partido no tiene nada que excluir.
