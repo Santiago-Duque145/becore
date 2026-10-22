@@ -202,14 +202,31 @@ Supabase (sesión, perfil, gustos; eventos, asistencia y avatares de confirmados
 pesa en el LCP de Descubre junto con la descarga de la portada. Revisar después del congelamiento: juntar consultas,
 pedirlas en paralelo o cachear el perfil.
 
-### Después (Lighthouse del usuario)
+### Lighthouse del usuario: antes y después
 
-| Página | Performance | CLS | LCP | FCP | TBT | SI |
-|---|---|---|---|---|---|---|
-| `/descubre` antes | 69 | 0,259 | 4,4 s | 2,3 s | 10 ms | 3,1 s |
-| `/descubre` después | _pendiente_ | | | | | |
-| `/login` antes | 92 / 100 / 100 / 91 | | | | | |
-| `/login` después | _pendiente_ | | | | | |
+Lighthouse móvil en Chrome DevTools, build de producción (`vite preview`, puerto 4173), ventana de incógnito, cuenta de
+Felipe (tiene "Para ti" con "Polas y fútbol" primero). Una corrida por medición. Capturas en `capturas-15/`:
+`lighthouse-login.png`, `lighthouse-descubre-antes.png` y `lighthouse-descubre-despues.png`.
+
+| Página | Performance | Accesibilidad | Buenas prácticas | SEO | FCP | LCP | TBT | CLS | SI |
+|---|---|---|---|---|---|---|---|---|---|
+| `/login` | 92 | 100 | 100 | 91 | | | | | |
+| `/descubre` antes (09:04) | 69 | | | | 2,3 s | 4,4 s | 10 ms | 0,259 | 3,1 s |
+| `/descubre` después (09:33) | **79** | 100 | 100 | 92 | **3,2 s** | **4,2 s** | 40 ms | **0,049** | 3,2 s |
+
+Frente a la meta:
+- **CLS < 0,1: cumplida.** Bajó de 0,259 a 0,049.
+- **Performance ≥ 80: no se cumplió.** Quedó en 79.
+- **LCP < 2,5 s: no se cumplió.** Bajó solo de 4,4 a 4,2 s.
+
+**Lo que empeoró:** el FCP pasó de 2,3 a 3,2 s y el TBT de 10 a 40 ms. Es lo que frena el puntaje.
+
+**Hipótesis, sin verificar:** las dos precargas de fuentes (Poppins e Inter, ~50 KB cada una con prioridad alta) compiten
+en la red lenta simulada con el CSS y el JS que bloquean el primer pintado. Además, el LCP sigue atado a `/me` y
+`/events`, que tardan ~1 s cada uno (pendiente del backend, arriba).
+
+**Siguiente paso propuesto:** medir sin las dos precargas de fuentes. Si el FCP vuelve a ~2,3 s, quitarlas y dejar
+solo los `preconnect`. No se hizo en esta rama.
 
 Verificación: `npm run lint` sin errores · `npm test` backend 322/322, frontend 313/313 (nuevas: `startup-prefetch.test.js`,
 presets de `image.test.js`) · el build compila sin avisos; la entrada pasa de 174,6 a 177,7 kB (57,7 gz) por la precarga.
