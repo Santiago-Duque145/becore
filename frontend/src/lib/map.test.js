@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
+  OPENFREEMAP_ATTRIBUTION,
   TILES_ATTRIBUTION,
   TILES_MAX_ZOOM,
   TILES_URL,
+  VECTOR_LOAD_TIMEOUT_MS,
   boundsOf,
   directionsLinks,
   hasCoordinates,
@@ -10,6 +12,7 @@ import {
   isValidPoint,
   pinColor,
   sortByDistance,
+  supportsWebGL2,
   withDistance,
 } from './map.js';
 
@@ -37,12 +40,50 @@ describe('teselas', () => {
       expect(code, file).not.toMatch(/VITE_MAP_TILES_URL/);
     }
   });
-  it('el oscurecido es un filtro CSS solo en la capa de teselas', async () => {
+  it('el filtro oscuro es solo del respaldo raster y solo de la capa de teselas', async () => {
     const { readFile } = await import('node:fs/promises');
     const css = await readFile(new URL('../components/map/map.css', import.meta.url), 'utf8');
-    expect(css).toMatch(/\.leaflet-tile-pane\s*\{[^}]*filter:\s*invert\(1\)/);
-    // ningún otro selector (pines, popups, controles) lleva invert()
+    expect(css).toMatch(/\[data-basemap='raster'\]\s+\.leaflet-tile-pane\s*\{[^}]*filter:\s*invert\(1\)/);
+    // ningún otro selector (pines, popups, controles, mapa vectorial) lleva invert()
     expect(css.match(/invert\(/g)).toHaveLength(1);
+    expect(css).not.toMatch(/(^|\n)\.leaflet-tile-pane\s*\{/); // sin filtro global
+  });
+  it('MapBase marca el modo del mapa base y carga MapLibre solo de forma diferida', async () => {
+    const { readFile } = await import('node:fs/promises');
+    const code = await readFile(new URL('../components/map/MapBase.jsx', import.meta.url), 'utf8');
+    expect(code).toContain('data-basemap={basemap}');
+    expect(code).toContain("import('@maplibre/maplibre-gl-leaflet')");
+    expect(code).not.toMatch(/^import .*['"]maplibre-gl['"]/m); // nunca con import estático
+  });
+});
+
+describe('mapa vectorial: atribución, respaldo y WebGL2', () => {
+  it('atribución "© OpenFreeMap © OpenStreetMap contributors" con sus enlaces', () => {
+    expect(OPENFREEMAP_ATTRIBUTION).toContain('&copy; OpenFreeMap');
+    expect(OPENFREEMAP_ATTRIBUTION).toContain('&copy; OpenStreetMap contributors');
+    expect(OPENFREEMAP_ATTRIBUTION).toContain('https://openfreemap.org');
+    expect(OPENFREEMAP_ATTRIBUTION).toContain('https://www.openstreetmap.org/copyright');
+  });
+  it('si el estilo no carga en 10 s se pasa al respaldo raster', () => expect(VECTOR_LOAD_TIMEOUT_MS).toBe(10_000));
+
+  it('supportsWebGL2: true solo si el navegador entrega un contexto webgl2', () => {
+    const doc = (getContext) => ({ createElement: () => ({ getContext }) });
+    expect(supportsWebGL2(doc((type) => (type === 'webgl2' ? {} : null)))).toBe(true);
+    expect(supportsWebGL2(doc(() => null))).toBe(false); // celular viejo o sin WebGL
+    expect(
+      supportsWebGL2(
+        doc(() => {
+          throw new Error('bloqueado');
+        }),
+      ),
+    ).toBe(false);
+    expect(
+      supportsWebGL2({
+        createElement: () => {
+          throw new Error('sin DOM');
+        },
+      }),
+    ).toBe(false);
   });
 });
 

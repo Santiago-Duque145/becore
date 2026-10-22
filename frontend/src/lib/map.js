@@ -7,9 +7,27 @@ export const MEDELLIN = { lat: 6.2442, lng: -75.5812 };
 export const DEFAULT_ZOOM = 12;
 export const PIN_ZOOM = 15;
 
-// Teselas: OpenStreetMap estándar (libre, sin clave). Es la ÚNICA constante de teselas de la app: todos los mapas
-// (Descubre, detalle, selector de ubicación y Mapa en vivo) pasan por MapBase. El estilo oscuro NO viene de las
-// teselas: lo da un filtro CSS solo sobre la capa de teselas (map.css, .leaflet-tile-pane), no sobre pines ni popups.
+// Mapa base de todos los mapas de la app (Descubre, detalle, selector de ubicación y Mapa en vivo): pasan por MapBase.
+// 1) Principal: teselas VECTORIALES de OpenFreeMap (sin clave) dibujadas con MapLibre GL y el estilo propio de
+//    lib/mapStyle.js. Se cargan con import() dentro del chunk del mapa.
+// 2) Respaldo (MapLibre falla, no hay WebGL2 o el estilo no carga): teselas raster de OpenStreetMap oscurecidas con un
+//    filtro CSS solo sobre la capa de teselas (map.css, [data-basemap='raster']), nunca sobre pines ni popups.
+export const OPENFREEMAP_ATTRIBUTION =
+  '<a href="https://openfreemap.org" target="_blank" rel="noopener">&copy; OpenFreeMap</a> <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">&copy; OpenStreetMap contributors</a>';
+
+// Si el mapa vectorial no termina de cargar en este tiempo, se pasa al respaldo raster
+export const VECTOR_LOAD_TIMEOUT_MS = 10_000;
+
+// MapLibre GL 5 necesita WebGL2. Se prueba con un canvas temporal (document inyectable para poder probarlo).
+export function supportsWebGL2(doc = document) {
+  try {
+    const canvas = doc.createElement('canvas');
+    return Boolean(canvas.getContext('webgl2'));
+  } catch {
+    return false;
+  }
+}
+
 export const TILES_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 export const TILES_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 export const TILES_MAX_ZOOM = 19;
