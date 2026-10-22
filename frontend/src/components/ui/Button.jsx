@@ -1,7 +1,7 @@
 import { forwardRef } from 'react';
 import { Link } from 'react-router';
 import { cn } from '../../lib/cn.js';
-import { LoaderIcon } from '../icons/index.js';
+import { LoadingDots } from './LoadingDots.jsx';
 
 const VARIANTS = {
   primary: 'bg-accent text-on-accent font-bold hover:brightness-110',
@@ -40,7 +40,7 @@ export const Button = forwardRef(function Button(
       className={buttonClass({ variant, size, className })}
       {...props}
     >
-      {loading && <LoaderIcon size={18} className="animate-spin motion-reduce:animate-none" />}
+      {loading && <LoadingDots />}
       {children}
     </button>
   );
@@ -51,4 +51,12 @@ export const LinkButton = forwardRef(function LinkButton(
   ref,
 ) {
   return <Link ref={ref} className={buttonClass({ variant, size, className })} {...props} />;
+});
+
+// Enlace externo (WhatsApp, Google Calendar…) con el aspecto de un botón; se abre en otra pestaña
+export const ExternalLinkButton = forwardRef(function ExternalLinkButton(
+  { variant = 'primary', size = 'md', className, ...props },
+  ref,
+) {
+  return <a ref={ref} target="_blank" rel="noopener noreferrer" className={buttonClass({ variant, size, className })} {...props} />;
 });

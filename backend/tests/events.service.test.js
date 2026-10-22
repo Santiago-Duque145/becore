@@ -8,15 +8,26 @@ vi.mock('../src/repositories/events.repository.js', () => ({
 }));
 vi.mock('../src/repositories/attendance.repository.js', () => ({
   findUserAttendances: vi.fn(),
+  listConfirmedPreviewIds: vi.fn(),
   listConfirmedUserIds: vi.fn().mockResolvedValue([]),
+}));
+vi.mock('../src/repositories/profiles.repository.js', () => ({
+  findAvatarsByIds: vi.fn(),
 }));
 vi.mock('../src/services/notifications.service.js', () => ({
   notify: vi.fn(),
 }));
 
+vi.mock('../src/services/rating-requests.service.js', () => ({
+  requestRatingsForEvent: vi.fn(),
+}));
+
 import * as repo from '../src/repositories/events.repository.js';
-import { findUserAttendances } from '../src/repositories/attendance.repository.js';
+import { findUserAttendances, listConfirmedPreviewIds } from '../src/repositories/attendance.repository.js';
+import { findAvatarsByIds } from '../src/repositories/profiles.repository.js';
+import { requestRatingsForEvent } from '../src/services/rating-requests.service.js';
 import * as service from '../src/services/events.service.js';
+import { findEventTags } from '../src/repositories/ai.repository.js';
 
 const owner = { id: 'owner-1', role: 'organizer' };
 const other = { id: 'owner-2', role: 'organizer' };
@@ -79,6 +90,16 @@ describe('getEvent', () => {
     findUserAttendances.mockResolvedValue([{ eventId: 'ev-1', status: 'confirmed', checkedIn: false }]);
     const result = await service.getEvent(other, 'ev-1');
     expect(result.myAttendance).toEqual({ status: 'confirmed', checkedIn: false });
+  });
+
+  it('IA2: trae las etiquetas de event_ai y nunca el embedding', async () => {
+    repo.findEventById.mockResolvedValue(baseEvent());
+    findUserAttendances.mockResolvedValue([]);
+    findEventTags.mockResolvedValueOnce(['football', 'music']);
+    const result = await service.getEvent(other, 'ev-1');
+    expect(findEventTags).toHaveBeenCalledWith('ev-1');
+    expect(result.tags).toEqual(['football', 'music']);
+    expect(result).not.toHaveProperty('embedding');
   });
 });
 
@@ -199,5 +220,76 @@ describe('listEvents', () => {
     repo.listEvents.mockResolvedValue({ rows: [], total: 0 });
     await service.listEvents(owner, { ...query, scope: 'past' });
     expect(repo.listEvents.mock.calls[0][0].statuses).toContain('finished');
+  });
+});
+
+describe('finishEvent', () => {
+  const live = { id: 'e1', organizerId: 'owner-1', status: 'in_progress', capacity: 10, confirmedCount: 2, startsAt: '2026-10-01T10:00:00Z' };
+
+  beforeEach(() => {
+    repo.findEventById.mockResolvedValue(live);
+    repo.updateEvent.mockImplementation(async (_id, patch) => ({ ...live, ...patch, finishedAt: '2026-10-01T11:00:00Z' }));
+    requestRatingsForEvent.mockResolvedValue(2);
+  });
+
+  it('el organizador finaliza un evento en curso y se pide la calificación', async () => {
+    const result = await service.finishEvent(owner, 'e1');
+    expect(repo.updateEvent).toHaveBeenCalledWith('e1', { status: 'finished' });
+    expect(requestRatingsForEvent).toHaveBeenCalledWith(expect.objectContaining({ id: 'e1', status: 'finished' }));
+    expect(result.status).toBe('finished');
+  });
+
+  it('otro organizador → 403 y no cambia nada', async () => {
+    await expect(service.finishEvent({ id: 'otro', role: 'organizer' }, 'e1')).rejects.toMatchObject({ status: 403 });
+    expect(repo.updateEvent).not.toHaveBeenCalled();
+  });
+
+  it.each(['draft', 'published', 'finished', 'cancelled'])('estado %s → 409 EVENT_NOT_IN_PROGRESS', async (status) => {
+    repo.findEventById.mockResolvedValue({ ...live, status });
+    await expect(service.finishEvent(owner, 'e1')).rejects.toMatchObject({ status: 409 });
+    expect(repo.updateEvent).not.toHaveBeenCalled();
+  });
+
+  it('evento inexistente → 404', async () => {
+    repo.findEventById.mockResolvedValue(null);
+    await expect(service.finishEvent(owner, 'e1')).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('si falla el aviso de calificación, el evento igual queda finalizado', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    requestRatingsForEvent.mockRejectedValue(new Error('smtp'));
+    await expect(service.finishEvent(owner, 'e1')).resolves.toMatchObject({ status: 'finished' });
+  });
+});
+
+describe('listConfirmedPeople', () => {
+  const event = { id: 'e1', organizerId: 'owner-1', status: 'published', confirmedCount: 2 };
+
+  beforeEach(() => {
+    repo.findEventById.mockResolvedValue(event);
+    listConfirmedPreviewIds.mockResolvedValue({ e1: ['u1', 'u2'] });
+    findAvatarsByIds.mockResolvedValue([
+      { id: 'u1', firstName: 'Ana', avatarUrl: null, avatarPreset: 'goleador', email: 'ana@x.co', fullName: 'Ana Gómez' },
+      { id: 'u2', firstName: 'Luis', avatarUrl: 'https://cdn/x.webp', avatarPreset: null },
+    ]);
+  });
+
+  it('devuelve solo nombre de pila y avatar, en orden de confirmación', async () => {
+    const people = await service.listConfirmedPeople({ id: 'visitante', role: 'participant' }, 'e1');
+    expect(people).toEqual([
+      { name: 'Ana', avatarUrl: null, avatarPreset: 'goleador' },
+      { name: 'Luis', avatarUrl: 'https://cdn/x.webp', avatarPreset: null },
+    ]);
+    expect(JSON.stringify(people)).not.toMatch(/ana@x\.co|Gómez|u1/);
+  });
+
+  it('un borrador ajeno no existe → 404', async () => {
+    repo.findEventById.mockResolvedValue({ ...event, status: 'draft' });
+    await expect(service.listConfirmedPeople({ id: 'visitante', role: 'participant' }, 'e1')).rejects.toMatchObject({ status: 404 });
+  });
+
+  it('sin confirmados → lista vacía', async () => {
+    listConfirmedPreviewIds.mockResolvedValue({});
+    expect(await service.listConfirmedPeople({ id: 'visitante' }, 'e1')).toEqual([]);
   });
 });

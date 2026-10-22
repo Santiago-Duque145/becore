@@ -1,6 +1,9 @@
 import { forwardRef, useId } from 'react';
-import { CalendarIcon, UsersIcon } from '../../components/icons/index.js';
-import { Chip, Field, Input, OptionCard } from '../../components/ui/index.js';
+import { Link } from 'react-router';
+import { CalendarIcon, SparklesIcon, UsersIcon } from '../../components/icons/index.js';
+import { Checkbox, Chip, Field, Input, OptionCard } from '../../components/ui/index.js';
+import { AvatarPicker } from '../../components/preferences/AvatarPicker.jsx';
+import { DemographicsFields } from '../../components/preferences/DemographicsFields.jsx';
 import {
   DAY_OPTIONS,
   INTEREST_GROUPS,
@@ -11,7 +14,7 @@ import {
   TIME_SLOT_OPTIONS,
 } from '../../constants/preferences.js';
 
-// Los 5 pasos de /bienvenida con los textos de auth-onboarding §6.
+// Los 6 pasos de /bienvenida con los textos de auth-onboarding §6.
 // Cada paso recibe el estado del reducer, dispatch y la ref del título (recibe el foco al cambiar de paso).
 
 const ROLE_ICONS = { participant: UsersIcon, organizer: CalendarIcon };
@@ -70,6 +73,56 @@ export function RoleStep({ state, dispatch, titleRef, firstName }) {
             onClick={() => dispatch({ type: 'setRole', role: value })}
           />
         ))}
+      </div>
+    </>
+  );
+}
+
+// Primer paso para quien aún no aceptó la política (p. ej. entró por Google). Sin aceptar no se avanza ni se omite.
+export function ConsentStep({ state, dispatch, titleRef }) {
+  const titleId = useId();
+  return (
+    <>
+      <StepHeading
+        ref={titleRef}
+        id={titleId}
+        title="Antes de empezar"
+        subtitle="Be Core es un proyecto académico de la Universidad Católica Luis Amigó. Necesitamos tu aceptación para guardar tus datos."
+      />
+      <Checkbox
+        checked={state.consentAccepted}
+        onChange={(e) => dispatch({ type: 'setConsent', accepted: e.target.checked })}
+        label={
+          <>
+            Acepto la{' '}
+            <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="font-semibold text-accent underline">
+              política de tratamiento de datos personales
+            </a>
+          </>
+        }
+      />
+    </>
+  );
+}
+
+// Opcional y solo para estadísticas agregadas del proyecto: no cambia las recomendaciones
+export function DemographicsStep({ state, dispatch, titleRef }) {
+  const titleId = useId();
+  return (
+    <>
+      <StepHeading
+        ref={titleRef}
+        id={titleId}
+        title="Cuéntanos un poco de ti"
+        subtitle="Es opcional. Solo lo usamos para estadísticas anónimas del proyecto; no cambia tus recomendaciones."
+      />
+      <div role="group" aria-labelledby={titleId}>
+        <DemographicsFields
+          gender={state.gender}
+          ageRange={state.ageRange}
+          onGender={(value) => dispatch({ type: 'pick', field: 'gender', value })}
+          onAgeRange={(value) => dispatch({ type: 'pick', field: 'ageRange', value })}
+        />
       </div>
     </>
   );
@@ -170,8 +223,22 @@ export function ZoneStep({ state, dispatch, titleRef }) {
           enterKeyHint="done"
         />
       </Field>
+      <p className="mt-2 mb-3 text-xs font-semibold text-ink-muted">Tu foto (opcional)</p>
+      <AvatarPicker compact />
+      <p className="mt-6 flex gap-2 rounded-field border border-accent/20 bg-accent/10 px-3.5 py-3 text-xs leading-relaxed text-ink-muted">
+        <SparklesIcon size={16} className="mt-px shrink-0 text-accent-soft" />
+        <span>
+          Usamos IA para recomendarte eventos: solo con tus gustos, nunca con tus datos personales.{' '}
+          <Link to="/privacidad" className="focus-ring hit-area rounded font-semibold text-accent-soft underline-offset-2 hover:underline">
+            Cómo usamos tus datos
+          </Link>
+        </span>
+      </p>
     </>
   );
 }
 
-export const STEPS = [RoleStep, InterestsStep, AvailabilityStep, MotivationStep, ZoneStep];
+export const STEPS = [RoleStep, DemographicsStep, InterestsStep, AvailabilityStep, MotivationStep, ZoneStep];
+
+// Con el paso de consentimiento por delante cuando todavía falta aceptar la política
+export const stepsFor = (needsConsent) => (needsConsent ? [ConsentStep, ...STEPS] : STEPS);

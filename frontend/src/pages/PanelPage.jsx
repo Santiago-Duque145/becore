@@ -3,6 +3,8 @@ import { useMediaQuery } from '../hooks/useMediaQuery.js';
 import { useOrganizerDashboard } from '../hooks/useOrganizerDashboard.js';
 import { PlusIcon } from '../components/icons/index.js';
 import { EmptyState, ErrorState, LinkButton, Skeleton } from '../components/ui/index.js';
+import { RatingsPanel } from '../components/organizer/RatingsPanel.jsx';
+import { AiMetricsPanel } from '../components/organizer/AiMetricsPanel.jsx';
 import { LiveActivityPanel } from '../components/organizer/LiveActivityPanel.jsx';
 import {
   OrganizerEventsCards,
@@ -163,6 +165,9 @@ export default function PanelPage() {
                   <OrganizerEventsCards events={data.events} />
                 ))}
             </section>
+
+            {data && <RatingsPanel events={data.events} />}
+            <AiMetricsPanel />
           </div>
 
           <aside className="w-full shrink-0 lg:w-[280px]" aria-label="Actividad">

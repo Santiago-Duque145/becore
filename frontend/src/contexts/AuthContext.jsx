@@ -104,13 +104,6 @@ export function AuthProvider({ children }) {
     if (error) throw toAuthUiError(error);
   }
 
-  async function requestPasswordReset(email) {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectUrl('/nueva-contrasena'),
-    });
-    if (error) throw toAuthUiError(error);
-  }
-
   async function updatePassword(password) {
     const { error } = await supabase.auth.updateUser({ password });
     if (error) throw toAuthUiError(error);
@@ -141,7 +134,6 @@ export function AuthProvider({ children }) {
         signIn,
         signUp,
         signInWithGoogle,
-        requestPasswordReset,
         updatePassword,
         getUrlAuthError,
         signOut,

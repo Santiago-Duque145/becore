@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Navigate, useLocation } from 'react-router';
+import { Navigate, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { registerSchema } from '../../lib/auth-schemas.js';
 import { destinationAfterAuth, fromState } from '../../lib/auth-redirect.js';
@@ -10,16 +10,16 @@ import { AuthLink } from '../../components/auth/AuthLink.jsx';
 import { FormAlert } from '../../components/auth/FormAlert.jsx';
 import { GoogleSignIn } from '../../components/auth/GoogleSignIn.jsx';
 import { PasswordStrength } from '../../components/auth/PasswordStrength.jsx';
-import { ConfirmEmailNotice } from './ConfirmEmailNotice.jsx';
-import { Button, Field, Input, PasswordInput } from '../../components/ui/index.js';
+import { Button, Checkbox, Field, Input, PasswordInput } from '../../components/ui/index.js';
+import { clearConsentPending, markConsentPending } from '../../lib/consent-pending.js';
 
-// Crear cuenta: nombre, correo y contraseña, sin rol (auth-onboarding §5)
+// Crear cuenta: nombre, correo, contraseña y aceptación de la política de datos, sin rol (auth-onboarding §5)
 export default function RegistroPage() {
   const { session, profile, loading, signUp } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const from = fromState(location);
   const [formError, setFormError] = useState(null);
-  const [pending, setPending] = useState(null); // { email, password } cuando falta confirmar el correo
   const {
     register,
     handleSubmit,
@@ -31,16 +31,16 @@ export default function RegistroPage() {
   // Sin confirmación de correo, signUp deja la sesión abierta y el perfil nuevo trae onboardingCompleted=false
   if (session && !loading) return <Navigate to={destinationAfterAuth(profile, from)} replace />;
 
-  if (pending) {
-    return <ConfirmEmailNotice email={pending.email} password={pending.password} onBack={() => setPending(null)} />;
-  }
-
-  async function onSubmit(values) {
+  async function onSubmit({ consent: _consent, ...values }) {
     setFormError(null);
+    // La casilla ya es obligatoria: se recuerda para que la API guarde data_consent_at al abrir sesión
+    markConsentPending();
     try {
       const { needsConfirmation } = await signUp(values);
-      if (needsConfirmation) setPending({ email: values.email, password: values.password });
+      // Con confirmación de correo activa, Supabase envía un código de 6 dígitos: se escribe en /verificar
+      if (needsConfirmation) navigate(`/verificar?email=${encodeURIComponent(values.email)}`, { state: location.state });
     } catch (error) {
+      clearConsentPending();
       if (error.code === 'user_already_exists') {
         setError('email', { type: 'exists' }, { shouldFocus: true });
       } else {
@@ -61,6 +61,7 @@ export default function RegistroPage() {
       errors.email?.message
     );
   const busy = isSubmitting || Boolean(session);
+  const consent = Boolean(watch('consent'));
 
   return (
     <AuthLayout
@@ -98,13 +99,28 @@ export default function RegistroPage() {
         </Field>
         <PasswordStrength id="password-strength" password={watch('password')} />
 
+        <Checkbox
+          className="mt-3 mb-2"
+          error={errors.consent?.message}
+          label={
+            <>
+              Acepto la{' '}
+              <a href="/privacidad" target="_blank" rel="noopener noreferrer" className="font-semibold text-accent underline">
+                política de tratamiento de datos personales
+              </a>
+            </>
+          }
+          {...register('consent')}
+        />
+
         <Button type="submit" loading={busy} className="mt-1 w-full">
           Crear cuenta
         </Button>
         <FormAlert className="mt-3">{formError}</FormAlert>
       </form>
 
-      <GoogleSignIn from={from} disabled={busy} />
+      <GoogleSignIn from={from} disabled={busy || !consent} onStart={markConsentPending} onError={clearConsentPending} />
+      {!consent && <p className="mt-2 text-center text-xs text-ink-muted">Acepta la política para continuar con Google.</p>}
     </AuthLayout>
   );
 }

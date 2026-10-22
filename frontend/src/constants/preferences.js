@@ -69,3 +69,17 @@ export const MOTIVATION_OPTIONS = [
 
 export const MAX_MOTIVATIONS = 2;
 export const MAX_ZONE_LENGTH = 80;
+
+// Paso "Cuéntanos un poco de ti" (opcional, solo estadísticas agregadas; NO se usa para recomendar).
+// Mismos valores que backend/src/constants/demographics.js y la migración 20261021120000.
+export const GENDER_OPTIONS = [
+  { slug: 'female', label: 'Mujer' },
+  { slug: 'male', label: 'Hombre' },
+  { slug: 'other', label: 'Otro' },
+  { slug: 'prefer_not_to_say', label: 'Prefiero no decirlo' },
+];
+
+export const AGE_RANGE_OPTIONS = ['18-24', '25-34', '35-44', '45-54', '55+'].map((slug) => ({
+  slug,
+  label: slug === '55+' ? '55 o más' : slug.replace('-', ' a '),
+}));

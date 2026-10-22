@@ -30,3 +30,16 @@ describe('preferencias: frontend y backend sincronizados', () => {
     expect(front.MAX_ZONE_LENGTH).toBe(back.MAX_ZONE_LENGTH);
   });
 });
+
+describe('datos demográficos: frontend y backend sincronizados', () => {
+  it('sexo: mismos valores, orden y textos', async () => {
+    const demographics = await import('../../../backend/src/constants/demographics.js');
+    expect(front.GENDER_OPTIONS.map((o) => o.slug)).toEqual(demographics.GENDERS);
+    for (const o of front.GENDER_OPTIONS) expect(o.label).toBe(demographics.GENDER_LABELS[o.slug]);
+  });
+
+  it('rango de edad: mismos valores y orden', async () => {
+    const demographics = await import('../../../backend/src/constants/demographics.js');
+    expect(front.AGE_RANGE_OPTIONS.map((o) => o.slug)).toEqual(demographics.AGE_RANGES);
+  });
+});

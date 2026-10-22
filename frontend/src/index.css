@@ -88,6 +88,20 @@
     }
   }
 
+  /* IA8: resalta un instante los campos que rellenó el asistente */
+  --animate-draft-fill: draft-fill 2s var(--ease-out-soft) both;
+
+  @keyframes draft-fill {
+    from {
+      background-color: color-mix(in srgb, var(--color-accent) 18%, transparent);
+      box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-accent) 18%, transparent);
+    }
+    to {
+      background-color: transparent;
+      box-shadow: 0 0 0 6px transparent;
+    }
+  }
+
   /* Punto "en vivo" del ticker (la única animación en bucle que permite la skill §4) */
   --animate-blink: blink 1.6s ease-in-out infinite;
 
@@ -114,6 +128,64 @@
     }
     to {
       stroke-dashoffset: 0;
+    }
+  }
+
+  /* P1 · Hero de auth: barras que se desplazan (10 s, ida y vuelta) y enlaces que se dibujan y se recogen (12 s).
+     Pedido expreso del director (docs/PLAN.md §5, P1): segunda excepción al "nada decorativo en bucle" de la skill §4. */
+  --animate-hero-drift: hero-drift 10s ease-in-out infinite alternate;
+  --animate-hero-link: hero-link 12s var(--ease-out-soft) infinite;
+
+  @keyframes hero-drift {
+    from {
+      transform: translate(-12px, 8px);
+    }
+    to {
+      transform: translate(12px, -8px);
+    }
+  }
+
+  @keyframes hero-link {
+    0% {
+      stroke-dashoffset: 1;
+    }
+    30%,
+    70% {
+      stroke-dashoffset: 0;
+    }
+    100% {
+      stroke-dashoffset: -1;
+    }
+  }
+
+  /* P1 · Onboarding: rebote corto del chip al elegirlo */
+  --animate-chip-pop: chip-pop 320ms var(--ease-out-soft);
+
+  @keyframes chip-pop {
+    40% {
+      transform: scale(1.08);
+    }
+    70% {
+      transform: scale(0.97);
+    }
+  }
+
+  /* P1 · Final del onboarding: cada pieza sale del check hacia su destino (--cx, --cy) y cae mientras se desvanece.
+     1.4 s + hasta 100 ms de retraso = 1.5 s en total. */
+  --animate-confetti: confetti 1.4s cubic-bezier(0.2, 0.7, 0.4, 1) both;
+
+  @keyframes confetti {
+    0% {
+      opacity: 1;
+      transform: translate(0, 0) rotate(0deg) scale(0.6);
+    }
+    35% {
+      opacity: 1;
+      transform: translate(var(--cx), var(--cy)) rotate(calc(var(--cr) / 3)) scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: translate(calc(var(--cx) * 1.15), calc(var(--cy) + 120px)) rotate(var(--cr)) scale(1);
     }
   }
 }
@@ -158,4 +230,215 @@
   background:
     radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--color-accent) 25%, transparent), transparent 60%),
     linear-gradient(160deg, var(--color-bg-deep), var(--color-bg));
+}
+
+/* P7 · Pantallas de carga (docs/PLAN.md, P7). Bucles de 1,8 s que solo animan transform y opacity; el trazo de la "B"
+   anima stroke-dashoffset (como animate-draw), barato en un SVG de ≤ 72 px. Tercera excepción pedida al
+   "nada decorativo en bucle" de la skill §4: solo mientras se espera. Todo se apaga con motion-reduce. */
+@theme {
+  --animate-loader-trace: loader-trace 1.8s var(--ease-out-soft) infinite;
+  --animate-loader-fill: loader-fill 1.8s ease-in-out infinite;
+  --animate-loader-streak: loader-streak 1.8s ease-in-out infinite;
+  --animate-loader-dot: loader-dot 1.8s var(--ease-out-soft) infinite;
+  --animate-loader-link: loader-link 1.8s ease-in-out infinite;
+  --animate-phrase: phrase 300ms var(--ease-out-soft) both;
+  --animate-dot-bounce: dot-bounce 0.9s ease-in-out infinite;
+  --animate-ball-bounce: ball-bounce 0.9s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  --animate-note-shake: note-shake 1.2s ease-in-out infinite;
+  --animate-tree-sway: tree-sway 1.8s ease-in-out infinite;
+  --animate-sparkle: sparkle 1.8s ease-in-out infinite;
+
+  /* La "B" se dibuja (0–45 %), se rellena (45–55 %), se queda y se desvanece para el siguiente bucle */
+  @keyframes loader-trace {
+    0% {
+      stroke-dashoffset: 1;
+      opacity: 1;
+    }
+    45%,
+    82% {
+      stroke-dashoffset: 0;
+      opacity: 1;
+    }
+    100% {
+      stroke-dashoffset: 0;
+      opacity: 0;
+    }
+  }
+
+  @keyframes loader-fill {
+    0%,
+    40% {
+      opacity: 0;
+    }
+    55%,
+    82% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  /* Líneas de movimiento de colores que cruzan por detrás de la "B" */
+  @keyframes loader-streak {
+    0% {
+      opacity: 0;
+      transform: translateX(-16px);
+    }
+    25% {
+      opacity: 1;
+    }
+    65%,
+    100% {
+      opacity: 0;
+      transform: translateX(16px);
+    }
+  }
+
+  /* Puntos de la comunidad: aparecen uno a uno y se conectan */
+  @keyframes loader-dot {
+    0%,
+    30% {
+      opacity: 0;
+      transform: scale(0);
+    }
+    45% {
+      opacity: 1;
+      transform: scale(1.25);
+    }
+    55%,
+    82% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    100% {
+      opacity: 0;
+      transform: scale(0);
+    }
+  }
+
+  @keyframes loader-link {
+    0%,
+    55% {
+      opacity: 0;
+    }
+    68%,
+    82% {
+      opacity: 0.7;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  @keyframes phrase {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+
+  /* Tres puntos de los botones en loading */
+  @keyframes dot-bounce {
+    0%,
+    60%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.55;
+    }
+    30% {
+      transform: translateY(-4px);
+      opacity: 1;
+    }
+  }
+
+  /* Variantes por categoría: balón que rebota, nota que vibra, árbol que se mece, chispa que late */
+  @keyframes ball-bounce {
+    0%,
+    100% {
+      transform: translateY(0) scale(1.08, 0.9);
+    }
+    15% {
+      transform: translateY(-2px) scale(1);
+    }
+    50% {
+      transform: translateY(-30%) scale(1);
+    }
+  }
+
+  @keyframes note-shake {
+    0%,
+    50%,
+    100% {
+      transform: rotate(0);
+    }
+    10%,
+    30% {
+      transform: rotate(-10deg);
+    }
+    20%,
+    40% {
+      transform: rotate(10deg);
+    }
+  }
+
+  @keyframes tree-sway {
+    0%,
+    100% {
+      transform: rotate(-6deg);
+    }
+    50% {
+      transform: rotate(6deg);
+    }
+  }
+
+  @keyframes sparkle {
+    0%,
+    100% {
+      opacity: 0.7;
+      transform: scale(0.85);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+  }
+}
+
+/* Los elementos de un SVG animado giran o escalan sobre su propio centro */
+@utility origin-self {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Skeleton con brillo de marca (P7): un barrido diagonal turquesa muy suave en lugar del pulso gris.
+   Solo mueve el ::after con transform; con prefers-reduced-motion queda el bloque quieto. */
+@utility skeleton-sweep {
+  position: relative;
+  overflow: hidden;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 25%,
+      color-mix(in srgb, var(--color-accent) 10%, transparent) 50%,
+      transparent 75%
+    );
+    transform: translateX(-100%);
+    animation: skeleton-sweep 1.6s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &::after {
+      animation: none;
+      opacity: 0;
+    }
+  }
+}
+
+@keyframes skeleton-sweep {
+  to {
+    transform: translateX(100%);
+  }
 }

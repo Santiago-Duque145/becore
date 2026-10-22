@@ -16,13 +16,43 @@
     <title>Be Core</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Perf de Descubre: el origen de Supabase sirve las portadas (imagen, sin CORS) y Auth/Realtime (con CORS) -->
+    <link rel="preconnect" href="%VITE_SUPABASE_URL%" />
+    <link rel="preconnect" href="%VITE_SUPABASE_URL%" crossorigin />
+    <!-- Fuentes del primer pintado (subconjunto latin): Poppins 600 de los títulos e Inter (variable) del texto.
+         Son las URL que hoy entrega el CSS de Google Fonts de abajo; si Google cambia de versión (v24/v20), la precarga
+         solo deja de servir y el navegador baja la nueva como siempre. -->
+    <link rel="preload" as="font" type="font/woff2" href="https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLEj6Z1xlFQ.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
     />
   </head>
   <body>
-    <div id="root"></div>
+    <!-- P7 · Arranque: mientras se descarga el JS, el isotipo aparece a los 300 ms (sin parpadeo si carga rápido).
+         React lo reemplaza al montar. Autocontenido: colores de la skill §1, sin Tailwind. -->
+    <style>
+      .boot { min-height: 100dvh; display: grid; place-items: center; background: #0b1420; }
+      .boot svg { opacity: 0; animation: boot-in 200ms ease-out 300ms forwards, boot-breathe 1.8s ease-in-out 500ms infinite; }
+      @keyframes boot-in { to { opacity: 1; } }
+      @keyframes boot-breathe { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.75; transform: scale(0.94); } }
+      @media (prefers-reduced-motion: reduce) { .boot svg { animation: boot-in 0s linear 300ms forwards; } }
+    </style>
+    <div id="root">
+      <div class="boot" role="status" aria-label="Cargando">
+        <svg width="72" height="72" viewBox="0 0 34 34" fill="none" aria-hidden="true">
+          <rect width="34" height="34" rx="9" fill="#0D1B2A" />
+          <path d="M10 24 L10 10 Q10 8 12 8 L18 8 Q23 8 23 12.5 Q23 16 19 17 Q24 18 24 22.5 Q24 27 18 27 L12 27 Q10 27 10 25 Z" fill="url(#boot-gradient)" />
+          <defs>
+            <linearGradient id="boot-gradient" x1="10" y1="8" x2="24" y2="27" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#14B8A6" />
+              <stop offset="1" stop-color="white" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

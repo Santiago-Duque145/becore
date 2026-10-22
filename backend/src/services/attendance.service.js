@@ -2,6 +2,7 @@ import * as attendanceRepo from '../repositories/attendance.repository.js';
 import * as activityRepo from '../repositories/activity.repository.js';
 import * as eventsRepo from '../repositories/events.repository.js';
 import { AppError } from '../utils/app-error.js';
+import { recordConfirmedLater } from './recommendations/feedback.js';
 
 const CHECKIN_OPENS_MS = 2 * 3600 * 1000;
 
@@ -10,6 +11,7 @@ const forbidden = () => new AppError(403, 'FORBIDDEN', 'No tienes permiso para e
 
 export async function confirm(user, eventId) {
   const confirmedCount = await attendanceRepo.confirmAttendance(eventId, user.id);
+  recordConfirmedLater(user.id, eventId); // IA4: si vino de "Para ti", cuenta para la prueba A/B (sin esperar)
   return { confirmedCount, myAttendance: { status: 'confirmed', checkedIn: false } };
 }
 

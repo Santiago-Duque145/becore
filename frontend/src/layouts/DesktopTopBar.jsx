@@ -1,10 +1,13 @@
 import { Link, NavLink, useLocation, useNavigate, useSearchParams } from 'react-router';
-import { Avatar, BrandMark, Input } from '../components/ui/index.js';
+import { useMyAvatar } from '../hooks/useMyAvatar.js';
+import { BrandMark, PreviewableAvatar, Input } from '../components/ui/index.js';
 import { SearchIcon } from '../components/icons/index.js';
 import { cn } from '../lib/cn.js';
+import { SEARCH_PLACEHOLDER } from '../pages/descubre/descubre-filters.js';
 import { TOP_BAR_LINKS } from './navigation.js';
 
-// Buscador de desktop-descubre (240 px). Escribe ?q= en /descubre, que filtra la lista.
+// Buscador de desktop-descubre (288 px: el mockup pide 240, pero el ejemplo de IA7 no cabría). Escribe ?q= en
+// /descubre, que busca en lenguaje natural desde 2 letras.
 function TopBarSearch() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
@@ -24,7 +27,7 @@ function TopBarSearch() {
   }
 
   return (
-    <div role="search" className="w-60">
+    <div role="search" className="w-72">
       <label htmlFor="buscar-eventos" className="sr-only">
         Buscar eventos
       </label>
@@ -32,7 +35,7 @@ function TopBarSearch() {
         id="buscar-eventos"
         type="search"
         icon={SearchIcon}
-        placeholder="Buscar eventos"
+        placeholder={SEARCH_PLACEHOLDER}
         value={value}
         onChange={handleChange}
       />
@@ -42,6 +45,7 @@ function TopBarSearch() {
 
 // Barra superior del participante (desktop-descubre.html: padding 20×40, enlaces 13.5 px con gap 30)
 export function DesktopTopBar({ profile, hasUnread = false }) {
+  const avatar = useMyAvatar();
   return (
     <header className="pt-safe sticky top-0 z-40 border-b border-line bg-bg/95 backdrop-blur-md">
       <div className="flex items-center justify-between px-10 py-5">
@@ -79,7 +83,7 @@ export function DesktopTopBar({ profile, hasUnread = false }) {
         <div className="flex items-center gap-[18px]">
           <TopBarSearch />
           <Link to="/perfil" aria-label="Mi perfil" className="focus-ring flex h-11 w-11 items-center justify-center rounded-full">
-            <Avatar name={profile?.fullName} decorative />
+            <PreviewableAvatar name={profile?.fullName} role={profile?.role} {...avatar} />
           </Link>
         </div>
       </div>

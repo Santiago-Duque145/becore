@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useCancelEvent, usePublishEvent } from '../../hooks/useEvent.js';
 import { Button, LinkButton, Modal, useToast } from '../ui/index.js';
+import { FinishEventButton } from './FinishEventButton.jsx';
 
 // Acciones del organizador dueño en la barra del detalle (en lugar del botón de asistencia)
 export function OwnerActions({ event }) {
@@ -31,12 +32,13 @@ export function OwnerActions({ event }) {
 
   return (
     <div className="flex w-full flex-col gap-2.5" role="group" aria-label="Acciones del organizador">
+      {event.status === 'in_progress' && <FinishEventButton event={event} className="w-full" />}
       {isDraft && canModify && (
         <Button onClick={handlePublish} loading={publishEvent.isPending} className="w-full">
           Publicar evento
         </Button>
       )}
-      <LinkButton to={`/eventos/${event.id}/asistentes`} variant={isDraft ? 'secondary' : 'primary'} className="w-full">
+      <LinkButton to={`/eventos/${event.id}/asistentes`} variant={isDraft || event.status === 'in_progress' ? 'secondary' : 'primary'} className="w-full">
         Ver asistentes / check-in
       </LinkButton>
       {canModify && (

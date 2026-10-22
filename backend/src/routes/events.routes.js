@@ -7,21 +7,38 @@ import {
   updateEventSchema,
   listEventsQuerySchema,
   recommendedQuerySchema,
+  searchQuerySchema,
+  searchOpenParamsSchema,
+  searchOpenSchema,
   eventIdParamsSchema,
+  coverUploadSchema,
 } from '../schemas/events.schemas.js';
+import { draftBodySchema } from '../schemas/drafts.schemas.js';
 import * as controller from '../controllers/events.controller.js';
+import { createEventDraft } from '../controllers/drafts.controller.js';
 
 const router = Router();
 const organizerOnly = [requireAuth, requireRole('organizer')];
 const byId = { params: eventIdParamsSchema };
 
 router.get('/events', requireAuth, validate({ query: listEventsQuerySchema }), controller.listEvents);
-// Antes de /events/:id para que "recommended" no se valide como id
+// Antes de /events/:id para que "recommended" y "search" no se validen como id
 router.get('/events/recommended', requireAuth, validate({ query: recommendedQuerySchema }), controller.listRecommended);
+router.get('/events/search', requireAuth, validate({ query: searchQuerySchema }), controller.searchEvents);
+router.post(
+  '/events/search/:searchId/open',
+  requireAuth,
+  validate({ params: searchOpenParamsSchema, body: searchOpenSchema }),
+  controller.recordSearchOpen,
+);
+router.post('/events/draft', ...organizerOnly, validate({ body: draftBodySchema }), createEventDraft);
 router.post('/events', ...organizerOnly, validate({ body: createEventSchema }), controller.createEvent);
+router.post('/events/cover-upload-url', ...organizerOnly, validate({ body: coverUploadSchema }), controller.createCoverUpload);
 router.get('/events/:id', requireAuth, validate(byId), controller.getEvent);
+router.get('/events/:id/confirmed', requireAuth, validate(byId), controller.listConfirmedPeople);
 router.patch('/events/:id', ...organizerOnly, validate({ ...byId, body: updateEventSchema }), controller.updateEvent);
 router.post('/events/:id/cancel', ...organizerOnly, validate(byId), controller.cancelEvent);
+router.post('/events/:id/finish', ...organizerOnly, validate(byId), controller.finishEvent);
 router.post('/events/:id/publish', ...organizerOnly, validate(byId), controller.publishEvent);
 
 export default router;

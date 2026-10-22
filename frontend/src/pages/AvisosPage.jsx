@@ -12,7 +12,12 @@ function NotificationItem({ notification }) {
   const navigate = useNavigate();
   const markRead = useMarkNotificationRead();
   const unread = !notification.readAt;
-  const target = notification.eventId ? `/eventos/${notification.eventId}` : notification.appointmentId ? '/citas' : null;
+  const eventPath = notification.type === 'event_rating_request' ? '/calificar' : '';
+  const target = notification.eventId
+    ? `/eventos/${notification.eventId}${eventPath}`
+    : notification.appointmentId
+      ? '/citas'
+      : null;
 
   function open() {
     if (unread) markRead.mutate(notification.id);

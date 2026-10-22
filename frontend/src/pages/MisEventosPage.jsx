@@ -1,6 +1,9 @@
 import { useId } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { AlertCircleIcon, CalendarIcon } from '../components/icons/index.js';
+import { RateBanner } from '../components/events/RateBanner.jsx';
+import { AppointmentList } from '../components/appointments/AppointmentList.jsx';
+import { useAuth } from '../contexts/AuthContext.jsx';
 import { Badge, Chip, EmptyState, ErrorState, LinkButton, Skeleton } from '../components/ui/index.js';
 import { useParticipantDashboard } from '../hooks/useParticipantDashboard.js';
 import { useMarkNotificationRead, useNotifications } from '../hooks/useNotifications.js';
@@ -28,6 +31,14 @@ const EMPTY = {
   pasados: { title: 'Todavía no tienes eventos pasados.', description: 'Aquí verás a los que fuiste.' },
 };
 
+const EMPTY_APPOINTMENTS = {
+  proximos: {
+    title: 'No tienes citas próximas.',
+    description: 'Cuando un organizador te invite a una reunión, aparecerá aquí y en Avisos.',
+  },
+  pasados: { title: 'Aún no tienes citas pasadas.', description: 'Aquí verás las reuniones que ya ocurrieron.' },
+};
+
 // Fila de mobile-mis-eventos: fecha destacada, título, hora · lugar y estado con Badge
 function MyEventItem({ event }) {
   const status = myEventStatus(event);
@@ -52,6 +63,7 @@ function MyEventItem({ event }) {
           {status.label}
         </Badge>
       </Link>
+      <RateBanner event={event} className="mt-2" />
     </li>
   );
 }
@@ -80,6 +92,8 @@ export default function MisEventosPage() {
   const [params, setParams] = useSearchParams();
   const tab = params.get('tab') === 'pasados' ? 'pasados' : 'proximos';
   const panelId = useId();
+  const appointmentsId = useId();
+  const { profile } = useAuth();
   const { data, isPending, isError, error, refetch } = useParticipantDashboard();
   const { data: inbox } = useNotifications();
   const current = TABS.find((t) => t.value === tab);
@@ -128,6 +142,19 @@ export default function MisEventosPage() {
           </ul>
         )}
       </div>
+
+      {/* Mis citas (RF-14): siguen las pestañas Próximos / Pasados; el detalle se abre en un diálogo */}
+      <section aria-labelledby={appointmentsId} className="mt-8">
+        <h2 id={appointmentsId} className="mb-3 font-display text-base font-semibold text-ink">
+          Mis citas
+        </h2>
+        <AppointmentList
+          scope={tab === 'pasados' ? 'past' : 'upcoming'}
+          viewerId={profile?.id}
+          empty={EMPTY_APPOINTMENTS[tab]}
+          skeletons={1}
+        />
+      </section>
     </div>
   );
 }

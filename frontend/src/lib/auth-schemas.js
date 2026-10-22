@@ -14,6 +14,8 @@ export const registerSchema = z.object({
   fullName: z.string().trim().min(2, 'El nombre debe tener al menos 2 caracteres').max(80, 'El nombre no puede superar 80 caracteres'),
   email,
   password: newPassword,
+  // Política de tratamiento de datos (Ley 1581 de 2012): sin aceptarla no se crea la cuenta
+  consent: z.literal(true, { error: 'Debes aceptar la política para crear tu cuenta' }),
 });
 
 export const recoverSchema = z.object({ email });

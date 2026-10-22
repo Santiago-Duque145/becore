@@ -19,6 +19,7 @@ import {
 } from '../src/repositories/profiles.repository.js';
 import { findPreferencesByUserId, upsertPreferences } from '../src/repositories/preferences.repository.js';
 import { INTERESTS } from '../src/constants/preferences.js';
+import { deleteCachedRecommendations } from '../src/repositories/ai.repository.js';
 
 const pendingUser = { id: 'u1', fullName: 'Ana', role: 'participant', onboardingCompletedAt: null };
 const noAnswers = { interests: [], days: [], timeSlots: [], motivations: [], zone: null };
@@ -63,6 +64,24 @@ describe('completeOnboarding', () => {
     expect(me.onboardingCompleted).toBe(true);
   });
 
+  // P7: "Reintentar" del onboarding puede reenviar el guardado. Es idempotente: una sola fila de gustos (upsert por
+  // user_id) y la fecha de onboarding_completed_at no se mueve.
+  it('reenvío con el onboarding ya completo y el mismo rol: solo reescribe los gustos, no la fecha', async () => {
+    const doneUser = { ...pendingUser, onboardingCompletedAt: '2026-10-22T13:00:00Z' };
+    const me = await completeOnboarding(doneUser, { role: 'participant', ...noAnswers });
+    expect(markOnboardingCompleted).not.toHaveBeenCalled();
+    expect(updateProfile).not.toHaveBeenCalled();
+    expect(upsertPreferences).toHaveBeenCalledTimes(1);
+    expect(upsertPreferences.mock.calls[0][0]).toBe('u1');
+    expect(me.onboardingCompleted).toBe(true);
+  });
+
+  it('IA3: guardar gustos borra el "Para ti" guardado (ya no corresponde)', async () => {
+    const doneUser = { ...pendingUser, onboardingCompletedAt: '2026-10-22T13:00:00Z' };
+    await completeOnboarding(doneUser, { role: 'participant', ...noAnswers });
+    expect(deleteCachedRecommendations).toHaveBeenCalledWith('u1');
+  });
+
   it('carrera: otro request completó con otro rol → 409', async () => {
     markOnboardingCompleted.mockResolvedValue(null);
     findProfileById.mockResolvedValue({ ...pendingUser, role: 'participant', onboardingCompletedAt: 'antes' });
@@ -87,6 +106,7 @@ describe('updateName', () => {
       fullName: 'Ana María',
       role: 'participant',
       onboardingCompleted: false,
+      dataConsentAccepted: false,
       preferences: null,
     });
   });

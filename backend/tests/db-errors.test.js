@@ -49,6 +49,26 @@ describe('translateDbError', () => {
     expect(translateDbError({ code: '23514', message: 'otra regla' }).code).toBe('CONSTRAINT_VIOLATION');
   });
 
+  it('trigger de franja (23514) → APPOINTMENT_OUTSIDE_SLOT', () => {
+    const err = translateDbError({ code: '23514', message: 'APPOINTMENT_OUTSIDE_SLOT' });
+    expect(err.status).toBe(409);
+    expect(err.code).toBe('APPOINTMENT_OUTSIDE_SLOT');
+  });
+
+  it.each([
+    ['availability_slots_no_overlap', 'SLOT_OVERLAP'],
+    ['appointments_no_overlap', 'APPOINTMENT_OVERLAP'],
+  ])('exclusión %s (23P01) → %s', (constraint, code) => {
+    const err = translateDbError({ code: '23P01', message: `conflicting key value violates exclusion constraint "${constraint}"` });
+    expect(err.status).toBe(409);
+    expect(err.code).toBe(code);
+    expect(translateDbError({ code: '23P01', constraint_name: constraint, message: 'x' }).code).toBe(code);
+  });
+
+  it('otra exclusión → CONSTRAINT_VIOLATION', () => {
+    expect(translateDbError({ code: '23P01', message: 'otra' }).code).toBe('CONSTRAINT_VIOLATION');
+  });
+
   it('23505 → DUPLICATE', () => {
     const err = translateDbError({ code: '23505', message: 'duplicate key' });
     expect(err.status).toBe(409);

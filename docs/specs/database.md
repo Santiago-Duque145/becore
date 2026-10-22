@@ -25,7 +25,7 @@ erDiagram
 
 | Tabla | Para qué | Columnas clave | RF |
 |---|---|---|---|
-| `profiles` | Datos y rol de cada usuario | `id` (= `auth.users.id`), `email`, `full_name`, `role` | RF-01, RF-03 |
+| `profiles` | Datos y rol de cada usuario | `id` (= `auth.users.id`), `email`, `full_name`, `role`, `gender` (enum `gender_identity`, NULL), `age_range` (NULL), `data_consent_at` (NULL = aún no aceptó la política). Sexo y edad: solo estadísticas, no recomendaciones ni IA (migración `20261021120000`) | RF-01, RF-03 |
 | `events` | Eventos | `organizer_id`, `title`, `description`, `category`, `location`, `starts_at`, `ends_at`, `capacity`, `confirmed_count`, `status`, `cancelled_at` | RF-04 a RF-10 |
 | `attendances` | Confirmaciones | `event_id`, `user_id`, `status`, `checked_in`, `confirmed_at`, `cancelled_at`. Única por (`event_id`, `user_id`) | RF-11 a RF-13 |
 | `availability_slots` | Bloques libres del organizador | `organizer_id`, `starts_at`, `ends_at` | RF-15 |
@@ -55,6 +55,17 @@ erDiagram
   `events_confirmed_within_capacity`): bajar el cupo por debajo de los confirmados falla con `CAPACITY_BELOW_CONFIRMED`.
 - `ends_at` es opcional en eventos y obligatorio en citas; si existe debe ser mayor que `starts_at`.
 - Longitudes de texto: ver la columna en el SQL. Los esquemas Zod usan exactamente los mismos límites.
+- Franjas y citas (migración `20261021130000_appointment_overlap_rules`, extensión `btree_gist`), con rangos
+  `[starts_at, ends_at)` (los que solo se tocan no se cruzan):
+  - `availability_slots_no_overlap` (exclusión): una franja no se cruza con otra del mismo organizador → errcode
+    `23P01` → `SLOT_OVERLAP`.
+  - `appointments_no_overlap` (exclusión parcial, `where status = 'scheduled'`): una cita programada no se cruza con
+    otra programada del mismo organizador → `23P01` → `APPOINTMENT_OVERLAP`. Las canceladas no cuentan.
+  - Trigger `appointments_within_slot` (`enforce_appointment_within_slot`, antes de insertar o de cambiar horario,
+    organizador o estado): una cita programada cabe completa en una franja del organizador; si no, lanza
+    `APPOINTMENT_OUTSIDE_SLOT` (errcode `23514`). Bloquea esa franja con `FOR SHARE` mientras se inserta.
+  - Dos inserciones simultáneas que se cruzan: la segunda espera a que la primera confirme y falla (probado en
+    `backend/tests/integration/appointment-rules.test.js`). Borrar una franja no toca las citas ya agendadas.
 
 ### Ciclo de vida del evento
 

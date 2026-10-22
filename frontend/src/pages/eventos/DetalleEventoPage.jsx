@@ -1,24 +1,34 @@
-import { useParams } from 'react-router';
+import { useLocation, useParams } from 'react-router';
 import { AlertCircleIcon, CalendarIcon, MapPinIcon } from '../../components/icons/index.js';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useEvent } from '../../hooks/useEvent.js';
 import { useRealtimeEvent } from '../../hooks/useRealtimeEvent.js';
+import { resolveAvatar } from '../../lib/avatar.js';
+import { endLabel } from '../../lib/event-time.js';
 import { formatLongDay, formatTime } from '../../lib/format.js';
 import { AttendanceButton } from '../../components/events/AttendanceButton.jsx';
 import { DetailCover, DetailSkeleton, InfoRow } from '../../components/events/EventDetailParts.jsx';
+import { EventLocation } from '../../components/events/EventLocation.jsx';
+import { EventTags } from '../../components/events/EventTags.jsx';
+import { AddToCalendarButton } from '../../components/events/AddToCalendarButton.jsx';
+import { ShareEventButton } from '../../components/events/ShareEventButton.jsx';
+import { AvatarStack } from '../../components/events/AvatarStack.jsx';
+import { RateBanner } from '../../components/events/RateBanner.jsx';
+import { RatingBadge } from '../../components/events/RatingBadge.jsx';
 import { OwnerActions } from '../../components/events/OwnerActions.jsx';
-import { Avatar, CapacityBar, EmptyState, ErrorState, LinkButton } from '../../components/ui/index.js';
+import { CapacityBar, PreviewableAvatar, EmptyState, ErrorState, LinkButton } from '../../components/ui/index.js';
 
 // /eventos/:id según mobile-detalle-evento.html, sin distancia, "Ver ruta", chat ni mapa (CLAUDE.md §9).
 // Móvil: pantalla completa (AppShell inmersivo) con barra de acción fija abajo.
 // Escritorio: columna centrada de 720 px y la barra de acción al final de la columna.
 export default function DetalleEventoPage() {
   const { id } = useParams();
+  const location = useLocation();
   const { profile } = useAuth();
   const { data: event, isPending, isError, error, refetch } = useEvent(id);
   useRealtimeEvent(id);
 
-  if (isPending) return <DetailSkeleton />;
+  if (isPending) return <DetailSkeleton category={location.state?.category} />;
   if (isError) {
     return (
       <div className="mx-auto max-w-[720px] px-[22px] pt-16 md:px-0 md:pt-0">
@@ -41,10 +51,17 @@ export default function DetalleEventoPage() {
 
   const isOwner = event.organizer?.id === profile?.id;
   const showAttendance = !isOwner && profile?.role === 'participant' && event.status !== 'draft';
+  // Compartir: cualquier evento público; calendario: quien confirmó y el evento aún no termina
+  const canShare = event.status === 'published' || event.status === 'in_progress';
+  const canAddToCalendar = canShare && event.myAttendance?.status === 'confirmed';
   const hasActionBar = isOwner || showAttendance;
-  const timeRange = event.endsAt
-    ? `${formatTime(event.startsAt)} — ${formatTime(event.endsAt)}`
-    : formatTime(event.startsAt);
+  // Activo: "7:00 p. m. · Termina aprox. 9:00 p. m. (2 h por defecto)"; finalizado/cancelado: solo el rango
+  const finishLabel = endLabel(event);
+  const timeRange = finishLabel
+    ? `${formatTime(event.startsAt)} · ${finishLabel}`
+    : event.endsAt
+      ? `${formatTime(event.startsAt)} — ${formatTime(event.endsAt)}`
+      : formatTime(event.startsAt);
 
   return (
     <article className="mx-auto w-full max-w-[720px]">
@@ -65,12 +82,12 @@ export default function DetalleEventoPage() {
 
         <InfoRow icon={CalendarIcon} main={formatLongDay(event.startsAt)} sub={timeRange} />
         <InfoRow icon={MapPinIcon} main={event.location} />
+        <EventLocation event={event} />
 
         <div className="mt-1.5 mb-4 rounded-[14px] border border-white/[0.06] bg-panel px-4 py-3.5">
           <CapacityBar
             confirmedCount={event.confirmedCount}
             capacity={event.capacity}
-            label="Cupos disponibles"
             live={event.status === 'published' || event.status === 'in_progress'}
           />
         </div>
@@ -79,12 +96,25 @@ export default function DetalleEventoPage() {
           <p className="mb-4 text-[13px] leading-[1.55] whitespace-pre-line text-ink/80">{event.description}</p>
         )}
 
-        <p className="mb-[18px] text-[11.5px] text-ink-muted">
+        <EventTags tags={event.tags} className="mb-4" />
+
+        <p className="mb-[18px] flex items-center gap-3 text-[11.5px] text-ink-muted">
+          <AvatarStack people={event.confirmedPreview} total={event.confirmedCount} eventId={event.id} />
           {event.confirmedCount === 1 ? '1 persona confirmada' : `${event.confirmedCount} personas confirmadas`}
+          <RatingBadge event={event} />
         </p>
 
+        <RateBanner event={event} className="mb-[18px]" />
+
+        {(canShare || canAddToCalendar) && (
+          <div className="mb-[18px] flex flex-wrap gap-2">
+            {canShare && <ShareEventButton event={event} />}
+            {canAddToCalendar && <AddToCalendarButton event={event} />}
+          </div>
+        )}
+
         <div className="flex items-center gap-2.5 pt-1">
-          <Avatar name={event.organizer?.fullName} decorative />
+          <PreviewableAvatar name={event.organizer?.fullName} role="organizer" {...resolveAvatar(event.organizer)} />
           <div>
             <p className="text-[12.5px] font-semibold text-ink">{event.organizer?.fullName}</p>
             <p className="text-[11px] text-ink-muted">Organizador</p>

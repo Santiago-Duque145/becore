@@ -13,13 +13,15 @@ export async function findUserAttendances(userId, eventIds) {
   return data.map((row) => ({ eventId: row.event_id, status: row.status, checkedIn: row.checked_in }));
 }
 
-const ATTENDEE_COLUMNS = 'user_id, status, checked_in, confirmed_at, user:profiles!user_id(full_name, email)';
+const ATTENDEE_COLUMNS = 'user_id, status, checked_in, confirmed_at, user:profiles!user_id(full_name, email, avatar_url, avatar_preset)';
 
 function toAttendee(row) {
   return {
     userId: row.user_id,
     fullName: row.user?.full_name ?? '',
     email: row.user?.email ?? '',
+    avatarUrl: row.user?.avatar_url ?? null,
+    avatarPreset: row.user?.avatar_preset ?? null,
     status: row.status,
     checkedIn: row.checked_in,
     confirmedAt: row.confirmed_at,
@@ -38,6 +40,36 @@ export async function listConfirmedUserIds(eventId) {
     .select('user_id')
     .eq('event_id', eventId)
     .eq('status', 'confirmed');
+  if (error) throw translateDbError(error) ?? error;
+  return data.map((row) => row.user_id);
+}
+
+// Hasta `limit` confirmados por evento, los primeros en confirmar: { [eventId]: userId[] }
+export async function listConfirmedPreviewIds(eventIds, limit) {
+  if (!eventIds.length) return {};
+  const { data, error } = await supabaseAdmin
+    .from('attendances')
+    .select('event_id, user_id')
+    .in('event_id', eventIds)
+    .eq('status', 'confirmed')
+    .order('confirmed_at', { ascending: true });
+  if (error) throw translateDbError(error) ?? error;
+  const byEvent = {};
+  for (const { event_id: eventId, user_id: userId } of data) {
+    byEvent[eventId] ??= [];
+    if (byEvent[eventId].length < limit) byEvent[eventId].push(userId);
+  }
+  return byEvent;
+}
+
+// Quienes hicieron check-in: los únicos que pueden calificar
+export async function listCheckedInUserIds(eventId) {
+  const { data, error } = await supabaseAdmin
+    .from('attendances')
+    .select('user_id')
+    .eq('event_id', eventId)
+    .eq('status', 'confirmed')
+    .eq('checked_in', true);
   if (error) throw translateDbError(error) ?? error;
   return data.map((row) => row.user_id);
 }
@@ -92,4 +124,16 @@ export async function listAttendanceStatuses(eventIds) {
     .in('event_id', eventIds);
   if (error) throw translateDbError(error) ?? error;
   return data.map((row) => ({ eventId: row.event_id, status: row.status, checkedIn: row.checked_in }));
+}
+
+// Cuántas personas distintas tienen asistencia confirmada en alguno de los eventos (GET /public/stats)
+export async function countConfirmedPeople(eventIds) {
+  if (!eventIds.length) return 0;
+  const { data, error } = await supabaseAdmin
+    .from('attendances')
+    .select('user_id')
+    .in('event_id', eventIds)
+    .eq('status', 'confirmed');
+  if (error) throw translateDbError(error) ?? error;
+  return new Set(data.map((row) => row.user_id)).size;
 }

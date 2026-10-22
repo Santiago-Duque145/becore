@@ -3,9 +3,9 @@ import { cn } from '../../lib/cn.js';
 import { AlertCircleIcon, CalendarIcon } from '../icons/index.js';
 
 // Ícono + título + una frase + una acción. Nunca una pantalla en blanco (skill §3).
-// variant="error" para fallos de carga (role="alert").
+// variant="error" para fallos de carga (role="alert"). size="sm" para una sección dentro de una página (p. ej. "Para ti").
 export const EmptyState = forwardRef(function EmptyState(
-  { icon, title, description, action, variant = 'empty', className, ...props },
+  { icon, title, description, action, variant = 'empty', size = 'md', className, ...props },
   ref,
 ) {
   const isError = variant === 'error';
@@ -15,7 +15,8 @@ export const EmptyState = forwardRef(function EmptyState(
       ref={ref}
       role={isError ? 'alert' : undefined}
       className={cn(
-        'flex flex-col items-center gap-3 rounded-card border border-dashed px-6 py-12 text-center',
+        'flex flex-col items-center gap-3 rounded-card border border-dashed px-6 text-center',
+        size === 'sm' ? 'py-7' : 'py-12',
         isError ? 'border-danger/40 bg-danger/5' : 'border-line bg-panel/60',
         className,
       )}

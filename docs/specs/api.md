@@ -1,7 +1,7 @@
 # Contrato de la API — Be Core
 
 Base: `http://localhost:3000/api/v1`. JSON en camelCase. Todas las rutas exigen
-`Authorization: Bearer <access_token de Supabase>` salvo `GET /health`.
+`Authorization: Bearer <access_token de Supabase>` salvo `GET /health` y `GET /public/stats`.
 
 Registro, inicio y cierre de sesión **no** pasan por esta API: el frontend los hace con Supabase Auth
 (ver `frontend/CLAUDE.md` §4.3). La API solo verifica el token.
@@ -13,6 +13,7 @@ Registro, inicio y cierre de sesión **no** pasan por esta API: el frontend los 
 {
   "id": "uuid", "email": "ana@correo.com", "fullName": "Ana Gómez", "role": "organizer", "createdAt": "ISO",
   "onboardingCompleted": true,
+  "dataConsentAccepted": true, "gender": "female", "ageRange": "25-34",
   "preferences": {
     "categories": ["sport", "culture"], "interests": ["football", "cinema"], "days": ["weekends"],
     "timeSlots": ["evening"], "motivations": ["fun"], "zone": "Belén", "updatedAt": "ISO"
@@ -78,7 +79,16 @@ Formato: `{ "error": { "code": "EVENT_FULL", "message": "El evento ya no tiene c
 | `EVENT_STARTED` | 409 | El evento ya empezó, no se puede modificar |
 | `CAPACITY_BELOW_CONFIRMED` | 409 | El cupo no puede ser menor que los confirmados actuales |
 | `CHECKIN_NOT_OPEN` | 409 | El check-in se habilita 2 horas antes del evento |
+| `EVENT_NOT_FINISHED` | 409 | Solo puedes calificar eventos que ya terminaron |
+| `NOT_ATTENDED` | 403 | Solo califican quienes hicieron check-in en el evento |
+| `RATING_WINDOW_CLOSED` | 409 | El plazo para calificar (7 días) ya terminó |
+| `RATING_NOT_FOUND` | 404 | Aún no calificaste este evento |
+| `EVENT_NOT_IN_PROGRESS` | 409 | Solo puedes finalizar un evento que está en curso |
+| `GEOCODE_UNAVAILABLE` | 502 | No pudimos buscar esa dirección ahora. Marca el lugar directamente en el mapa |
 | `APPOINTMENT_NOT_ACTIVE` | 409 | La cita fue cancelada |
+| `SLOT_OVERLAP` | 409 | Ese horario se cruza con otra de tus franjas. Elige otro o borra primero la que se cruza |
+| `APPOINTMENT_OUTSIDE_SLOT` | 409 | La cita debe quedar dentro de una de tus franjas de disponibilidad |
+| `APPOINTMENT_OVERLAP` | 409 | Ese horario se cruza con otra de tus citas. Elige otro horario |
 | `ONBOARDING_ALREADY_COMPLETED` | 409 | Ya completaste tu bienvenida; tu rol ya no se puede cambiar |
 | `DUPLICATE`, `CONSTRAINT_VIOLATION` | 409 | Ese registro ya existe / Los datos no cumplen las reglas |
 | `INTERNAL_ERROR` | 500 | Algo salió mal, intenta de nuevo |
@@ -93,10 +103,24 @@ Leyenda de acceso: **todos** = cualquier usuario autenticado; **org** = rol `org
 | Método | Ruta | Acceso | Body / Query | Respuesta |
 |---|---|---|---|---|
 | GET | `/health` | público | — | `{ data: { status: "ok" } }` |
+| GET | `/public/stats` | público | — | `{ data: { eventsThisWeek, confirmedPeople } }` |
 | GET | `/me` | todos | — | `Profile` |
-| PATCH | `/me` | todos | `{ fullName }` 2–80 | `Profile` |
-| PUT | `/me/onboarding` | todos | `{ role, interests[], days[], timeSlots[], motivations[] (≤ 2), zone? (≤ 80) }`; listas opcionales (vacías por defecto) | `Profile` |
-| PUT | `/me/preferences` | todos | lo mismo sin `role` (si llega, se ignora) | `Profile` |
+| PATCH | `/me` | todos | `{ fullName? (2–80), gender?, ageRange? }`; al menos un campo. `null` borra sexo o edad | `Profile` |
+| PUT | `/me/onboarding` | todos | `{ role, consent? (solo `true`), gender?, ageRange?, interests[], days[], timeSlots[], motivations[] (≤ 2), zone? (≤ 80) }`; listas opcionales (vacías por defecto) | `Profile` |
+| PUT | `/me/preferences` | todos | lo mismo sin `role`, `gender` ni `ageRange` (si llegan, se ignoran) | `Profile` |
+| PUT | `/me/consent` | todos | `{ gender?, ageRange? }` (ambos opcionales) | `Profile` |
+
+`gender`: `female` · `male` · `other` · `prefer_not_to_say`. `ageRange`: `18-24` · `25-34` · `35-44` · `45-54` · `55+`
+(`backend/src/constants/demographics.js`). Son opcionales y **solo para estadísticas agregadas**: no se usan en
+recomendaciones ni se envían a ninguna IA. `PUT /me/consent` guarda `profiles.data_consent_at = now()` la primera vez
+(reenviar no la mueve) y, si vienen, sexo y edad. `consent: true` en `PUT /me/onboarding` hace lo mismo desde el primer paso de /bienvenida. El perfil expone `dataConsentAccepted` (boolean), nunca la fecha.
+
+`GET /public/stats` (P1, hero del login): solo dos conteos agregados, **sin datos personales**. `eventsThisWeek` = eventos
+`published`, `in_progress` o `finished` (sin borradores ni cancelados) que empiezan en la semana actual, de lunes 00:00 a
+lunes 00:00 en hora de Bogotá. `confirmedPeople` = personas distintas con asistencia `confirmed` en esos eventos. El
+resultado se guarda **5 minutos en memoria** (las peticiones simultáneas comparten una consulta) y la respuesta lleva
+`Cache-Control: public, max-age=300`. Un error de base responde 500 `INTERNAL_ERROR` y no se guarda. El frontend no
+muestra nada si falla o si algún conteo es 0.
 
 `PUT /me/onboarding`: guarda las respuestas (upsert en `user_preferences`) y, si el onboarding estaba pendiente, fija
 `role` y `onboarding_completed_at = now()`. Si ya estaba completo: mismo rol → solo actualiza los gustos; otro rol →
@@ -108,9 +132,14 @@ Leyenda de acceso: **todos** = cualquier usuario autenticado; **org** = rol `org
 | Método | Ruta | Acceso | Body / Query | Respuesta |
 |---|---|---|---|---|
 | GET | `/events` | todos | ver "Filtros" | `{ data: Event[], meta: { total, page, pageSize } }` |
-| GET | `/events/recommended` | todos | query `limit` 1–20 (defecto 6) | `(Event & { reason })[]` "Para ti", ver abajo |
+| POST | `/recommendations/feedback` | todos | `{ eventId, action: 'clicked' }` | 204 siempre (prueba A/B, `ai.md` §9) |
+| GET | `/admin/ai-metrics` | org | — | métricas de la prueba A/B por variante y origen (`ai.md` §9) |
+| GET | `/events/search` | todos | query `q` 2–200, `category` opcional | `{ data: Event[], meta: { mode: 'semantic' \| 'classic', total, searchId } }`, máx. 30, ver abajo (IA7) |
+| POST | `/events/draft` | organizador | `{ text }` 10–500 | 200 siempre: `{ data: { draft: {…} \| null, reason? } }` (IA8, ver abajo) |
+| POST | `/events/search/:searchId/open` | todos | `{ eventId }` | 204 siempre: marca el primer resultado abierto de esa búsqueda (IA7) |
+| GET | `/events/recommended` | todos | query `limit` 1–20 (defecto 6) | `(Event & { reason })[]` "Para ti", ver abajo. Si viene vacío, además `meta.emptyReason`: `no_preferences`, `no_events`, `all_confirmed` o `no_matches` |
 | POST | `/events` | org | ver "Crear" | 201 `Event` |
-| GET | `/events/:id` | todos | — | `Event` |
+| GET | `/events/:id` | todos | — | `Event & { tags: string[] }`: `tags` son los gustos que Gemini asignó (IA2, `docs/specs/ai.md`), `[]` si aún no tiene. Nunca incluye embeddings |
 | PATCH | `/events/:id` | dueño | mismos campos de crear, todos opcionales (mínimo uno) | `Event` |
 | POST | `/events/:id/publish` | dueño | — | `Event` (solo desde `draft`; si no → 409 `INVALID_EVENT_TRANSITION`) |
 | POST | `/events/:id/cancel` | dueño | — | `Event` |
@@ -128,6 +157,19 @@ sin preferencias guardadas devuelve `[]`. Candidatos: `published`, `starts_at > 
 ni tiene confirmados. Puntaje por reglas en hora de Bogotá (categoría +3; día, franja y zona +1 cada uno); se
 excluyen los de puntaje 0 y se ordena por puntaje desc y luego `startsAt` asc. `reason` es la señal más fuerte
 ("Porque te gusta el deporte", "Es en tu zona", "Encaja con tus fines de semana"…). Va antes de `/events/:id` en el router.
+
+**Búsqueda en lenguaje natural — `GET /events/search`** (IA7, `services/search/`, `docs/specs/ai.md` §15): busca entre los
+eventos próximos visibles (`published` e `in_progress`), con la categoría si viene. `mode: 'semantic'`: embedding de la
+consulta contra `event_ai` (índice HNSW) + coincidencia literal en título o lugar + refuerzos por día, franja, categoría
+y gusto que la frase menciona; solo entra lo que pasa el umbral, ordenado por puntaje. `mode: 'classic'` (IA apagada,
+Gemini o la base fallan, o la persona pasó 30 consultas nuevas en 10 min): la frase completa, o todas sus palabras de 3+
+letras, en título, descripción o lugar, sin tildes ni mayúsculas, ordenado por fecha. Nunca responde 500 por la IA. La
+consulta se guarda en `search_events` sin correos, teléfonos ni `user_id`. Va antes de `/events/:id` en el router.
+
+**Borrador con IA — `POST /events/draft`** (organizador, IA8, `docs/specs/ai.md` §16): body `{ text }` (10–500). Siempre 200 con
+`{ data: { draft, reason? } }`; `draft` es `null` si la IA está apagada, sin cupo, falla o se pasó el límite de 10 al día
+(`reason`: `AI_DISABLED`, `AI_UNAVAILABLE`, `AI_ERROR`, `DAILY_LIMIT`). No guarda nada: el evento se crea después con
+`POST /events`. Va antes de `/events/:id` en el router.
 
 **Crear evento — body:**
 | Campo | Regla |
@@ -149,6 +191,9 @@ excluyen los de puntaje 0 y se ordena por puntaje desc y luego `startsAt` asc. `
 **Cancelar:** mismas reglas 1–4, luego `status = 'cancelled'`, `cancelled_at = now()` y correo
 `event_cancelled` a los confirmados (RF-06, RF-17).
 
+- `POST /events/:id/finish` (organizador dueño) → 200 `{ data: Event }` con `status: 'finished'`. Solo desde `in_progress`
+  (409 `EVENT_NOT_IN_PROGRESS`); otro organizador → 403. Fija `finished_at` y pide la calificación a quienes hicieron check-in.
+
 ### Asistencia (RF-10 a RF-13)
 
 | Método | Ruta | Acceso | Body | Respuesta |
@@ -164,6 +209,55 @@ excluyen los de puntaje 0 y se ordena por puntaje desc y luego `startsAt` asc. `
 - Check-in: asistencia debe estar `confirmed` (si no → `NOT_CONFIRMED`), evento `published` o `in_progress`
   (si no → `EVENT_NOT_ACTIVE`) y `now() >= startsAt - 2 horas` (si no → `CHECKIN_NOT_OPEN`).
   Al marcar `true` inserta `activity_log` con `action = 'checked_in'`.
+
+### Calificación de eventos (P2)
+
+Solo califica un participante con `checked_in = true` en un evento `finished`, dentro de los 7 días posteriores a
+`finishedAt`. Una calificación por usuario y evento; dentro del plazo se puede editar.
+
+- `POST /events/:id/rating` (participante) → 201 `{ data: Rating }`. Body: `{ stars: 1–5, tags?: string[], comment?: string ≤ 500 }`.
+  `tags` ⊂ `well_organized, punctual, good_vibe, would_repeat, good_venue, needs_improvement`.
+- `PUT /events/:id/rating` (participante) → 200 `{ data: Rating }`. Mismo body; crea o reemplaza.
+- `GET /events/:id/rating/me` (participante) → `{ data: Rating }` o 404 `RATING_NOT_FOUND`.
+- `GET /events/:id/ratings/summary` (autenticado) → `{ data: { average, total, byStars: {1..5}, byTag, comments? } }`.
+  `comments` (anónimos, ≤ 20) solo si quien consulta es el organizador del evento; `average` es `null` sin votos.
+- Al pasar un evento a `finished`, el cron de estados envía el aviso `event_rating_request` (campana y correo, enlace
+  `/eventos/:id/calificar`) a quienes hicieron check-in. Una sola vez por usuario y evento.
+- `Event` incluye ahora `finishedAt` (ISO o `null`).
+
+### Avatares y portadas (P3)
+
+Las imágenes se suben a Supabase Storage con **URL firmada**: la API valida permisos y crea el destino; el
+navegador comprime (WebP, máx. 1024 px, originales ≤ 8 MB) y sube directo con el token; luego confirma la ruta.
+La carpeta de cada archivo es el id de quien lo sube; una ruta ajena responde 403 `FORBIDDEN`.
+
+- `POST /me/avatar/upload-url` → 201 `{ data: { bucket, path, token } }`. Body: `{ contentType: image/webp|jpeg|png }`.
+- `PUT /me/avatar` `{ path }` → guarda la URL pública como `avatarUrl`. Responde como `GET /me`.
+- `PUT /me/avatar-preset` `{ preset }` → uno de los 12 ids (`goleador`, `corredora`, `ciclista`, `nadador`, `bailarina`,
+  `guitarrista`, `pintor`, `fotografa`, `lectora`, `jardinero`, `ajedrecista`, `actriz`). Reemplaza la foto subida.
+- `DELETE /me/avatar` → quita foto y avatar elegido.
+- `POST /events/cover-upload-url` (organizador) → igual que el de avatar, en el bucket `event-covers`.
+- `POST/PATCH /events` aceptan `coverPath` (ruta subida por el propio organizador; `null` en PATCH quita la portada).
+- `Profile` suma `avatarUrl` y `avatarPreset`. `Event` suma `coverUrl` y `confirmedPreview: [{ name, avatarUrl, avatarPreset }]`
+  (hasta 3 confirmados, solo nombre de pila) en listas, detalle y recomendados.
+- `GET /events/:id/confirmed` (autenticado) → `{ data: [{ name, avatarUrl, avatarPreset }] }`: todos los confirmados
+  (máx. 200, por orden de confirmación), solo nombre de pila y foto, y solo de eventos que el usuario puede ver
+  (un borrador ajeno responde 404). Alimenta la lista de "quiénes van". `Event.organizer` suma `avatarUrl` y
+  `avatarPreset`; `GET /events/:id/attendees` (organizador) suma los mismos dos campos por asistente.
+- Prioridad al mostrar: foto subida → avatar elegido → foto de Google (`user_metadata`) → iniciales.
+
+### Mapa de eventos (P6)
+
+- `Event` suma `latitude` y `longitude` (números o `null`). `POST /events` y `PATCH /events/:id` los aceptan juntos
+  (latitud −90..90, longitud −180..180); una sola de las dos responde 400. En `PATCH`, `null` en las dos quita la ubicación.
+  La base lo exige con checks (`events_coordinates_together`, rangos).
+- **Ubicación automática:** si `POST /events` llega sin `latitude`/`longitude`, o `PATCH /events/:id` edita un evento que aún
+  no tiene ubicación y no trae coordenadas, el backend geocodifica el texto de `location` (versiones cada vez más cortas, máx.
+  4 intentos). Si no logra ubicarlo, guarda el evento igual. `latitude: null, longitude: null` explícitos significan "sin ubicación".
+- `GET /geocode?q=…` (organizador; `q` de 3 a 120 caracteres) → `{ data: [{ label, lat, lng }] }` (máx. 5). Busca en
+  Nominatim (OpenStreetMap) **desde el backend**: limitada a Colombia y sesgada hacia Medellín, máximo 1 petición por
+  segundo (cola), `User-Agent` con el nombre del proyecto y caché en memoria de 24 h. Si Nominatim falla: 502 `GEOCODE_UNAVAILABLE`.
+- La ubicación del dispositivo **no** pasa por la API: la distancia "a 1,8 km" se calcula en el navegador.
 
 ### Paneles (RF-18, RF-19)
 
@@ -208,7 +302,9 @@ Leen la tabla `notifications` (`message`, `read_at`) del usuario. El envío por 
 | POST | `/availability` | org | `{ startsAt, endsAt }` futuro, `endsAt > startsAt`, duración máx. 8 h | 201 bloque |
 | DELETE | `/availability/:id` | dueño | — | 204 |
 
-No se validan cruces entre bloques (alcance básico, así lo dice RF-15).
+Una franja no puede cruzarse con otra del mismo organizador → 409 `SLOT_OVERLAP`. Las que solo se tocan
+(una termina 5:00 p. m. y la otra empieza 5:00 p. m.) no se cruzan. Lo impone la base (`database.md` §2), también
+con dos peticiones simultáneas. Borrar una franja no toca las citas ya agendadas dentro de ella.
 
 ### Citas y reuniones (RF-14)
 
@@ -222,6 +318,11 @@ No se validan cruces entre bloques (alcance básico, así lo dice RF-15).
 Crear cita: `title` 3–100, `notes` 0–1000, `location` 0–200, `startsAt` futuro, `endsAt > startsAt`,
 `participantIds` arreglo de 1 a 30 uuids de perfiles con rol `participant`. Envía `appointment_created`
 a cada invitado. Cancelar envía `appointment_cancelled`; si ya estaba cancelada → `APPOINTMENT_NOT_ACTIVE`.
+
+Reglas de horario (las impone la base, `database.md` §2, también con dos peticiones simultáneas):
+la cita debe quedar **completa dentro de una sola franja** del organizador → si no, 409 `APPOINTMENT_OUTSIDE_SLOT`;
+y no puede cruzarse con otra cita **programada** del mismo organizador → 409 `APPOINTMENT_OVERLAP`
+(las canceladas no bloquean). En ambos casos no se crea la cita ni se avisa a nadie.
 
 ## 4. Correos (RF-16, RF-17)
 

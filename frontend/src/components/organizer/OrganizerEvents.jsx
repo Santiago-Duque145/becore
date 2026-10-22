@@ -2,7 +2,9 @@ import { Link } from 'react-router';
 import { Badge } from '../ui/index.js';
 import { capacityState } from '../ui/CapacityBar.jsx';
 import { cn } from '../../lib/cn.js';
+import { capacityText } from '../../lib/capacity.js';
 import { formatDate } from '../../lib/format.js';
+import { FinishEventButton } from '../events/FinishEventButton.jsx';
 import { CATEGORY_STYLE, canEditEvent, eventRowStatus } from './organizer-ui.js';
 
 const BAR_COLOR = { open: 'bg-accent', almost_full: 'bg-action', full: 'bg-ink-faint' };
@@ -22,8 +24,9 @@ function CategoryBox({ category }) {
   );
 }
 
-// Barra corta de la tabla (120 px) con "24 / 40" debajo
+// Barra corta de la tabla (120 px) con "Confirmados 24 de 40" y los cupos disponibles debajo
 function MiniCapacity({ event }) {
+  const text = capacityText(event.confirmedCount, event.capacity);
   const percent =
     event.capacity > 0 ? Math.min((event.confirmedCount / event.capacity) * 100, 100) : 0;
   return (
@@ -33,7 +36,7 @@ function MiniCapacity({ event }) {
         aria-valuemin={0}
         aria-valuemax={event.capacity}
         aria-valuenow={Math.min(event.confirmedCount, event.capacity)}
-        aria-label={`${event.confirmedCount} de ${event.capacity} cupos ocupados`}
+        aria-label={`${text.confirmed}. ${text.available}`}
         className="h-1.5 w-[120px] overflow-hidden rounded-full bg-line"
       >
         <div
@@ -44,14 +47,14 @@ function MiniCapacity({ event }) {
           style={{ width: `${percent}%` }}
         />
       </div>
-      <p className="mt-1 text-[11px] text-ink-muted tabular-nums">
-        {event.confirmedCount} / {event.capacity}
-      </p>
+      <p className="mt-1 text-[11px] font-semibold text-ink tabular-nums">{text.confirmed}</p>
+      <p className="text-[11px] text-ink-muted">{text.available}</p>
     </div>
   );
 }
 
 function RowAction({ event }) {
+  if (event.status === 'in_progress') return <FinishEventButton event={event} size="sm" variant="secondary" />;
   const editable = canEditEvent(event);
   return (
     <Link

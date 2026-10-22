@@ -1,24 +1,39 @@
-import { useId } from 'react';
+import { lazy, Suspense, useEffect, useId, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useEvents } from '../../hooks/useEvents.js';
+import { useEventSearch } from '../../hooks/useEventSearch.js';
+import { useGeolocation } from '../../hooks/useGeolocation.js';
+import { useRecommendedEvents } from '../../hooks/useRecommendedEvents.js';
 import { useMediaQuery } from '../../hooks/useMediaQuery.js';
-import { SearchIcon } from '../../components/icons/index.js';
+import { hasCoordinates, sortByDistance, withDistance } from '../../lib/map.js';
+import { SearchIcon, SparklesIcon } from '../../components/icons/index.js';
 import { EventCard, EventCardSkeleton } from '../../components/events/EventCard.jsx';
-import { Button, Chip, EmptyState, ErrorState, Input, LinkButton } from '../../components/ui/index.js';
-import { CATEGORY_FILTERS, emptyTitle, matchesSearch } from './descubre-filters.js';
+import { NearMeButton } from '../../components/events/NearMeButton.jsx';
+import { Button, Chip, EmptyState, ErrorState, Input, LinkButton, Skeleton } from '../../components/ui/index.js';
+import { CATEGORY_FILTERS, SEARCH_PLACEHOLDER, descubreRequest, emptyTitle, matchesSearch } from './descubre-filters.js';
 import { LiveTicker } from './LiveTicker.jsx';
-import { ParaTiCarousel } from './ParaTiCarousel.jsx';
+import { MapEventList } from './MapEventList.jsx';
+import { ParaTiCarousel, ParaTiSkeleton } from './ParaTiCarousel.jsx';
 import { UpcomingAppointmentsPanel } from './UpcomingAppointmentsPanel.jsx';
 
-// /descubre (mobile-descubre.html y desktop-descubre.html, sin distancia, mapa ni "Cerca de ti").
+// Leaflet pesa: el mapa se descarga solo al entrar en la vista de mapa
+const EventsMap = lazy(() => import('../../components/map/EventsMap.jsx').then((m) => ({ default: m.EventsMap })));
+
+// /descubre (mobile-descubre.html y desktop-descubre.html) con lista o mapa (?vista=mapa), "Cerca de mí" (P6)
+// y orden por cercanía (?orden=cerca). La ubicación solo vive en el navegador: nunca se envía ni se guarda.
 // Categoría (?cat=) y búsqueda (?q=) viven en la URL: el buscador de la barra superior de escritorio
-// escribe el mismo ?q= y al recargar se conserva el filtro.
+// escribe el mismo ?q= y al recargar se conserva el filtro. Desde 2 letras la búsqueda la hace la API (IA7: lenguaje
+// natural, con respaldo clásico) y sus resultados reemplazan la lista y los pines del mapa.
 export default function DescubrePage() {
   const { profile } = useAuth();
   const [params, setParams] = useSearchParams();
   const category = params.get('cat') ?? '';
   const query = params.get('q') ?? '';
+  const view = params.get('vista') === 'mapa' ? 'mapa' : 'lista';
+  const byDistance = params.get('orden') === 'cerca';
+  const geo = useGeolocation();
+  const [selectedId, setSelectedId] = useState(null); // pin resaltado en el mapa
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const showSidePanel = useMediaQuery('(min-width: 1024px)');
   const searchId = useId();
@@ -26,11 +41,31 @@ export default function DescubrePage() {
   // En escritorio el participante busca desde la barra superior; el organizador (barra lateral) aquí
   const showInlineSearch = !isDesktop || isOrganizer;
 
-  const { data, isPending, isError, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = useEvents({
-    scope: 'upcoming',
-    ...(category && { category }),
-  });
-  const events = (data?.pages.flatMap((page) => page.data) ?? []).filter((e) => matchesSearch(e, query));
+  const mapView = view === 'mapa';
+  // Misma petición que precarga el arranque (lib/startup-prefetch.js)
+  const { search: apiSearch, filters, showParaTi } = descubreRequest(params);
+  const recommended = useRecommendedEvents(showParaTi);
+  const list = useEvents(filters, { enabled: !apiSearch });
+  const search = useEventSearch(query, category);
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = list;
+  const { isError, error, refetch } = apiSearch ? search : list;
+  // CLS: mientras pueda haber "Para ti", la lista no se pinta hasta que llegan las dos respuestas. Así el carrusel nunca
+  // empuja tarjetas ya pintadas, y si viene vacío su skeleton desaparece a la vez que llegan las tarjetas.
+  const isPending = apiSearch ? search.isPending : list.isPending || (showParaTi && recommended.isPending);
+  const paraTi = showParaTi && !isPending ? recommended.data : null;
+  // LCP: la primera portada visible (la de "Para ti" si hay, si no la primera de la lista) se pide con prioridad alta
+  const paraTiFirst = paraTi?.events?.length > 0;
+
+  // En el mapa se cargan todos los eventos de una vez (sin "Ver más")
+  useEffect(() => {
+    if (!apiSearch && mapView && hasNextPage && !isFetchingNextPage) fetchNextPage();
+  }, [apiSearch, mapView, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const matching = apiSearch ? search.events : (data?.pages.flatMap((page) => page.data) ?? []).filter((e) => matchesSearch(e, query));
+  // Distancia calculada aquí, en el navegador; sin ubicación todo funciona igual sin distancias
+  const withKm = withDistance(matching, geo.position);
+  const events = byDistance && geo.position ? sortByDistance(withKm) : withKm;
+  const unlocated = events.filter((e) => !hasCoordinates(e)).length;
 
   function setParam(key, value) {
     const next = new URLSearchParams(params);
@@ -72,7 +107,7 @@ export default function DescubrePage() {
               id={searchId}
               type="search"
               icon={SearchIcon}
-              placeholder="Buscar eventos"
+              placeholder={SEARCH_PLACEHOLDER}
               value={query}
               onChange={(e) => setParam('q', e.target.value)}
               enterKeyHint="search"
@@ -96,22 +131,49 @@ export default function DescubrePage() {
           ))}
         </div>
 
-        {!category && !query && <ParaTiCarousel />}
+        <div className="mb-4 flex flex-wrap items-center gap-2.5">
+          <div role="group" aria-label="Vista" className="flex gap-2">
+            <Chip selected={!mapView} onClick={() => setParam('vista', '')}>
+              Lista
+            </Chip>
+            <Chip selected={mapView} onClick={() => setParam('vista', 'mapa')}>
+              Mapa
+            </Chip>
+          </div>
+          {geo.position && (
+            <Chip selected={byDistance} onClick={() => setParam('orden', byDistance ? '' : 'cerca')}>
+              Más cerca primero
+            </Chip>
+          )}
+          <NearMeButton geo={geo} />
+        </div>
+
+        {apiSearch && search.mode === 'semantic' && !isPending && !isError && (
+          <p className="mb-3.5 inline-flex items-center gap-1.5 rounded-full border border-accent/20 bg-accent/10 px-3 py-1 text-xs font-semibold text-accent-soft">
+            <SparklesIcon size={14} />
+            Búsqueda inteligente
+          </p>
+        )}
 
         {isPending && (
-          <div className="grid gap-3.5 md:grid-cols-2 md:gap-[18px] xl:grid-cols-3" aria-busy="true" aria-label="Cargando eventos">
-            {Array.from({ length: 6 }, (_, i) => (
-              <EventCardSkeleton key={i} />
-            ))}
+          <div aria-busy="true" aria-label="Cargando eventos">
+            {showParaTi && <ParaTiSkeleton />}
+            <div className="grid gap-3.5 md:grid-cols-2 md:gap-[18px] xl:grid-cols-3">
+              {Array.from({ length: 6 }, (_, i) => (
+                <EventCardSkeleton key={i} />
+              ))}
+            </div>
           </div>
         )}
+
+        <ParaTiCarousel events={paraTi?.events} emptyReason={paraTi?.emptyReason} priorityFirst />
 
         {isError && <ErrorState message={error.message} onRetry={refetch} />}
 
         {!isPending && !isError && events.length === 0 && (
           <EmptyState
             title={emptyTitle(category, query)}
-            description={query ? 'Prueba con otra palabra.' : undefined}
+            description={query.trim() ? 'Prueba con otras palabras.' : undefined}
             action={
               query ? (
                 <Button variant="secondary" size="sm" onClick={() => setParam('q', '')}>
@@ -129,20 +191,39 @@ export default function DescubrePage() {
           />
         )}
 
-        {events.length > 0 && (
+        {mapView && !isPending && !isError && (
+          <section aria-label="Eventos en el mapa">
+            <Suspense fallback={<Skeleton className="h-[60dvh] min-h-[320px] md:h-[520px]" />}>
+              <EventsMap events={events} userPosition={geo.position} selectedId={selectedId} onSelect={setSelectedId} className="h-[60dvh] min-h-[320px] md:h-[520px]" />
+            </Suspense>
+            {unlocated > 0 && (
+              <p className="mt-2 text-xs text-ink-muted">
+                {unlocated === 1 ? '1 evento no tiene' : `${unlocated} eventos no tienen`} ubicación en el mapa; aparecen en la lista de abajo.
+              </p>
+            )}
+            {events.length > 0 && <MapEventList events={events} selectedId={selectedId} onSelect={setSelectedId} />}
+          </section>
+        )}
+
+        {!mapView && events.length > 0 && (
           <>
             <h2 className="sr-only">Próximos eventos</h2>
             <ul className="grid gap-3.5 md:grid-cols-2 md:gap-[18px] xl:grid-cols-3">
-              {events.map((event) => (
+              {events.map((event, index) => (
                 <li key={event.id} className="flex">
-                  <EventCard event={event} className="w-full" />
+                  <EventCard
+                    event={event}
+                    priority={index === 0 && !paraTiFirst}
+                    onOpen={apiSearch ? search.onOpen(event.id) : undefined}
+                    className="w-full"
+                  />
                 </li>
               ))}
             </ul>
           </>
         )}
 
-        {hasNextPage && !isError && (
+        {!apiSearch && !mapView && hasNextPage && !isError && (
           <div className="mt-5 flex justify-center">
             <Button variant="secondary" onClick={() => fetchNextPage()} loading={isFetchingNextPage}>
               Ver más

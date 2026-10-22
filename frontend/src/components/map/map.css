@@ -1,0 +1,103 @@
+/* Estilo del mapa (P6): Leaflet adaptado al tema oscuro con los tokens de la marca. Se carga junto al mapa
+   (carga diferida), no en el bundle inicial. */
+.leaflet-container {
+  font-family: inherit;
+  background: var(--color-bg);
+  color: var(--color-ink);
+}
+
+.leaflet-container a {
+  color: var(--color-accent-soft);
+}
+
+/* Respaldo raster: las teselas de OpenStreetMap son claras, así que se invierten y se les devuelve el tono
+   (hue-rotate) para que agua, parques y calles sigan reconociéndose, y se ajustan al azul de la marca.
+   El filtro aplica SOLO cuando el mapa cayó al respaldo (data-basemap="raster") y solo a la capa de teselas: el
+   mapa vectorial ya viene oscuro y los pines, popups y controles viven en otros paneles y no se tocan. */
+[data-basemap='raster'] .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.78) contrast(0.92) saturate(0.55);
+}
+
+/* Evita las líneas finas entre teselas (costuras) que aparecen con filtros en pantallas de alta densidad */
+.leaflet-tile {
+  outline: 1px solid transparent;
+  image-rendering: auto;
+}
+
+/* El lienzo de MapLibre no necesita el filtro ni recibe clics (los pines son de Leaflet) */
+.leaflet-gl-layer {
+  pointer-events: none;
+}
+
+/* Atribución obligatoria de las teselas: siempre visible y legible */
+.leaflet-control-attribution {
+  background: color-mix(in srgb, var(--color-bg) 78%, transparent) !important;
+  color: var(--color-ink-muted) !important;
+  font-size: 10px;
+}
+
+.leaflet-bar a,
+.leaflet-bar a:hover {
+  background: var(--color-panel);
+  color: var(--color-ink);
+  border-color: var(--color-line);
+}
+
+.leaflet-bar a:hover {
+  background: var(--color-field);
+}
+
+.leaflet-touch .leaflet-bar a {
+  width: 36px;
+  height: 36px;
+  line-height: 36px;
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--color-panel);
+  color: var(--color-ink);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.45);
+}
+
+.leaflet-popup-content {
+  margin: 12px 14px;
+}
+
+.leaflet-container a.leaflet-popup-close-button {
+  color: var(--color-ink-muted);
+}
+
+.leaflet-marker-icon:focus-visible {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: 3px;
+  border-radius: 50%;
+}
+
+/* Pines (SVG del mockup, ver pins.js): sin fondo de Leaflet y con una sombra suave para despegarlos del mapa */
+.becore-pin-icon {
+  background: none;
+  border: 0;
+}
+
+.becore-pin {
+  display: block;
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 0.55));
+}
+
+/* "Tú estás aquí" */
+.becore-user {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-accent-soft);
+  border: 3px solid var(--color-bg);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent-soft) 35%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .leaflet-fade-anim .leaflet-popup {
+    transition: opacity 0.15s linear;
+  }
+}

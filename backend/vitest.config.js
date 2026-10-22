@@ -4,6 +4,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     passWithNoTests: true,
+    setupFiles: ['./tests/setup.js'],
     exclude: ['tests/integration/**', 'node_modules/**'],
     env: {
       NODE_ENV: 'test',
@@ -18,6 +19,8 @@ export default defineConfig({
       MAIL_FROM: '',
       REMINDER_HOURS_BEFORE: '24',
       CRON_ENABLED: 'false',
+      AI_ENABLED: 'false',
+      GEMINI_API_KEY: '',
     },
   },
 });

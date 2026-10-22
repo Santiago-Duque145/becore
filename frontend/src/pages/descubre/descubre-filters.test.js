@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { emptyTitle, matchesSearch } from './descubre-filters.js';
+import { emptyTitle, isApiSearch, matchesSearch } from './descubre-filters.js';
 
 describe('matchesSearch', () => {
   const event = { title: 'Torneo de fútbol', location: 'Cancha de Belén' };
@@ -23,6 +23,14 @@ describe('emptyTitle', () => {
 
   it('sin filtro y con búsqueda', () => {
     expect(emptyTitle('', '')).toBe('Todavía no hay eventos próximos.');
-    expect(emptyTitle('sport', ' zumba ')).toBe('No encontramos eventos con “zumba”.');
+    expect(emptyTitle('sport', ' zumba ')).toBe('No encontramos planes así.');
+  });
+});
+
+describe('isApiSearch', () => {
+  it('desde 2 letras (sin contar espacios) busca la API', () => {
+    expect(isApiSearch('f')).toBe(false);
+    expect(isApiSearch(' f ')).toBe(false);
+    expect(isApiSearch('fu')).toBe(true);
   });
 });

@@ -69,7 +69,17 @@ Divisor + `GoogleButton`. Pie: "¿Ya tienes cuenta? **Inicia sesión**".
 Errores: correo existente → "Ese correo ya tiene cuenta. ¿Quieres iniciar sesión?" (con enlace).
 Si Supabase pide confirmación de correo: pantalla "Revisa tu correo para activar la cuenta" con botón "Ya lo confirmé". Si no la pide: ir directo a `/bienvenida`.
 
-## 6. Onboarding (`/bienvenida`) — 5 pasos
+> **Actualización 2026-10-21 (pedido del director, 2026-10-17):** el onboarding pasa a **6 pasos**: después del rol va
+> "Cuéntanos un poco de ti" (sexo y rango de edad, opcionales, elección única; tocar la elegida la quita). Los pasos de
+> abajo se numeran desde el 3 (gustos = 3, disponibilidad = 4, motivación = 5, zona = 6). Sexo y edad solo alimentan
+> estadísticas agregadas: **no** entran en `scoreEvent` ni se envían a IA. Además, `/registro` exige la casilla
+> "Acepto la política de tratamiento de datos personales" (enlace a `/privacidad`); el consentimiento es **obligatorio para todos**, sin "Ahora no": quien entra por Google (onboarding pendiente, sin
+> `data_consent_at`) lo acepta en el **primer paso de /bienvenida** (7 pasos); una cuenta vieja (onboarding completo) ve un
+> **diálogo modal** cuya única salida es aceptar o "Salir" (cierra sesión); el diálogo nunca aparece con el onboarding
+> pendiente. El paso "Cuéntanos un poco de ti" se precarga con `gender` y `age_range` si ya existen.
+> Detalle en `docs/progreso/05_*`.
+
+## 6. Onboarding (`/bienvenida`) — 6 pasos (los 5 originales + datos opcionales)
 
 Pantalla completa en `bg`. Arriba: botón atrás (desde el paso 2), `ProgressSteps` de 5 y "Omitir" (enlace pequeño a la derecha). Abajo fijo (con safe-area): botón primario "Continuar" (en el último: "Ver mis eventos"). Transición entre pasos: fade + 8 px de desplazamiento, 200 ms. El estado vive en un solo `useReducer`; volver atrás no borra nada. Ningún paso es obligatorio salvo el 1.
 
@@ -96,7 +106,7 @@ fun "Divertirme" · compete "Competir" · learn "Aprender algo nuevo" · meet_pe
 **Paso 5 — "¿Por dónde te mueves?"** · sub "Así te mostramos planes cerca. Es opcional."
 Input de texto "Barrio o zona" (placeholder "Ej.: Belén, Laureles, Envigado"), máx. 80. Sin GPS.
 
-**Final:** pantalla breve "¡Listo, {nombre}! Ya tenemos planes para ti" con check animado (respeta `motion-reduce`), y a los 1.2 s → `/descubre`.
+**Final:** pantalla breve "¡Listo, {nombre}! Ya tenemos planes para ti" con check animado y confeti en CSS (24 piezas con los colores de la marca, 1.5 s; P1), y a los 1.6 s → `/descubre` (1.2 s y sin confeti con `prefers-reduced-motion`).
 **Omitir** (en cualquier paso): guarda lo que haya + rol, y marca el onboarding como completado.
 
 ## 7. API (Express, validación Zod, errores con el formato de `docs/specs/api.md`)

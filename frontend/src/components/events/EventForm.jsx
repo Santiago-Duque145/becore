@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react';
+import { lazy, Suspense, useId, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -11,9 +11,17 @@ import {
   formValuesToPayload,
 } from '../../lib/event-schema.js';
 import { bogotaInputToIso } from '../../lib/format.js';
-import { Button, Field, Input, Select, Textarea, useToast } from '../ui/index.js';
+import { Button, Field, Input, Select, Skeleton, Textarea, useToast } from '../ui/index.js';
+import { CoverUpload } from './CoverUpload.jsx';
+import { requestCoverUpload } from '../../services/events.api.js';
+import { uploadToTarget } from '../../services/storage.js';
 import { CapacityStepper, CategoryPicker } from './EventFormControls.jsx';
 import { EventCard } from './EventCard.jsx';
+import { DraftAssistant } from './DraftAssistant.jsx';
+import { useApplyDraft } from './useApplyDraft.js';
+
+// Leaflet pesa: el selector de ubicación se descarga solo al abrir el formulario
+const LocationPicker = lazy(() => import('../map/LocationPicker.jsx'));
 
 const FIELDS = ['title', 'description', 'category', 'location', 'startsAt', 'endsAt', 'capacity'];
 
@@ -28,7 +36,7 @@ export const EMPTY_EVENT_VALUES = {
 };
 
 // Tarjeta de vista previa con lo que lleva escrito el organizador
-function previewEvent(values) {
+function previewEvent(values, coverUrl) {
   let startsAt = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString();
   try {
     if (values.startsAt) startsAt = new Date(bogotaInputToIso(values.startsAt)).toISOString();
@@ -37,6 +45,7 @@ function previewEvent(values) {
   }
   return {
     id: 'vista-previa',
+    coverUrl,
     title: values.title.trim() || 'Título del evento',
     category: values.category || 'other',
     location: values.location.trim() || 'Lugar del evento',
@@ -58,6 +67,9 @@ export function EventForm({
   onSubmit,
   onCancel,
   keepDuration = false,
+  initialCoverUrl = null,
+  initialPlace = null,
+  assistant = false, // IA8: tarjeta "Describe tu evento en una frase" (solo al crear)
 }) {
   const toast = useToast();
   const capacityId = useId();
@@ -67,6 +79,8 @@ export function EventForm({
     handleSubmit,
     setError,
     watch,
+    getValues,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(eventFormSchema),
@@ -74,9 +88,13 @@ export function EventForm({
     mode: 'onTouched',
   });
   const values = watch();
+  const [cover, setCover] = useState({ blob: null, previewUrl: null, removed: false });
+  const [place, setPlace] = useState(initialPlace); // { lat, lng } | null
   // Qué botón envió (borrador / publicar / guardar): se fija al hacer clic, antes del submit
   const intentRef = useRef(actions.at(-1).intent);
   const [pendingIntent, setPendingIntent] = useState(null);
+  const draft = useApplyDraft({ getValues, setValue, place, setPlace });
+  const hl = (name) => (draft.filled.has(name) ? 'rounded-field animate-draft-fill motion-reduce:animate-none' : '');
   const descriptionLength = values.description?.length ?? 0;
   const initialDuration = Number(initialValues.durationMinutes);
   const extraDuration =
@@ -86,7 +104,23 @@ export function EventForm({
     const intent = intentRef.current;
     setPendingIntent(intent);
     try {
-      await onSubmit(formValuesToPayload(formValues), intent);
+      const payload = formValuesToPayload(formValues);
+      // La imagen se sube al enviar (no al elegirla) para no dejar archivos huérfanos si se cancela
+      if (cover.blob) {
+        const { data: target } = await requestCoverUpload(cover.blob.type);
+        payload.coverPath = await uploadToTarget(target, cover.blob);
+      } else if (cover.removed) {
+        payload.coverPath = null;
+      }
+      // Ubicación: con pin se envían las dos coordenadas; si había y se quitó, null en las dos; si no, nada
+      if (place) {
+        payload.latitude = place.lat;
+        payload.longitude = place.lng;
+      } else if (initialPlace) {
+        payload.latitude = null;
+        payload.longitude = null;
+      }
+      await onSubmit(payload, intent);
     } catch (error) {
       const fieldErrors = (error.details ?? []).filter((d) => FIELDS.includes(d.field));
       fieldErrors.forEach((d) =>
@@ -107,28 +141,36 @@ export function EventForm({
         className="min-w-0 flex-1 rounded-card border border-line bg-panel p-5"
         noValidate
       >
-        <Field label="Título" error={errors.title?.message}>
+        {assistant && <DraftAssistant onDraft={draft.apply} onUndo={draft.undo} canUndo={draft.canUndo} />}
+        <Field label="Título" error={errors.title?.message} className={hl('title')}>
           <Input placeholder="Ej.: Torneo barrial de fútbol" {...register('title')} />
         </Field>
 
-        <Controller
-          name="category"
-          control={control}
-          render={({ field }) => (
-            <CategoryPicker
-              value={field.value}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              error={errors.category?.message}
-            />
-          )}
-        />
+        <div className={hl('category')}>
+          <Controller
+            name="category"
+            control={control}
+            render={({ field }) => (
+              <CategoryPicker
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                error={errors.category?.message}
+              />
+            )}
+          />
+        </div>
 
         <div className="grid gap-x-4 md:grid-cols-2">
-          <Field label="Fecha y hora" hint="Hora de Colombia" error={errors.startsAt?.message}>
+          <Field label="Fecha y hora" hint="Hora de Colombia" error={errors.startsAt?.message} className={hl('startsAt')}>
             <Input type="datetime-local" {...register('startsAt')} />
           </Field>
-          <Field label="Duración (opcional)" error={errors.durationMinutes?.message}>
+          <Field
+            label="Duración (opcional)"
+            hint="Si no la defines, el evento termina 2 horas después de empezar. Igual puedes finalizarlo cuando quieras."
+            error={errors.durationMinutes?.message}
+            className={hl('durationMinutes')}
+          >
             <Select {...register('durationMinutes')}>
               {!keepDuration && <option value="">Sin definir</option>}
               {extraDuration && (
@@ -145,15 +187,22 @@ export function EventForm({
           </Field>
         </div>
 
-        <Field label="Lugar" error={errors.location?.message}>
+        <Field label="Lugar" error={errors.location?.message} className={hl('location')}>
           <Input placeholder="Ej.: Cancha La Floresta, Medellín" {...register('location')} />
         </Field>
+
+        <div className={hl('pin')}>
+          <Suspense fallback={<Skeleton className="mb-4 h-72" />}>
+            <LocationPicker value={place} onChange={setPlace} />
+          </Suspense>
+        </div>
 
         <Field
           label="Cupo máximo"
           id={capacityId}
           hint={`Entre ${CAPACITY_MIN} y ${CAPACITY_MAX} personas`}
           error={errors.capacity?.message}
+          className={hl('capacity')}
         >
           <Controller
             name="capacity"
@@ -173,10 +222,13 @@ export function EventForm({
           />
         </Field>
 
+        <CoverUpload value={cover} existingUrl={initialCoverUrl} onChange={setCover} />
+
         <Field
           label="Descripción (opcional)"
           hint={`${descriptionLength} / ${DESCRIPTION_MAX}`}
           error={errors.description?.message}
+          className={hl('description')}
         >
           <Textarea
             rows={4}
@@ -211,7 +263,7 @@ export function EventForm({
         <p className="mb-2.5 text-xs font-semibold text-ink-muted">
           Así lo verán los participantes
         </p>
-        <EventCard event={previewEvent(values)} preview />
+        <EventCard event={previewEvent(values, cover.previewUrl ?? (cover.removed ? null : initialCoverUrl))} preview />
       </aside>
     </div>
   );

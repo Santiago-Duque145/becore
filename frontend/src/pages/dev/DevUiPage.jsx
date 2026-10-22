@@ -20,7 +20,8 @@ import {
 } from '../../components/ui/index.js';
 import { CalendarIcon, UsersIcon } from '../../components/icons/index.js';
 import { STATUS_BADGES } from '../../components/ui/Badge.jsx';
-import { FieldsDemo, IconGrid, Section, Swatches, Typography } from './dev-sections.jsx';
+import { FieldsDemo, GeoQrDemo, IconGrid, Section, Swatches, Typography } from './dev-sections.jsx';
+import { LoadersDemo } from './LoadersDemo.jsx';
 
 // Página de verificación del sistema de diseño (solo en desarrollo): /dev/ui
 export default function DevUiPage() {
@@ -166,6 +167,8 @@ export default function DevUiPage() {
         </div>
       </Section>
 
+      <LoadersDemo />
+
       <Section title="EmptyState · ErrorState">
         <div className="grid gap-4 md:grid-cols-2">
           <EmptyState
@@ -203,7 +206,7 @@ export default function DevUiPage() {
 
       <Section title="CapacityBar">
         <div className="grid gap-5 md:grid-cols-2">
-          <CapacityBar confirmedCount={24} capacity={40} label="Cupos disponibles" live />
+          <CapacityBar confirmedCount={24} capacity={40} live />
           <CapacityBar confirmedCount={46} capacity={50} />
           <CapacityBar confirmedCount={30} capacity={30} />
           <CapacityBar confirmedCount={0} capacity={12} />
@@ -225,6 +228,10 @@ export default function DevUiPage() {
             </Button>
           </div>
         </Modal>
+      </Section>
+
+      <Section title="NearMeButton · QrCode">
+        <GeoQrDemo />
       </Section>
 
       <Section title="Íconos">

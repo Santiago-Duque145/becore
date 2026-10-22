@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Link, Navigate, useLocation } from 'react-router';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { loginSchema } from '../../lib/auth-schemas.js';
 import { destinationAfterAuth, fromState } from '../../lib/auth-redirect.js';
@@ -9,14 +9,18 @@ import { AuthLayout } from '../../layouts/AuthLayout.jsx';
 import { FormAlert } from '../../components/auth/FormAlert.jsx';
 import { GoogleSignIn } from '../../components/auth/GoogleSignIn.jsx';
 import { AuthLink } from '../../components/auth/AuthLink.jsx';
+import { resendSignupCode } from '../../services/auth-otp.js';
 import { Button, Field, Input, PasswordInput } from '../../components/ui/index.js';
 
 // Login con los valores exactos de mobile-login.html (auth-onboarding §4)
 export default function LoginPage() {
   const { session, profile, loading, signIn } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const from = fromState(location);
   const [formError, setFormError] = useState(null);
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState(null); // cuenta creada pero sin confirmar
+  const [sendingCode, setSendingCode] = useState(false);
   const {
     register,
     handleSubmit,
@@ -32,10 +36,25 @@ export default function LoginPage() {
 
   async function onSubmit(values) {
     setFormError(null);
+    setUnconfirmedEmail(null);
     try {
       await signIn(values);
     } catch (error) {
+      if (error.code === 'email_not_confirmed') setUnconfirmedEmail(values.email);
+      else setFormError(error.message);
+    }
+  }
+
+  // "Enviarme un código": reenvía el código de confirmación y lleva a escribirlo en /verificar
+  async function sendCode() {
+    setSendingCode(true);
+    setFormError(null);
+    try {
+      await resendSignupCode(unconfirmedEmail);
+      navigate(`/verificar?email=${encodeURIComponent(unconfirmedEmail)}`, { state: location.state });
+    } catch (error) {
       setFormError(error.message);
+      setSendingCode(false);
     }
   }
 
@@ -81,6 +100,14 @@ export default function LoginPage() {
           Iniciar sesión
         </Button>
         <FormAlert className="mt-3">{formError}</FormAlert>
+        {unconfirmedEmail && (
+          <div role="alert" className="mt-3 rounded-field border border-action/30 bg-action/10 p-3.5">
+            <p className="mb-2.5 text-[13px] font-semibold text-action">Tu cuenta aún no está confirmada.</p>
+            <Button variant="secondary" size="sm" onClick={sendCode} loading={sendingCode}>
+              Enviarme un código
+            </Button>
+          </div>
+        )}
       </form>
 
       <GoogleSignIn from={from} disabled={busy} />

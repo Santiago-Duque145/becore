@@ -5,6 +5,7 @@ vi.mock('nodemailer', () => ({ default: { createTransport } }));
 
 import { sendMail } from '../src/mail/mailer.js';
 import { TEMPLATES } from '../src/mail/templates.js';
+import { env } from '../src/config/env.js';
 
 const mail = { subject: 'Hola', html: '<p>Hola</p>', text: 'Hola' };
 
@@ -25,9 +26,9 @@ describe('plantillas', () => {
   const event = { title: 'Partido <5v5>', startsAt: '2026-10-31T20:00:00.000Z', location: 'Cancha' };
   const appointment = { title: 'Reunión', startsAt: '2026-10-31T20:00:00.000Z', location: '', notes: '' };
 
-  it('cubren los 6 tipos con asunto, mensaje corto, html y texto', () => {
+  it('cubren los 7 tipos con asunto, mensaje corto, html y texto', () => {
     expect(Object.keys(TEMPLATES).sort()).toEqual(
-      ['appointment_cancelled', 'appointment_created', 'appointment_reminder', 'event_cancelled', 'event_reminder', 'event_updated'],
+      ['appointment_cancelled', 'appointment_created', 'appointment_reminder', 'event_cancelled', 'event_rating_request', 'event_reminder', 'event_updated'],
     );
     for (const [type, build] of Object.entries(TEMPLATES)) {
       const out = build(type.startsWith('event') ? event : appointment);
@@ -45,6 +46,21 @@ describe('plantillas', () => {
     expect(TEMPLATES.appointment_created(appointment).subject).toBe('Nueva cita: Reunión');
     expect(TEMPLATES.appointment_reminder(appointment).subject).toBe('Recordatorio de cita: Reunión');
     expect(TEMPLATES.appointment_cancelled(appointment).subject).toBe('Se canceló la cita: Reunión');
+  });
+
+  it('enlaces con APP_URL y, si falta, con FRONTEND_URL', () => {
+    const withId = { ...event, id: 'abc-123' };
+    expect(TEMPLATES.event_reminder(withId).text).toContain('Ver el evento: http://localhost:5173/eventos/abc-123');
+    expect(TEMPLATES.appointment_created(appointment).html).toContain('href="http://localhost:5173/citas"');
+
+    env.APP_URL = 'https://demo-uno.trycloudflare.com/';
+    try {
+      expect(TEMPLATES.event_updated(withId).html).toContain('href="https://demo-uno.trycloudflare.com/eventos/abc-123"');
+      expect(TEMPLATES.appointment_reminder(appointment).text).toContain('https://demo-uno.trycloudflare.com/citas');
+    } finally {
+      delete env.APP_URL;
+    }
+    expect(TEMPLATES.event_cancelled(event).text).not.toContain('Ver el evento');
   });
 
   it('escapa HTML del título y recorta el mensaje a 500 caracteres', () => {

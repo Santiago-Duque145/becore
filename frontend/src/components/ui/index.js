@@ -1,16 +1,21 @@
 // Componentes base de Be Core (skill becore-ui §3). Importa siempre desde aquí.
 export { Avatar } from './Avatar.jsx';
+export { PreviewableAvatar } from './PreviewableAvatar.jsx';
 export { Badge, CATEGORY_TONES, STATUS_BADGES } from './Badge.jsx';
+export { BrandLoader, CategoryGlyph } from './BrandLoader.jsx';
 export { BrandMark } from './BrandMark.jsx';
-export { Button, LinkButton } from './Button.jsx';
+export { Button, ExternalLinkButton, LinkButton } from './Button.jsx';
 export { CapacityBar, capacityState } from './CapacityBar.jsx';
+export { Checkbox } from './Checkbox.jsx';
 export { Chip } from './Chip.jsx';
 export { Divider } from './Divider.jsx';
 export { EmptyState } from './EmptyState.jsx';
 export { ErrorState } from './ErrorState.jsx';
 export { Field } from './Field.jsx';
+export { FullScreenLoader } from './FullScreenLoader.jsx';
 export { GoogleButton } from './GoogleButton.jsx';
 export { Input } from './Input.jsx';
+export { LoadingDots } from './LoadingDots.jsx';
 export { Modal } from './Modal.jsx';
 export { OptionCard } from './OptionCard.jsx';
 export { PasswordInput } from './PasswordInput.jsx';

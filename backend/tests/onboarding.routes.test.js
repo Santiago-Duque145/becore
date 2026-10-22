@@ -18,7 +18,7 @@ vi.mock('../src/repositories/preferences.repository.js', () => ({
 }));
 
 import { supabaseAdmin } from '../src/config/supabase.js';
-import { completeOnboarding, findProfileById } from '../src/repositories/profiles.repository.js';
+import { completeOnboarding, findProfileById, updateProfile } from '../src/repositories/profiles.repository.js';
 import { findPreferencesByUserId, upsertPreferences } from '../src/repositories/preferences.repository.js';
 
 const pendingUser = {
@@ -95,7 +95,7 @@ describe('PUT /api/v1/me/onboarding', () => {
       motivations: ['fun', 'meet_people'],
       zone: 'Belén',
     });
-    expect(completeOnboarding).toHaveBeenCalledWith('user-uuid', 'organizer');
+    expect(completeOnboarding).toHaveBeenCalledWith('user-uuid', 'organizer', {});
     expect(res.body.data).toMatchObject({ role: 'organizer', onboardingCompleted: true });
     expect(res.body.data.preferences.categories).toEqual(['sport', 'culture']);
   });
@@ -176,5 +176,142 @@ describe('PUT /api/v1/me/preferences', () => {
     const res = await put('/me/preferences', { motivations: ['dinero'] });
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('VALIDATION_ERROR');
+  });
+});
+
+describe('sexo y rango de edad (opcionales, solo estadísticas)', () => {
+  it('onboarding pendiente: los guarda junto con el rol', async () => {
+    loginAs(pendingUser);
+    completeOnboarding.mockResolvedValue({ ...pendingUser, onboardingCompletedAt: 'ahora', gender: 'female', ageRange: '25-34' });
+    const res = await put('/me/onboarding', { ...answers, role: 'participant', gender: 'female', ageRange: '25-34' });
+    expect(res.status).toBe(200);
+    expect(completeOnboarding).toHaveBeenCalledWith('user-uuid', 'participant', { gender: 'female', ageRange: '25-34' });
+    expect(res.body.data).toMatchObject({ gender: 'female', ageRange: '25-34' });
+  });
+
+  it('nunca llegan a user_preferences (no se usan para recomendar)', async () => {
+    loginAs(pendingUser);
+    completeOnboarding.mockResolvedValue({ ...pendingUser, onboardingCompletedAt: 'ahora' });
+    await put('/me/onboarding', { ...answers, role: 'participant', gender: 'male', ageRange: '18-24' });
+    const [, row] = upsertPreferences.mock.calls[0];
+    expect(row).not.toHaveProperty('gender');
+    expect(row).not.toHaveProperty('ageRange');
+  });
+
+  it.each([
+    ['sexo fuera de lista', { gender: 'robot' }, 'gender'],
+    ['rango de edad fuera de lista', { ageRange: '12-17' }, 'ageRange'],
+  ])('%s → 400 VALIDATION_ERROR', async (_name, override, field) => {
+    loginAs(pendingUser);
+    const res = await put('/me/onboarding', { ...answers, ...override });
+    expect(res.status).toBe(400);
+    expect(res.body.error.details.map((d) => d.field)).toContain(field);
+    expect(upsertPreferences).not.toHaveBeenCalled();
+  });
+
+  it('GET /me: expone dataConsentAccepted y oculta la fecha', async () => {
+    loginAs({ ...completedUser, dataConsentAt: '2026-10-21T00:00:00.000Z' });
+    findPreferencesByUserId.mockResolvedValue(null);
+    const res = await request(app).get('/api/v1/me').set('Authorization', 'Bearer valid-token');
+    expect(res.body.data.dataConsentAccepted).toBe(true);
+    expect(res.body.data).not.toHaveProperty('dataConsentAt');
+
+    loginAs({ ...completedUser, dataConsentAt: null });
+    const old = await request(app).get('/api/v1/me').set('Authorization', 'Bearer valid-token');
+    expect(old.body.data.dataConsentAccepted).toBe(false);
+  });
+});
+
+describe('PUT /api/v1/me/consent', () => {
+  it('sin token → 401', async () => {
+    const res = await request(app).put('/api/v1/me/consent').send({});
+    expect(res.status).toBe(401);
+  });
+
+  it('primera vez: guarda data_consent_at y los datos opcionales', async () => {
+    loginAs({ ...completedUser, dataConsentAt: null });
+    updateProfile.mockImplementation((_id, fields) => Promise.resolve({ ...completedUser, ...fields }));
+    const res = await put('/me/consent', { gender: 'other', ageRange: '55+' });
+    expect(res.status).toBe(200);
+    const [, fields] = updateProfile.mock.calls[0];
+    expect(fields).toMatchObject({ gender: 'other', ageRange: '55+' });
+    expect(typeof fields.dataConsentAt).toBe('string');
+    expect(res.body.data.dataConsentAccepted).toBe(true);
+  });
+
+  it('sin datos opcionales basta con aceptar; no toca sexo ni edad', async () => {
+    loginAs({ ...completedUser, dataConsentAt: null });
+    updateProfile.mockImplementation((_id, fields) => Promise.resolve({ ...completedUser, ...fields }));
+    const res = await put('/me/consent', {});
+    expect(res.status).toBe(200);
+    const [, fields] = updateProfile.mock.calls[0];
+    expect(fields.gender).toBeUndefined();
+    expect(fields.ageRange).toBeUndefined();
+  });
+
+  it('reenviar no mueve la fecha de la primera aceptación', async () => {
+    loginAs({ ...completedUser, dataConsentAt: '2026-10-21T00:00:00.000Z' });
+    updateProfile.mockImplementation((_id, fields) => Promise.resolve({ ...completedUser, ...fields }));
+    await put('/me/consent', {});
+    expect(updateProfile.mock.calls[0][1].dataConsentAt).toBe('2026-10-21T00:00:00.000Z');
+  });
+
+  it('valor fuera de lista → 400 y no escribe', async () => {
+    loginAs(completedUser);
+    const res = await put('/me/consent', { gender: 'x' });
+    expect(res.status).toBe(400);
+    expect(updateProfile).not.toHaveBeenCalled();
+  });
+});
+
+describe('PATCH /api/v1/me con sexo y edad', () => {
+  const patch = (body) => request(app).patch('/api/v1/me').set('Authorization', 'Bearer valid-token').send(body);
+
+  it('solo sexo y edad (sin nombre) → 200; null borra el dato', async () => {
+    loginAs(completedUser);
+    updateProfile.mockResolvedValue({ ...completedUser, gender: null, ageRange: '35-44' });
+    const res = await patch({ gender: null, ageRange: '35-44' });
+    expect(res.status).toBe(200);
+    expect(updateProfile).toHaveBeenCalledWith('user-uuid', { gender: null, ageRange: '35-44' });
+  });
+
+  it('cuerpo vacío → 400', async () => {
+    loginAs(completedUser);
+    const res = await patch({});
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('consentimiento en el onboarding (primer paso para quien entró por Google)', () => {
+  it('consent: true guarda data_consent_at junto con el rol', async () => {
+    loginAs(pendingUser);
+    completeOnboarding.mockResolvedValue({ ...pendingUser, onboardingCompletedAt: 'ahora', dataConsentAt: 'ahora' });
+    const res = await put('/me/onboarding', { ...answers, role: 'participant', consent: true });
+    expect(res.status).toBe(200);
+    const [, , fields] = completeOnboarding.mock.calls[0];
+    expect(typeof fields.dataConsentAt).toBe('string');
+    expect(res.body.data.dataConsentAccepted).toBe(true);
+  });
+
+  it('sin consent no toca data_consent_at (quien ya aceptó en el registro por correo)', async () => {
+    loginAs({ ...pendingUser, dataConsentAt: '2026-10-17T00:00:00.000Z' });
+    completeOnboarding.mockResolvedValue({ ...pendingUser, onboardingCompletedAt: 'ahora', dataConsentAt: '2026-10-17T00:00:00.000Z' });
+    await put('/me/onboarding', { ...answers, role: 'participant' });
+    const [, , fields] = completeOnboarding.mock.calls[0];
+    expect(fields.dataConsentAt).toBeUndefined();
+  });
+
+  it('no mueve la fecha de la primera aceptación', async () => {
+    loginAs({ ...pendingUser, dataConsentAt: '2026-10-17T00:00:00.000Z' });
+    completeOnboarding.mockResolvedValue({ ...pendingUser, onboardingCompletedAt: 'ahora' });
+    await put('/me/onboarding', { ...answers, role: 'participant', consent: true });
+    expect(completeOnboarding.mock.calls[0][2].dataConsentAt).toBe('2026-10-17T00:00:00.000Z');
+  });
+
+  it('consent: false → 400 (solo vale true)', async () => {
+    loginAs(pendingUser);
+    const res = await put('/me/onboarding', { ...answers, consent: false });
+    expect(res.status).toBe(400);
+    expect(res.body.error.details.map((d) => d.field)).toContain('consent');
   });
 });

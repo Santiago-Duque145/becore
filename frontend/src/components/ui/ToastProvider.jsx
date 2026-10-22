@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { BodyPortal } from './BodyPortal.jsx';
 import { Toast } from './Toast.jsx';
 import { ToastContext } from './toast-context.js';
 
@@ -51,15 +52,17 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={api}>
       {children}
-      <div
-        role="status"
-        aria-live="polite"
-        className="pointer-events-none fixed inset-x-0 bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-[70] flex flex-col items-center gap-2 px-4 md:right-6 md:bottom-6 md:left-auto md:w-96 md:items-end md:px-0"
-      >
-        {toasts.map((t) => (
-          <Toast key={t.id} type={t.type} message={t.message} action={t.action} onClose={() => dismiss(t.id)} className="max-w-md" />
-        ))}
-      </div>
+      <BodyPortal>
+        <div
+          role="status"
+          aria-live="polite"
+          className="pointer-events-none fixed inset-x-0 bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-[70] flex flex-col items-center gap-2 px-4 md:right-6 md:bottom-6 md:left-auto md:w-96 md:items-end md:px-0"
+        >
+          {toasts.map((t) => (
+            <Toast key={t.id} type={t.type} message={t.message} action={t.action} onClose={() => dismiss(t.id)} className="max-w-md" />
+          ))}
+        </div>
+      </BodyPortal>
     </ToastContext.Provider>
   );
 }

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../lib/query-keys.js';
+import { useDebounced } from './useDebounced.js';
 import * as api from '../services/appointments.api.js';
 
 export function useAvailability() {
@@ -46,15 +46,6 @@ export function useCancelAppointment() {
     mutationFn: async (id) => (await api.cancelAppointment(id)).data,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: APPOINTMENTS_ROOT }),
   });
-}
-
-function useDebounced(value, delayMs) {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delayMs);
-    return () => clearTimeout(timer);
-  }, [value, delayMs]);
-  return debounced;
 }
 
 // Búsqueda de participantes con debounce de 300 ms; solo consulta con 2 letras o más

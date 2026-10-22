@@ -218,7 +218,9 @@ Las funciones SQL `confirm_attendance` y `cancel_attendance` lanzan excepciones 
 (`EVENT_FULL`, `ALREADY_CONFIRMED`, ...). Supabase lo devuelve en `error.message`. Traduce con la tabla de
 `docs/specs/api.md` §2. Además: código Postgres `23514` (check) → 409 `CONSTRAINT_VIOLATION` salvo que el
 constraint sea `events_confirmed_within_capacity` → 409 `CAPACITY_BELOW_CONFIRMED`; `23505` (unique) → 409
-`DUPLICATE`; cualquier otro → se relanza para que termine en 500.
+`DUPLICATE`; `23P01` (exclusión) → 409 `SLOT_OVERLAP` o `APPOINTMENT_OVERLAP` según el constraint
+(`availability_slots_no_overlap`, `appointments_no_overlap`), otro → `CONSTRAINT_VIOLATION`; cualquier otro → se
+relanza para que termine en 500.
 
 ### 4.8 Formato de respuesta
 
@@ -247,8 +249,23 @@ constraint sea `events_confirmed_within_capacity` → 409 `CAPACITY_BELOW_CONFIR
 - `vitest.config.js` define variables **falsas** en `test.env` (`NODE_ENV: 'test'`, `SUPABASE_URL: 'http://localhost:54321'`,
   `SUPABASE_SECRET_KEY: 'test'`, SMTP de mentira, `CRON_ENABLED: 'false'`, etc.) y excluye `tests/integration/**`.
   Así `env.js` no falla y el CI corre sin secretos.
-- La prueba de concurrencia de cupos (S2-03) es la única que golpea Supabase real. Vive en `tests/integration/`,
-  usa `vitest.integration.config.js` (incluye solo esa carpeta y carga el `.env` real con
+- Las pruebas que golpean Supabase real viven en `tests/integration/`: concurrencia de cupos (S2-03,
+  `capacity.test.js`) y reglas de franjas y citas (`appointment-rules.test.js`). Se corren
+  con `vitest.integration.config.js` (incluye solo esa carpeta y carga el `.env` real con
   `env: loadEnv('', process.cwd(), '')` importando `loadEnv` de `vite`) y se ejecuta con
   `"test:integration": "vitest run --config vitest.integration.config.js"`. Nunca corre en `npm test` ni en CI.
 - Cada service crítico (events, attendance) cubre: caso feliz, cada código de error de la spec y permisos.
+
+## 8. Migraciones (regla obligatoria)
+
+Toda migración se **aplica en Supabase antes de correr el backend que la necesita**. El proyecto de Supabase es uno
+solo y compartido: si el código nuevo pide una columna que aún no existe, `requireAuth` falla en cada petición y
+nadie puede entrar (pasó el 2026-10-17 con `profiles.gender`).
+
+1. Antes del push: `npx supabase migration list` (local y remoto con las mismas versiones) y `npx supabase db push --dry-run`
+   (solo debe aparecer la migración nueva).
+2. Prueba el SQL en una transacción revertida y luego aplica con `npx supabase db push`.
+3. **El PR que trae la migración lo dice en la descripción**: nombre del archivo y si ya se aplicó en Supabase.
+   Quien revisa no integra el PR hasta que figure como aplicada.
+4. Un error de base de datos nunca se disfraza de "no encontrado": los repositorios lo propagan y el manejador
+   central responde 500 (`INTERNAL_ERROR`). Solo el 401 `UNAUTHENTICATED` cierra la sesión en el frontend.
