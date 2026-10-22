@@ -36,7 +36,8 @@ cancelan su asistencia; el sistema impide el sobrecupo, envía recordatorios por
 Librerías **permitidas** además de las anteriores: `cors`, `helmet`, `morgan`, `nodemailer`, `node-cron`,
 `concurrently`, `react-hook-form`, `@hookform/resolvers`, `lucide-react`, `sonner`, `leaflet`, `react-leaflet`,
 `maplibre-gl` y `@maplibre/maplibre-gl-leaflet` (mapa vectorial con los colores de la marca; se cargan en diferido,
-solo al abrir un mapa).
+solo al abrir un mapa). Fase 3: `@google/genai` (SDK oficial de Gemini), **solo en el backend**; se instala en IA1
+(`docs/specs/ai.md`).
 Herramientas de desarrollo permitidas: `vitest`, `supertest`, `@vitest/coverage-v8`, `eslint`, `prettier`,
 `supabase` (CLI), `autocannon` (solo con `npx`).
 **No instales ninguna otra librería sin preguntar primero** y explicar en una frase por qué hace falta.
@@ -58,6 +59,7 @@ becore/
 │   │   ├── ui.md              ← rutas, pantallas, textos (lo visual queda bajo la skill becore-ui, ver §5.1)
 │   │   ├── auth-onboarding.md ← login, Google, onboarding de gustos y "Para ti"
 │   │   ├── rediseno-auditoria.md ← estado del frontend frente a los mockups y contradicciones resueltas
+│   │   ├── ai.md              ← Fase 3: IA con Gemini (recomendaciones híbridas, A/B, privacidad)
 │   │   └── backlog.md         ← tareas por sprint con criterios de aceptación
 │   ├── mockups/               ← 6 pantallas HTML estáticas de referencia visual
 │   ├── PROMPTS.md             ← cómo pedirle tareas a Claude Code
@@ -137,7 +139,7 @@ contradigan; `ui.md` sigue mandando en lo que la skill no cubre (rutas ↔ RF, f
 
 ## 9. Fuera de alcance
 
-Pagos, IA/chatbot, Google Maps API, chat interno, gamificación, apps nativas, despliegue en la nube y la
+Pagos, chatbot, Google Maps API, chat interno, gamificación, apps nativas, despliegue en la nube y la
 "estela convergente" del mapa. El mockup del chat es solo diseño para la sustentación. Si una tarea parece
 requerir algo de esta lista, detente y pregunta.
 
@@ -148,6 +150,13 @@ requerir algo de esta lista, detente y pregunta.
 > "IA/chatbot" de esta sección. Lo demás del alcance no cambia. Primer punto implementado: sexo, rango de edad y
 > consentimiento de datos (`docs/progreso/05_*`).
 
+> **Nota 2026-10-22 — Fase 3, inteligencia artificial con Gemini:** la IA entra al alcance con el visto bueno del
+> director (fecha: **por confirmar**). Se usa la **API de Gemini** (SDK `@google/genai`) solo desde el backend, para
+> recomendaciones híbridas de "Para ti" con prueba A/B, portada generada (IA5, requiere facturación) y resumen de reseñas.
+> Reglas: `GEMINI_API_KEY` solo en `backend/.env`; a Gemini nunca se le envía nombre, correo, IDs de usuario, sexo ni
+> edad; toda llamada tiene timeout, salida validada con Zod y respaldo sin IA ("Para ti" sigue con las reglas de R5).
+> Siguen fuera: chatbot y chat interno. Detalle en `docs/specs/ai.md` y `docs/PLAN.md` §6.
+
 > **Nota 2026-10-17 — mapa de eventos, pedido por el director:** el mapa de eventos entra al alcance con **Leaflet +
 > teselas libres** (sin Google Maps API; la ruta se abre en Google Maps o Waze con un enlace). La ubicación del
 > dispositivo se usa **solo para calcular distancias en el navegador**: nunca se envía al backend ni se guarda.
@@ -156,5 +165,5 @@ requerir algo de esta lista, detente y pregunta.
 
 ## 10. Estado actual
 
-- Sprints 1 y 2 cerrados (tags `v0.1` y `v0.2`); sprint 3 casi cerrado (README, plan de validación, p90 y citas hechos). En curso: `docs/PLAN.md` (Fase 2b: M1, P0–P6; Fase 3: IA). Congelamiento `v1.0` el 29 oct. Ver `docs/specs/backlog.md`.
+- Sprints 1 y 2 cerrados (tags `v0.1` y `v0.2`); sprint 3 casi cerrado (README, plan de validación, p90 y citas hechos). Fase 2b (M1, P0–P7) terminada; en curso la Fase 3 (IA, `docs/specs/ai.md`) según `docs/PLAN.md`. Congelamiento `v1.0` el 29 oct. Ver `docs/specs/backlog.md`.
 - Al terminar cada sprint, actualiza esta línea en un commit `docs: avanzar a sprint N`.
