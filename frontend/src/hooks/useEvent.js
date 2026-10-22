@@ -28,3 +28,6 @@ export const useUpdateEvent = (id) => useEventMutation(async (body) => (await ev
 export const useCancelEvent = (id) => useEventMutation(async () => (await eventsApi.cancelEvent(id)).data);
 export const usePublishEvent = (id) => useEventMutation(async () => (await eventsApi.publishEvent(id)).data);
 export const useFinishEvent = (id) => useEventMutation(async () => (await eventsApi.finishEvent(id)).data);
+
+// IA8: no invalida nada, solo pide el borrador (nada se guarda hasta que el organizador publique)
+export const useEventDraft = () => useMutation({ mutationFn: async (text) => (await eventsApi.createEventDraft(text)).data });

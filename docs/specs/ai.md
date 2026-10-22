@@ -273,6 +273,7 @@ que los eventos nuevos entran por ahí.
 | GET | `/admin/ai-metrics` | organizador | IA4 (hecho). `{ data: { rules: Metrics, ai: Metrics & { bySource: { gemini: Metrics, template: Metrics } }, excludedDemoRows } }`. `Metrics = { users, shown, clicked, confirmed, ctr, confirmRate, avgRating, ratings }`. Mostrados, abiertos y confirmados se cuentan como pares distintos (usuario, evento). Las tasas son `null` sin mostrados. Excluye los eventos de la cuenta de demostración (`DEMO_ORGANIZER_EMAIL`). |
 | GET | `/events/search` | todos | IA7 (hecho). Query `q` 2–200 y `category` opcional → `{ data: Event[], meta: { mode, total, searchId } }` (§15). |
 | POST | `/events/search/:searchId/open` | todos | IA7 (hecho). Body `{ eventId }`. Siempre 204. Marca el primer resultado abierto. |
+| POST | `/events/draft` | organizador | IA8 (hecho). Body `{ text }` 10–500. Siempre 200: `{ data: { draft: {…} \| null, reason? } }` (§16). Participante → 403. |
 | POST | `/events/:id/ratings/summary` | dueño | Nuevo (IA6). 409 `NOT_ENOUGH_COMMENTS` con < 3 comentarios. |
 
 `confirmed` lo registra el backend al confirmar asistencia (`attendance.service.js`, sin esperar: si falla, la confirmación no se entera), si el evento se le mostró en "Para ti" en los últimos 7 días. `avgRating` es el promedio de las estrellas que esas personas dieron a los eventos que confirmaron desde "Para ti".
@@ -372,3 +373,37 @@ políticas y sin permisos para `anon`/`authenticated`. No usa `recommendation_ev
 **Frontend:** placeholder "Prueba: fútbol el sábado en la tarde"; etiqueta "Búsqueda inteligente" solo en modo
 semántico; vacío "No encontramos planes así. Prueba con otras palabras." con "Quitar búsqueda"; los resultados
 reemplazan la lista y los pines del mapa; "Más cerca primero" ordena en el navegador.
+
+## 16. Asistente para crear eventos (IA8, hecho el 22 oct)
+
+**Qué hace:** en "Crear evento", la tarjeta "Describe tu evento en una frase" convierte algo como "micro el sábado en la
+tarde en Belén para 12 personas, nivel principiante" en un borrador que rellena el formulario. Nada se publica solo; el
+organizador revisa y edita todo, y "Deshacer" vuelve a los valores de antes.
+
+**`POST /events/draft`** (solo organizadores; `services/drafts/`):
+1. Zod: `text` de 10 a 500 caracteres. Participante → 403.
+2. `AI_ENABLED=false` → `{ draft: null, reason: 'AI_DISABLED' }`. Límite de 10 borradores por organizador y día de Bogotá
+   (en memoria: se reinicia con el backend) → `reason: 'DAILY_LIMIT'`.
+3. `scrubQuery`: sin correos ni teléfonos. A Gemini solo va la frase, dentro de `<datos>`: nunca nombre, correo ni ID.
+4. **Una** llamada con la cadena `GEMINI_TEXT_MODELS` (20 s por modelo), JSON validado con Zod: `title` ≤ 80,
+   `description`, `category` (si inventa una, queda `other`), `suggested_duration_minutes`, `suggested_capacity`,
+   `place_text` y `date_hint`. No se piden `tags`: el formulario no los tiene y las etiquetas salen de los embeddings.
+5. **Fecha por reglas** (`drafts/date-hint.js`, sin LLM, America/Bogota): hoy, mañana, pasado mañana, días de la semana
+   (siempre el próximo, nunca hoy), "el 5 de noviembre", "fin de semana" (sábado), franja (mañana 9:00, tarde 16:00,
+   noche 19:00; sin franja 18:00) y "a las 5 pm". Si no se entiende o ya pasó → `startsAt: null`.
+6. **Lugar:** `place_text` pasa por `locatePlace` (Nominatim, máx. 6 s) para proponer coordenadas; el organizador confirma
+   el pin. Si falla, sin coordenadas.
+7. La duración se ajusta a la opción más cercana del formulario (30 min … 8 h).
+8. Cualquier falla de la IA → `{ draft: null, reason: 'AI_UNAVAILABLE' | 'AI_ERROR' }` con 200. Nunca 500 por la IA.
+
+Respuesta: `{ data: { draft: { title, description, category, startsAt, durationMinutes, capacity, location, latitude,
+longitude } | null, reason? } }`. Los campos que no se pudieron proponer vienen `null` (o `""`) y el formulario los deja
+como estaban.
+
+**Registro:** solo el log del servidor (`[ai] borrador ok: <modelo> (<ms>)` / `falló: <código>`), sin la frase ni la
+respuesta. No hay tabla nueva ni migración.
+
+**Frontend:** `DraftAssistant` (tarjeta, `BrandLoader` mientras carga, aviso "Revisa antes de publicar: la IA puede
+equivocarse.", "Deshacer"), `useApplyDraft` (aplica, resalta ~2 s y deshace) y `lib/draft-values.js`. Solo en
+`/eventos/nuevo`. Sin IA: "El asistente no está disponible ahora; puedes llenar el formulario normal."
+

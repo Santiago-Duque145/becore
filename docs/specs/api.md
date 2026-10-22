@@ -135,6 +135,7 @@ muestra nada si falla o si algún conteo es 0.
 | POST | `/recommendations/feedback` | todos | `{ eventId, action: 'clicked' }` | 204 siempre (prueba A/B, `ai.md` §9) |
 | GET | `/admin/ai-metrics` | org | — | métricas de la prueba A/B por variante y origen (`ai.md` §9) |
 | GET | `/events/search` | todos | query `q` 2–200, `category` opcional | `{ data: Event[], meta: { mode: 'semantic' \| 'classic', total, searchId } }`, máx. 30, ver abajo (IA7) |
+| POST | `/events/draft` | organizador | `{ text }` 10–500 | 200 siempre: `{ data: { draft: {…} \| null, reason? } }` (IA8, ver abajo) |
 | POST | `/events/search/:searchId/open` | todos | `{ eventId }` | 204 siempre: marca el primer resultado abierto de esa búsqueda (IA7) |
 | GET | `/events/recommended` | todos | query `limit` 1–20 (defecto 6) | `(Event & { reason })[]` "Para ti", ver abajo. Si viene vacío, además `meta.emptyReason`: `no_preferences`, `no_events`, `all_confirmed` o `no_matches` |
 | POST | `/events` | org | ver "Crear" | 201 `Event` |
@@ -164,6 +165,11 @@ y gusto que la frase menciona; solo entra lo que pasa el umbral, ordenado por pu
 Gemini o la base fallan, o la persona pasó 30 consultas nuevas en 10 min): la frase completa, o todas sus palabras de 3+
 letras, en título, descripción o lugar, sin tildes ni mayúsculas, ordenado por fecha. Nunca responde 500 por la IA. La
 consulta se guarda en `search_events` sin correos, teléfonos ni `user_id`. Va antes de `/events/:id` en el router.
+
+**Borrador con IA — `POST /events/draft`** (organizador, IA8, `docs/specs/ai.md` §16): body `{ text }` (10–500). Siempre 200 con
+`{ data: { draft, reason? } }`; `draft` es `null` si la IA está apagada, sin cupo, falla o se pasó el límite de 10 al día
+(`reason`: `AI_DISABLED`, `AI_UNAVAILABLE`, `AI_ERROR`, `DAILY_LIMIT`). No guarda nada: el evento se crea después con
+`POST /events`. Va antes de `/events/:id` en el router.
 
 **Crear evento — body:**
 | Campo | Regla |

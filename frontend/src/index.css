@@ -88,6 +88,20 @@
     }
   }
 
+  /* IA8: resalta un instante los campos que rellenó el asistente */
+  --animate-draft-fill: draft-fill 2s var(--ease-out-soft) both;
+
+  @keyframes draft-fill {
+    from {
+      background-color: color-mix(in srgb, var(--color-accent) 18%, transparent);
+      box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-accent) 18%, transparent);
+    }
+    to {
+      background-color: transparent;
+      box-shadow: 0 0 0 6px transparent;
+    }
+  }
+
   /* Punto "en vivo" del ticker (la única animación en bucle que permite la skill §4) */
   --animate-blink: blink 1.6s ease-in-out infinite;
 

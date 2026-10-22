@@ -25,7 +25,7 @@ export default function NuevoEventoPage() {
   return (
     <div className="mx-auto max-w-5xl">
       <h1 className="mb-5 font-display text-xl font-semibold text-ink md:text-[22px]">Crear evento</h1>
-      <EventForm actions={ACTIONS} onSubmit={handleSubmit} onCancel={() => navigate(-1)} />
+      <EventForm assistant actions={ACTIONS} onSubmit={handleSubmit} onCancel={() => navigate(-1)} />
     </div>
   );
 }

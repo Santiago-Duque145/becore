@@ -13,7 +13,9 @@ import {
   eventIdParamsSchema,
   coverUploadSchema,
 } from '../schemas/events.schemas.js';
+import { draftBodySchema } from '../schemas/drafts.schemas.js';
 import * as controller from '../controllers/events.controller.js';
+import { createEventDraft } from '../controllers/drafts.controller.js';
 
 const router = Router();
 const organizerOnly = [requireAuth, requireRole('organizer')];
@@ -29,6 +31,7 @@ router.post(
   validate({ params: searchOpenParamsSchema, body: searchOpenSchema }),
   controller.recordSearchOpen,
 );
+router.post('/events/draft', ...organizerOnly, validate({ body: draftBodySchema }), createEventDraft);
 router.post('/events', ...organizerOnly, validate({ body: createEventSchema }), controller.createEvent);
 router.post('/events/cover-upload-url', ...organizerOnly, validate({ body: coverUploadSchema }), controller.createCoverUpload);
 router.get('/events/:id', requireAuth, validate(byId), controller.getEvent);

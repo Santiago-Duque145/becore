@@ -543,7 +543,7 @@ Al terminar: lint, pruebas, build, informe NN, push, sin PR.
 - [ ] M1 HTTPS en el celular: probado por datos móviles, app instalable, QR de acceso
 - [x] IA0 → IA4 (ramas `feature/ia-0` … `feature/ia-4`, informes 16–20)
 - [x] IA7 búsqueda en lenguaje natural (rama `feature/ia-7`, informe 21)
-- [ ] IA8 asistente para crear eventos
+- [x] IA8 asistente para crear eventos (rama `feature/ia-8`, informe 22)
 - [ ] IA6 resumen de reseñas (si sobra tiempo) · IA5 portada con IA → trabajo futuro
 - [ ] `v1.0` el 29 de octubre
 - [ ] Partido del 31 con resultados guardados
