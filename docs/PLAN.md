@@ -370,7 +370,7 @@ En la sustentación se presenta como un **sistema de recomendación híbrido** (
 - `GEMINI_API_KEY` solo en `backend/.env`. El frontend nunca llama a Gemini.
 - A Gemini **nunca** se le envía nombre, correo, IDs de usuario, sexo ni edad.
 - Timeout, respaldo sin IA y salida validada con Zod en toda llamada.
-- Modelos por variable de entorno (`GEMINI_MODEL`, `GEMINI_EMBEDDING_MODEL`, `GEMINI_IMAGE_MODEL`). Opus confirma los nombres vigentes en la documentación oficial.
+- Modelos por variable de entorno (`GEMINI_TEXT_MODEL`, `GEMINI_EMBEDDING_MODEL`). Opus confirma los nombres vigentes en la documentación oficial.
 - Capa gratuita: Google puede usar los datos para mejorar sus productos (se menciona en /privacidad). **La generación de imágenes no tiene capa gratuita**: IA5 requiere activar facturación en la clave (aprox. US$0,03–0,07 por imagen). Con facturación activa, los datos de pago no se usan para entrenar.
 
 ### Sesiones (rama `feature/ia-N`)
@@ -394,7 +394,7 @@ Lee docs/specs/ai.md.
    - RLS: lectura propia, escritura solo Express.
    Pruébala en una transacción revertida y luego aplícala.
 2. backend/src/services/ai/geminiClient.js: cliente único con timeout, 1 reintento, logs sin datos personales; funciones embedText(text) y generateJson(prompt, schema). (generateImage no: IA5 es trabajo futuro.)
-3. backend/.env.example (sin valores): GEMINI_MODEL, GEMINI_EMBEDDING_MODEL, GEMINI_IMAGE_MODEL, AI_ENABLED, AI_IMAGES_ENABLED.
+3. backend/.env.example (sin valores): GEMINI_TEXT_MODEL, GEMINI_EMBEDDING_MODEL, AI_ENABLED.
 4. Tests con el cliente simulado.
 ```
 

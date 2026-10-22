@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { z } from 'zod';
 import { AiError, createGeminiClient, gemini, toAiError } from '../src/services/ai/geminiClient.js';
 
-const config = { enabled: true, model: 'gemini-test', embeddingModel: 'embedding-test' };
+const config = { enabled: true, textModel: 'gemini-test', embeddingModel: 'embedding-test' };
 const vector = (n = 768) => Array.from({ length: n }, () => 0.01);
 const schema = { zodSchema: z.object({ tags: z.array(z.string()).max(4) }), jsonSchema: { type: 'object' } };
 const request = { system: 'sistema', prompt: '<datos>evento</datos>', ...schema };

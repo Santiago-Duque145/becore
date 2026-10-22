@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-// Texto opcional: una variable vacía en .env (GEMINI_MODEL=) cuenta como no definida y toma el valor por defecto
+// Texto opcional: una variable vacía en .env (GEMINI_TEXT_MODEL=) cuenta como no definida y toma el valor por defecto
 const optionalText = () => z.preprocess((value) => (value === '' ? undefined : value), z.string().min(1).optional());
 
 const schema = z.object({
@@ -20,7 +20,8 @@ const schema = z.object({
   CRON_ENABLED: z.string().default('false'),
   // IA con Gemini (docs/specs/ai.md §12). Todo opcional: sin clave o con AI_ENABLED=false la app funciona con las reglas.
   GEMINI_API_KEY: optionalText(),
-  GEMINI_MODEL: optionalText().default('gemini-3.5-flash-lite'),
+  // El más rápido y estable con la clave del proyecto (mediciones del 22 oct en docs/progreso/17_*)
+  GEMINI_TEXT_MODEL: optionalText().default('gemini-3.6-flash'),
   GEMINI_EMBEDDING_MODEL: optionalText().default('gemini-embedding-2'),
   AI_ENABLED: z.preprocess((value) => (value === '' ? undefined : value), z.enum(['true', 'false']).default('false')),
 });

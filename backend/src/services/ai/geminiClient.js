@@ -92,10 +92,10 @@ export function createGeminiClient({ sdk, config, now = Date.now, log = console.
     async generateJson({ system, prompt, jsonSchema, zodSchema }, { timeoutMs = 10_000, retry = false } = {}) {
       return call(
         'json',
-        config.model,
+        config.textModel,
         async (abortSignal) => {
           const response = await sdk.models.generateContent({
-            model: config.model,
+            model: config.textModel,
             contents: prompt,
             config: {
               systemInstruction: system,
@@ -129,5 +129,5 @@ if (aiOn && !env.GEMINI_API_KEY) console.warn('[ai] AI_ENABLED=true pero falta G
 
 export const gemini = createGeminiClient({
   sdk: aiOn && env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: env.GEMINI_API_KEY }) : null,
-  config: { enabled: aiOn, model: env.GEMINI_MODEL, embeddingModel: env.GEMINI_EMBEDDING_MODEL },
+  config: { enabled: aiOn, textModel: env.GEMINI_TEXT_MODEL, embeddingModel: env.GEMINI_EMBEDDING_MODEL },
 });

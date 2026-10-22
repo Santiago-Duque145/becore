@@ -1,7 +1,7 @@
 # 17 · IA1 Base de datos e infraestructura de IA (y arreglo del mapa sobre los modales)
 
-Fecha: 2026-10-22 · Rama: `feature/ia-1` (sale de `feature/ia-0`) · Estado: **código y pruebas listos; migración probada
-en una transacción revertida, pendiente del visto bueno del usuario para aplicarla.**
+Fecha: 2026-10-22 · Rama: `feature/ia-1` (sale de `feature/ia-0`) · Estado: **terminado. Migración probada en una
+transacción revertida y aplicada en Supabase el 2026-10-22.**
 
 ## 0. Arreglo previo: el mapa tapaba los modales (`fix(mapa)`, primer commit de la rama)
 
@@ -43,26 +43,49 @@ En las cuatro el contenedor tiene `isolation: isolate`. Captura: `capturas-17/de
 - **`/privacidad`:** dice que, con la versión gratuita de Gemini, Google puede usar los gustos y los eventos (sin nada
   que identifique a la persona) para mejorar sus productos.
 
-## 2. Gemini: llamadas reales y decisión de diseño
+## 2. Gemini: llamadas reales, elección del modelo y decisión de diseño
 
-Con la clave del proyecto (leída de `backend/.env` por el propio script, nunca impresa), solo con textos de prueba:
+Con la clave del proyecto (el script la lee de `backend/.env` y nunca la imprime), solo con textos de prueba.
 
-| Modelo | Resultado |
-|---|---|
-| `gemini-embedding-2` | Existe (también `-preview`). 768 dimensiones, norma 1,0000, ~0,5 s |
-| `gemini-3.5-flash-lite` | JSON válido con `responseJsonSchema`, pero **5–12 s** aun con `thinkingLevel: 'MINIMAL'`. **503 "high demand"** en 3 de 15 llamadas. `thinkingBudget: 0` → 400 |
-| `gemini-3.1-flash-lite` (respaldo) | **503 en las 6 llamadas** |
+**Embeddings:** `gemini-embedding-2` existe (también `-preview`; se usa el estable). Devuelve 768 dimensiones con norma
+1,0000 en ~0,5 s.
 
-**Decisión:** el plan esperaba a Gemini hasta 3 s dentro de `GET /events/recommended`. Con estas latencias fallaría casi
-siempre. La petición **nunca espera a Gemini**: responde con caché o con el orden híbrido, y el re-ordenado se calcula
-en segundo plano y queda en caché para la siguiente visita. Actualizado en `docs/specs/ai.md` §2, §3 y §7. Se implementa
-en IA3.
+**Modelo de texto:** queda en la variable `GEMINI_TEXT_MODEL` (antes `GEMINI_MODEL`). Si en tu `backend/.env` está la
+línea vieja `GEMINI_MODEL=`, se puede borrar.
+
+Se listaron con `models.list` los 14 modelos de texto flash y flash-lite que ve la clave, y se midió cada uno con el
+prompt de etiquetado (evento ficticio, salida JSON con `responseJsonSchema`), 1,5–2 s entre llamadas, timeout de 20 s:
+
+| Modelo | Llamadas bien | Mediana | p90 / máx. | Errores |
+|---|---|---|---|---|
+| **`gemini-3.6-flash`** (elegido) | **12 / 15** | **~1,0–1,2 s** | 3,4 s / 19,2 s | 429 × 3 (límite por minuto) |
+| `gemini-3-flash-preview` | 12 / 15 | ~1,0 s | 1,1 s / 1,5 s | 503 × 1, timeout × 2 · es preliminar |
+| `gemini-3.5-flash` | 11 / 15 | ~1,1–1,5 s | 1,5 s / 3,4 s | 429 × 4 |
+| `gemini-3.5-flash-lite` | 4 / 5 | 5,6 s | 7,5 s | timeout × 1 (antes: 5–12 s y 503) |
+| `gemini-3.1-flash-lite` | 4 / 15 | 1,6–7,9 s | — | 503 × 11 |
+| `gemini-flash-lite-latest` | 3 / 5 | 7,0 s | 16,8 s | timeout × 2 |
+| `gemini-3.8-flash` | 0 / 11 | — | — | 400 con `thinkingLevel: MINIMAL`; 503 y 429 sin él o con `LOW` |
+| `gemini-3.7-flash` | 0 / 11 | — | — | ídem |
+| `gemini-flash-latest` | 0 / 5 | — | — | 503 × 5 |
+| `gemini-2.5-flash`, `gemini-2.5-flash-lite` | 0 / 5 | — | — | 404: la clave no tiene acceso |
+| `gemini-omni-1.1-flash`, `gemini-omni-flash-preview` | 0 / 5 | — | — | 429 × 5 |
+| `gemini-3.1-flash-lite-preview` | 0 / 5 | — | — | 503 × 4, timeout × 1 |
+
+Todos los que respondieron devolvieron las mismas etiquetas (`football, music`).
+
+**Elección:** `gemini-3.6-flash` es estable (no preliminar), el más rápido y el que más respondió. Sus fallos fueron 429,
+que el reintento en segundo plano cubre. El valor por defecto pasa a ser ese; se cambia en `.env` sin tocar código.
+
+**Decisión de diseño:** el plan esperaba a Gemini hasta 3 s dentro de `GET /events/recommended`. Aun con el modelo más
+rápido hay respuestas de 19 s y errores 429 o 503. La petición **nunca espera a Gemini** (aprobado por el usuario el
+22 oct): responde con caché o con el orden híbrido, y el re-ordenado se calcula en segundo plano y queda en caché para la
+siguiente visita. Está en `docs/specs/ai.md` §2, §3 y §7, y se implementa en IA3.
 
 ## 3. Código
 
 - **`@google/genai` 2.30.0** en el backend (permitido en `CLAUDE.md` §2). npm no corrió el `postinstall` de
   `protobufjs`, que solo revisa versiones.
-- **`backend/src/config/env.js`:** `GEMINI_API_KEY`, `GEMINI_MODEL` (defecto `gemini-3.5-flash-lite`),
+- **`backend/src/config/env.js`:** `GEMINI_API_KEY`, `GEMINI_TEXT_MODEL` (defecto `gemini-3.6-flash`, elegido por medición, §2),
   `GEMINI_EMBEDDING_MODEL` (defecto `gemini-embedding-2`) y `AI_ENABLED` (defecto `false`). Una variable vacía en `.env`
   toma el defecto.
 - **`backend/src/services/ai/geminiClient.js`:** cliente único con `embedText` y `generateJson`.
@@ -77,57 +100,78 @@ en IA3.
 - **Pruebas sin internet:** `tests/setup.js` reemplaza la instancia por una apagada y `vitest.config.js` fija
   `AI_ENABLED=false`. `tests/gemini-client.test.js` (12 pruebas) usa un SDK falso. `tests/ai-migration.test.js`
   comprueba:
-  - que el check de `events.tags` tiene exactamente `INTEREST_SLUGS`;
-  - que hay 2 columnas `vector(768)` e índice HNSW por coseno;
-  - que las 2 tablas tienen RLS de solo lectura;
-  - que la migración no toca sexo, edad ni consentimiento.
+  - que el check de `event_ai.tags` tiene exactamente `INTEREST_SLUGS`;
+  - que los dos `vector(768)` viven en `event_ai` y `user_ai`, con índice HNSW por coseno en `event_ai`;
+  - que no se toca `events` ni `user_preferences`;
+  - que `event_ai` y `user_ai` tienen RLS sin políticas y sin permisos para `anon`/`authenticated`;
+  - que la caché y la A/B solo tienen políticas de lectura propia;
+  - que nada entra a Realtime ni toca sexo, edad o consentimiento.
 
-## 4. Migración `20261022160000_ai_recommendations.sql`
+## 4. Migración `20261022160000_ai_recommendations.sql` (aplicada)
 
-Contenido:
-- extensión `vector` en el esquema `extensions`;
-- `events.tags` (check contra los 18 gustos, máx. 4) y `events.embedding vector(768)`;
-- `user_preferences.embedding vector(768)`;
-- tablas `ai_recommendations` (caché) y `recommendation_events` (A/B; un solo clic y un solo confirmado por usuario y
-  evento);
-- índice HNSW por coseno;
-- RLS de lectura propia, sin políticas de escritura.
+### Primera versión, descartada antes de aplicar
 
-Es aditiva: las filas actuales no cambian.
+La primera versión agregaba `tags` y `embedding` a `events` y `embedding` a `user_preferences`. Pasó el `dry-run` y la
+prueba revertida, y la base quedó intacta, pero **no se aplicó**:
+- `events` está en la publicación de Realtime (junto con `notifications` y `activity_log`; consultado en
+  `pg_publication_tables`). Cada confirmación de asistencia habría mandado ~10 KB de vector a cada pantalla suscrita.
+- `user_preferences` no está en Realtime, pero tiene una política de lectura propia desde el navegador: el embedding
+  habría quedado al alcance del frontend.
 
-**1. `npx supabase migration list`:** local = remoto en las 10 anteriores; solo falta `20261022160000`.
+### Versión aplicada: tablas aparte (decisión del usuario, 22 oct)
 
-**2. `npx supabase db push --dry-run`:** "Would push these migrations: 20261022160000_ai_recommendations.sql".
+- **`event_ai`:** `event_id` (PK y FK a `events`, `on delete cascade`), `tags` (check: los 18 gustos, máx. 4),
+  `embedding vector(768)` y `updated_at` con trigger. Índice HNSW por coseno.
+- **`user_ai`:** `user_id` (PK y FK a `profiles`, `on delete cascade`), `embedding vector(768) not null` y `updated_at`
+  con trigger.
+- **Acceso:** las dos tienen RLS activado **sin ninguna política** y `revoke all` a `anon` y `authenticated`. Solo el
+  backend las lee y escribe, y los embeddings no salen nunca al frontend. No están en Realtime.
+- **`ai_recommendations` (caché) y `recommendation_events` (A/B):** sin cambios frente a la primera versión, con
+  lectura propia y sin políticas de escritura.
+- **No se toca** ninguna tabla existente.
 
-**3. Prueba en una transacción revertida** (`npx supabase db query --linked -f …`). Toda la migración y las
-comprobaciones van dentro de un bloque `DO` que termina **siempre** con `raise exception` y lleva el resultado en el
-mensaje. Postgres revierte todo aunque la API haga commit automático.
+**1. `npx supabase db push --dry-run`:** solo `20261022160000_ai_recommendations.sql`.
+
+**2. Prueba en una transacción revertida** (`npx supabase db query --linked -f …`). La migración y las comprobaciones
+van en un bloque `DO` que termina **siempre** con `raise exception` y lleva el resultado en el mensaje, así que
+Postgres revierte todo.
 
 | Comprobación | Resultado |
 |---|---|
 | Extensión | `vector` 0.8.2 en `extensions` |
-| Columnas | `events.tags` text[], `events.embedding` y `user_preferences.embedding` de tipo `extensions.vector` |
-| Filas actuales | 14 eventos, todos con `tags = '{}'` y sin embedding; 8 perfiles con gustos, sin embedding |
-| Índice | `CREATE INDEX events_embedding_hnsw ON public.events USING hnsw (embedding vector_cosine_ops)` |
-| RLS | activado en las dos tablas nuevas; políticas solo `SELECT` propias |
-| `tags = {football, music}` | aceptadas |
-| `tags = {golf}` | rechazada por `events_tags_valid` |
+| Tablas nuevas | `ai_recommendations`, `event_ai`, `recommendation_events`, `user_ai`, las cuatro con RLS |
+| Columnas nuevas en `events` / `user_preferences` | 0 |
+| Tablas nuevas en Realtime | 0 |
+| Políticas | solo `ai_recommendations SELECT` y `recommendation_events SELECT`; ninguna en `event_ai` ni `user_ai` |
+| Permiso `select` de `authenticated` | `event_ai`: no · `user_ai`: no · `ai_recommendations`: sí (con RLS propia) |
+| Leer `event_ai` / `user_ai` como `authenticated` (`set local role`) | permiso denegado en las dos |
+| Índice | `CREATE INDEX event_ai_embedding_hnsw ON public.event_ai USING hnsw (embedding vector_cosine_ops)` |
+| Datos actuales | 14 eventos, 8 perfiles con gustos (sin cambios) |
+| `tags = {football, music}` + vector de 768 | aceptados; distancia coseno consigo mismo 0,000000 |
+| `tags = {golf}` | rechazada por `event_ai_tags_valid` |
 | 5 etiquetas | rechazadas (máx. 4) |
-| Vector de 768 | se guarda; distancia coseno consigo mismo con `operator(extensions.<=>)`: 0,000000 |
 | Vector de 3 dimensiones | rechazado: "expected 768 dimensions, not 3" |
-| Caché válida / inválida | se inserta / se rechaza (variante y fechas) |
+| `updated_at` | se actualiza solo al editar |
+| `user_ai` con vector / sin vector | aceptado (similitud con el evento 1,0000) / rechazado |
+| Caché válida / inválida | se inserta / se rechaza |
 | Segundo "clicked" del mismo usuario y evento | rechazado (único) |
-| "shown" repetido | permitido (2 filas) |
+| Borrar el evento | borra su fila de `event_ai` y de `recommendation_events` (cascada) |
 
-**Después de la prueba** se consultó la base: 0 columnas nuevas, 0 tablas nuevas, sin extensión `vector` y sin el
-índice. No quedó nada.
+**3. Base intacta después de la prueba:** 0 tablas nuevas, sin extensión `vector`, sin índice, 14 eventos.
 
-**Pendiente:** el visto bueno del usuario para `npx supabase db push`.
+**4. Aplicada** con `npx supabase db push`, que respondió "Applying migration 20261022160000_ai_recommendations.sql".
+`npx supabase migration list` muestra `20261022160000` en local y en remoto. Estado después:
+- las 4 tablas existen;
+- `vector` 0.8.2;
+- índice HNSW presente;
+- `authenticated` no puede leer `event_ai`;
+- 0 tablas nuevas en Realtime;
+- 14 eventos.
 
 ## Verificación
 
 | Qué | Resultado |
 |---|---|
 | `npm run lint` | sin errores |
-| `npm test` | backend 338/338, frontend 316/316 |
+| `npm test` | backend 340/340, frontend 316/316 |
 | `npm run build -w frontend` | compila |
