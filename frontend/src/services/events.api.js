@@ -16,5 +16,8 @@ export const searchEvents = (q, category) => api.get('/events/search', { params:
 // Primer resultado abierto de una búsqueda (para el informe; sin datos de la persona)
 export const recordSearchOpen = (searchId, eventId) => api.post(`/events/search/${searchId}/open`, { eventId });
 
+// IA8 · borrador desde una frase: { data: { draft: {…} | null, reason? } }. Siempre 200; sin IA, draft es null
+export const createEventDraft = (text) => api.post('/events/draft', { text });
+
 // Portada (P3): URL firmada para que el organizador suba la imagen; la ruta se envía luego como coverPath
 export const requestCoverUpload = (contentType) => api.post('/events/cover-upload-url', { contentType });
