@@ -7,6 +7,9 @@ import {
   updateEventSchema,
   listEventsQuerySchema,
   recommendedQuerySchema,
+  searchQuerySchema,
+  searchOpenParamsSchema,
+  searchOpenSchema,
   eventIdParamsSchema,
   coverUploadSchema,
 } from '../schemas/events.schemas.js';
@@ -17,8 +20,15 @@ const organizerOnly = [requireAuth, requireRole('organizer')];
 const byId = { params: eventIdParamsSchema };
 
 router.get('/events', requireAuth, validate({ query: listEventsQuerySchema }), controller.listEvents);
-// Antes de /events/:id para que "recommended" no se valide como id
+// Antes de /events/:id para que "recommended" y "search" no se validen como id
 router.get('/events/recommended', requireAuth, validate({ query: recommendedQuerySchema }), controller.listRecommended);
+router.get('/events/search', requireAuth, validate({ query: searchQuerySchema }), controller.searchEvents);
+router.post(
+  '/events/search/:searchId/open',
+  requireAuth,
+  validate({ params: searchOpenParamsSchema, body: searchOpenSchema }),
+  controller.recordSearchOpen,
+);
 router.post('/events', ...organizerOnly, validate({ body: createEventSchema }), controller.createEvent);
 router.post('/events/cover-upload-url', ...organizerOnly, validate({ body: coverUploadSchema }), controller.createCoverUpload);
 router.get('/events/:id', requireAuth, validate(byId), controller.getEvent);

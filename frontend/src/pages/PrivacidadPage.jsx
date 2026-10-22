@@ -39,8 +39,9 @@ const SECTIONS = [
       <p>
         Para recomendarte eventos usamos IA: Gemini, de Google, en su capa gratuita. En esa capa Google puede usar lo que
         le enviamos para mejorar sus productos. Por eso solo le enviamos tus gustos (lo que elegiste en el cuestionario:
-        planes, días, horarios, qué buscas y tu zona) y los textos de los eventos (título, descripción y lugar). Nunca
-        datos personales: ni tu nombre, ni tu correo, ni tu sexo, ni tu edad.
+        planes, días, horarios, qué buscas y tu zona), los textos de los eventos (título, descripción y lugar) y lo que
+        escribes en el buscador de Descubre, sin correos ni teléfonos y sin decir quién lo escribió. Nunca datos
+        personales: ni tu nombre, ni tu correo, ni tu sexo, ni tu edad.
       </p>
     ),
   },

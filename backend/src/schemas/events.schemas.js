@@ -88,6 +88,20 @@ export const recommendedQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(20).default(6),
 });
 
+// IA7 · búsqueda en lenguaje natural
+export const searchQuerySchema = z.object({
+  q: z.string().trim().min(2, 'Escribe al menos 2 letras').max(200, 'La búsqueda no puede superar 200 caracteres'),
+  category: z.enum(CATEGORIES).optional(),
+});
+
+export const searchOpenParamsSchema = z.object({
+  searchId: z.uuid({ error: 'Identificador de búsqueda inválido' }),
+});
+
+export const searchOpenSchema = z.object({
+  eventId: z.uuid({ error: 'Identificador de evento inválido' }),
+});
+
 export const eventIdParamsSchema = z.object({
   id: z.uuid({ error: 'Identificador de evento inválido' }),
 });
