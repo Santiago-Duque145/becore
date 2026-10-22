@@ -4,6 +4,7 @@ import { findAvatarsByIds } from '../repositories/profiles.repository.js';
 import { COVER_BUCKET } from '../constants/avatars.js';
 import * as storage from './storage.service.js';
 import { requestRatingsForEvent } from './rating-requests.service.js';
+import { locatePlace } from './geocode.service.js';
 import { notify } from './notifications.service.js';
 import { buildContent } from '../mail/templates.js';
 import { AppError } from '../utils/app-error.js';
@@ -114,11 +115,21 @@ async function notifyConfirmed(event, type) {
   await notify({ userIds, type, eventId: event.id, buildContent: () => buildContent(type, event) });
 }
 
+// Todo evento debe quedar en el mapa: si no llegan coordenadas (ni el pin del selector ni un null explícito), se
+// geocodifica el texto del lugar. Si no se puede ubicar, el evento se guarda igual y se puede marcar al editarlo.
+async function placeFromText(location) {
+  const hit = await locatePlace(location);
+  return hit ? { latitude: hit.lat, longitude: hit.lng } : {};
+}
+
 export async function createEvent(user, input) {
   const { coverPath, ...fields } = input;
+  const cover = coverPatch(user, coverPath); // primero los permisos: una portada ajena falla antes de salir a la red
+  const place = fields.latitude === undefined ? await placeFromText(fields.location) : {};
   const event = await eventsRepo.insertEvent(user.id, {
     ...fields,
-    ...coverPatch(user, coverPath),
+    ...place,
+    ...cover,
     status: fields.status ?? 'draft',
   });
   return toEvent(event, null);
@@ -152,6 +163,8 @@ export async function updateEvent(user, id, input) {
   const { coverPath, ...fields } = input;
   const patch = { ...fields, ...coverPatch(user, coverPath) };
   const event = await findOwnedActiveEvent(user, id);
+  // Editar un evento que aún no tiene ubicación (y sin pin nuevo) intenta ubicarlo con el texto del lugar
+  if (patch.latitude === undefined && event.latitude == null) Object.assign(patch, await placeFromText(patch.location ?? event.location));
 
   if (patch.capacity !== undefined && patch.capacity < event.confirmedCount) {
     throw new AppError(409, 'CAPACITY_BELOW_CONFIRMED', 'El cupo no puede ser menor que los confirmados actuales');

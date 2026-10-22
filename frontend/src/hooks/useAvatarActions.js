@@ -11,7 +11,7 @@ export function useAvatarActions() {
 
   const upload = useMutation({
     mutationFn: async (file) => {
-      const blob = await compressImage(file);
+      const blob = await compressImage(file, 'avatar');
       const { data: target } = await profileApi.requestAvatarUpload(blob.type);
       await uploadToTarget(target, blob);
       return profileApi.saveAvatarPhoto(target.path);

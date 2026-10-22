@@ -102,7 +102,14 @@ export const TrophyIcon = createIcon('TrophyIcon', [
   ['path', { d: 'M17 6h2a2 2 0 010 4h-2M7 6H5a2 2 0 000 4h2' }],
 ]);
 
-export const MusicIcon = createIcon('MusicIcon', [
+// Balón (P7): loader de deporte y pantalla "Sin conexión"
+export const BallIcon = createIcon('BallIcon', [
+  ['circle', { cx: 12, cy: 12, r: 10 }],
+  ['path', { d: 'M12 7.5l4.3 3.1-1.6 5h-5.4l-1.6-5L12 7.5z' }],
+  ['path', { d: 'M12 7.5V2M16.3 10.6l5.2-1.7M14.7 15.6l3.2 4.4M9.3 15.6L6.1 20M7.7 10.6L2.5 8.9' }],
+]);
+
+export const MusicIcon =createIcon('MusicIcon', [
   ['path', { d: 'M9 18V5l12-2v13' }],
   ['circle', { cx: 6, cy: 18, r: 3 }],
   ['circle', { cx: 18, cy: 16, r: 3 }],

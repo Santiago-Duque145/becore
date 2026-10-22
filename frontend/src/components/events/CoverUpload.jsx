@@ -22,7 +22,7 @@ export function CoverUpload({ value, existingUrl, onChange }) {
     const problem = validateImageFile(file);
     if (problem) return toast.error(problem);
     try {
-      const blob = await compressImage(file);
+      const blob = await compressImage(file, 'cover');
       onChange({ blob, previewUrl: URL.createObjectURL(blob), removed: false });
     } catch (error) {
       toast.error(error.message);

@@ -7,16 +7,33 @@ export const MEDELLIN = { lat: 6.2442, lng: -75.5812 };
 export const DEFAULT_ZOOM = 12;
 export const PIN_ZOOM = 15;
 
-// Teselas: estilo oscuro de CARTO (libre para uso no comercial). VITE_MAP_TILES_URL permite cambiarlas.
-export const DEFAULT_TILES_URL = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-export const TILES_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+// Mapa base de todos los mapas de la app (Descubre, detalle, selector de ubicación y Mapa en vivo): pasan por MapBase.
+// 1) Principal: teselas VECTORIALES de OpenFreeMap (sin clave) dibujadas con MapLibre GL y el estilo propio de
+//    lib/mapStyle.js. Se cargan con import() dentro del chunk del mapa.
+// 2) Respaldo (MapLibre falla, no hay WebGL2 o el estilo no carga): teselas raster de OpenStreetMap oscurecidas con un
+//    filtro CSS solo sobre la capa de teselas (map.css, [data-basemap='raster']), nunca sobre pines ni popups.
+export const OPENFREEMAP_ATTRIBUTION =
+  '<a href="https://openfreemap.org" target="_blank" rel="noopener">&copy; OpenFreeMap</a> <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">&copy; OpenStreetMap contributors</a>';
 
-// Respaldo si las teselas oscuras fallan: el mapa estándar de OpenStreetMap
-export const FALLBACK_TILES_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-export const FALLBACK_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
+// Si el mapa vectorial no termina de cargar en este tiempo, se pasa al respaldo raster
+export const VECTOR_LOAD_TIMEOUT_MS = 10_000;
 
-export const tilesUrl = (envValue) => (envValue && envValue.trim() ? envValue.trim() : DEFAULT_TILES_URL);
+// MapLibre GL 5 necesita WebGL2. Se prueba con un canvas temporal (document inyectable para poder probarlo).
+export function supportsWebGL2(doc = document) {
+  try {
+    const canvas = doc.createElement('canvas');
+    return Boolean(canvas.getContext('webgl2'));
+  } catch {
+    return false;
+  }
+}
+
+export const TILES_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+export const TILES_ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+export const TILES_MAX_ZOOM = 19;
+
+// Aviso cuando el backend no logró ubicar el lugar con el texto (el evento se guardó igual)
+export const LOCATION_MISSING_NOTICE = 'No pudimos ubicar el lugar en el mapa. Puedes marcarlo editando el evento.';
 
 // Color del pin por categoría: turquesa deporte, amarillo cultura, verde recreación, gris otros (tokens del tema)
 export const PIN_COLORS = {
@@ -26,6 +43,9 @@ export const PIN_COLORS = {
   other: 'var(--color-ink-muted)',
 };
 export const pinColor = (category) => PIN_COLORS[category] ?? PIN_COLORS.other;
+
+// "Activo" en el Mapa en vivo: publicado o en curso. Borradores, cancelados y finalizados no se muestran.
+export const isActiveEvent = (event) => event?.status === 'published' || event?.status === 'in_progress';
 
 // ¿El evento tiene ubicación marcada en el mapa?
 export function hasCoordinates(event) {

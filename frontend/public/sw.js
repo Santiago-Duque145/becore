@@ -5,7 +5,7 @@
 // - Archivos del shell: primero la caché (los de /assets llevan hash, así que nunca quedan viejos).
 // - Nunca toca /api ni otros orígenes (Supabase, Google Fonts): esas peticiones van directo a la red.
 // Si cambias este archivo, sube VERSION para que los celulares descarguen el nuevo.
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = `becore-shell-${VERSION}`;
 const OFFLINE_URL = '/offline.html';
 const SHELL = [

@@ -1,11 +1,15 @@
+import { createPortal } from 'react-dom';
 import { NavLink } from 'react-router';
 import { cn } from '../lib/cn.js';
 import { MOBILE_TABS } from './navigation.js';
 
 // Barra inferior de 4 pestañas (mobile-descubre.html). NavLink pone aria-current="page" en la activa.
+// Se dibuja con un portal directamente en <body>: un `position: fixed` deja de ser relativo a la pantalla si
+// CUALQUIER ancestro tiene transform, filter, will-change, contain o una animación que termina en transform
+// (como animate-enter con fill-mode both). Fuera del árbol de la app, ninguna página ni layout puede romperla.
 export function MobileTabBar({ role, hasUnread = false }) {
   const tabs = MOBILE_TABS[role] ?? MOBILE_TABS.participant;
-  return (
+  return createPortal(
     <nav
       aria-label="Principal"
       className="pb-safe fixed inset-x-0 bottom-0 z-50 border-t border-line bg-bg/95 backdrop-blur-md"
@@ -34,6 +38,7 @@ export function MobileTabBar({ role, hasUnread = false }) {
           </li>
         ))}
       </ul>
-    </nav>
+    </nav>,
+    document.body,
   );
 }

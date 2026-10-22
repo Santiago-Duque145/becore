@@ -15,10 +15,11 @@ import { StatusBadges } from './EventBadges.jsx';
 // cupo y acción. Sin distancia ni avatares (la API no trae asistentes por evento).
 // El enlace al detalle y el botón de asistencia son hermanos: no se anidan controles interactivos.
 // preview: vista previa del formulario de evento, sin enlace ni acciones reales (como la ve un participante)
-export function EventCard({ event, reason, className, preview = false }) {
+export function EventCard({ event, reason, className, preview = false, priority = false }) {
   const going = event.myAttendance?.status === 'confirmed';
   const Body = preview ? 'div' : Link;
-  const bodyProps = preview ? {} : { to: `/eventos/${event.id}` };
+  // La categoría viaja al detalle para que su pantalla de carga use el ícono animado de la categoría (P7)
+  const bodyProps = preview ? {} : { to: `/eventos/${event.id}`, state: { category: event.category } };
   return (
     <article
       className={cn(
@@ -27,7 +28,7 @@ export function EventCard({ event, reason, className, preview = false }) {
       )}
     >
       <Body {...bodyProps} className="focus-ring flex flex-1 flex-col rounded-card">
-        <EventCover event={event} />
+        <EventCover event={event} priority={priority} />
         <div className="flex flex-1 flex-col gap-2 px-3.5 pt-3 md:px-4 md:pt-3.5">
           {reason && <p className="text-[11.5px] font-semibold text-accent-soft">{reason}</p>}
           <h3 className="text-sm leading-snug font-semibold text-ink md:text-[14.5px]">{event.title}</h3>
@@ -80,15 +81,29 @@ export function EventCard({ event, reason, className, preview = false }) {
   );
 }
 
-export function EventCardSkeleton({ className }) {
+// Misma estructura y medidas que la tarjeta típica (portada, título, fecha, fin, lugar, avatares, cupo y botón) para que
+// el cambio de skeleton a tarjeta no mueva la página. withReason: la línea de "Para ti" con la razón.
+export function EventCardSkeleton({ className, withReason = false }) {
   return (
-    <div className={cn('overflow-hidden rounded-card border border-white/[0.06] bg-panel', className)} aria-hidden="true">
-      <div className="h-[84px] animate-pulse bg-field motion-reduce:animate-none md:h-[108px]" />
-      <div className="flex flex-col gap-2.5 p-4">
-        <Skeleton className="h-4 w-3/4" />
-        <Skeleton className="h-3 w-1/2" />
-        <Skeleton className="h-3 w-2/3" />
-        <Skeleton className="mt-1 h-7 w-full" />
+    <div className={cn('flex flex-col overflow-hidden rounded-card border border-white/[0.06] bg-panel', className)} aria-hidden="true">
+      <div className="skeleton-sweep h-[84px] shrink-0 bg-field md:h-[108px]" />
+      <div className="flex flex-col gap-2 px-3.5 pt-3 md:px-4 md:pt-3.5">
+        {withReason && <Skeleton className="h-[17px] w-2/3 rounded-md" />}
+        <Skeleton className="h-[19px] w-3/4 rounded-md md:h-5" />
+        <Skeleton className="h-[17px] w-1/2 rounded-md md:h-4" />
+        <Skeleton className="h-[17px] w-3/5 rounded-md md:h-4" />
+        <Skeleton className="h-[17px] w-2/3 rounded-md md:h-4" />
+      </div>
+      <div className="px-3.5 pt-2.5 md:px-4">
+        <Skeleton className="h-7 w-16 rounded-full" />
+      </div>
+      <div className="flex items-end gap-3 px-3.5 pt-2.5 pb-3.5 md:px-4 md:pb-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <Skeleton className="h-[17px] w-2/3 rounded-md" />
+          <Skeleton className="h-[7px] w-full rounded-full" />
+          <Skeleton className="h-4 w-1/2 rounded-md" />
+        </div>
+        <Skeleton className="h-11 w-[92px] shrink-0 rounded-lg" />
       </div>
     </div>
   );

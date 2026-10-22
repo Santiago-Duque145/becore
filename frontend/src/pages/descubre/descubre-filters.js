@@ -28,3 +28,15 @@ export function emptyTitle(category, query) {
   if (filter?.noun) return `No hay eventos de ${filter.noun} por ahora. ¡Vuelve pronto!`;
   return 'Todavía no hay eventos próximos.';
 }
+
+// Lo que Descubre pide a la API según la URL. Lo usan la página y la precarga del arranque (lib/startup-prefetch.js):
+// las dos tienen que armar exactamente la misma clave de caché para que la página reutilice lo ya pedido.
+export function descubreRequest(params) {
+  const category = params.get('cat') ?? '';
+  const query = params.get('q') ?? '';
+  const mapView = params.get('vista') === 'mapa';
+  return {
+    filters: { scope: 'upcoming', ...(category && { category }), ...(mapView && { pageSize: 50 }) },
+    showParaTi: !category && !query && !mapView,
+  };
+}

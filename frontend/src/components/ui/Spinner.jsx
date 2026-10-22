@@ -1,18 +1,9 @@
 import { forwardRef } from 'react';
 import { cn } from '../../lib/cn.js';
-import { LoaderIcon } from '../icons/index.js';
+import { BrandLoader } from './BrandLoader.jsx';
 
-// Solo para esperas de pantalla completa (p. ej. validar la sesión). Las acciones usan Button loading.
+// Espera corta dentro de una pantalla con un texto fijo ("Verificando tu código…"). Desde P7 es el BrandLoader
+// pequeño; las esperas de pantalla completa usan FullScreenLoader y las acciones, Button loading.
 export const Spinner = forwardRef(function Spinner({ label = 'Cargando', className, ...props }, ref) {
-  return (
-    <div
-      ref={ref}
-      role="status"
-      className={cn('flex items-center justify-center gap-2 py-10 text-sm text-ink-muted', className)}
-      {...props}
-    >
-      <LoaderIcon size={20} className="animate-spin text-accent motion-reduce:animate-none" />
-      <span>{label}…</span>
-    </div>
-  );
+  return <BrandLoader ref={ref} size="sm" label={label} message={`${label}…`} className={cn('py-10', className)} {...props} />;
 });

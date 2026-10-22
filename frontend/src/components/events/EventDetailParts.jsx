@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router';
 import { cn } from '../../lib/cn.js';
 import { CATEGORY_LABELS } from '../../lib/format.js';
 import { ChevronLeftIcon } from '../icons/index.js';
-import { Skeleton } from '../ui/index.js';
+import { BrandLoader, Skeleton } from '../ui/index.js';
 import { StatusBadges } from './EventBadges.jsx';
 
 // Piezas del detalle de evento (mobile-detalle-evento.html)
@@ -76,10 +76,19 @@ export function InfoRow({ icon: Icon, main, sub }) {
   );
 }
 
-export function DetailSkeleton() {
+// Carga del detalle. Si se llega desde una tarjeta ya se sabe la categoría: la portada toma su degradado y el ícono
+// animado de la categoría (P7: balón que rebota, nota que vibra…); si no, bloque con el barrido de marca.
+export function DetailSkeleton({ category }) {
+  const coverBg = COVER_BG[category];
   return (
     <div className="mx-auto w-full max-w-[720px]" aria-busy="true" aria-label="Cargando evento">
-      <div className="h-[230px] animate-pulse bg-field motion-reduce:animate-none md:h-[200px] md:rounded-card" />
+      {coverBg ? (
+        <div className={cn('flex h-[230px] items-center justify-center md:h-[200px] md:rounded-card', coverBg)}>
+          <BrandLoader category={category} size="md" phrases={false} label="Cargando evento" />
+        </div>
+      ) : (
+        <div className="skeleton-sweep h-[230px] bg-field md:h-[200px] md:rounded-card" />
+      )}
       <div className="flex flex-col gap-3 px-[22px] pt-[22px] md:px-0">
         <Skeleton className="h-7 w-3/4" />
         <Skeleton className="h-[34px] w-2/3" />

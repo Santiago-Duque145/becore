@@ -3,7 +3,8 @@ import { Navigate, useNavigate } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { AUTH_MESSAGES } from '../../lib/auth-errors.js';
 import { destinationAfterAuth, forgetFromPath, readRememberedFromPath } from '../../lib/auth-redirect.js';
-import { ErrorState, Spinner, useToast } from '../../components/ui/index.js';
+import { useLoaderVisibility } from '../../hooks/useLoaderTiming.js';
+import { ErrorState, FullScreenLoader, useToast } from '../../components/ui/index.js';
 
 const WAIT_MS = 10_000;
 
@@ -42,12 +43,16 @@ export default function AuthCallbackPage() {
     // Se ejecuta una vez al llegar del proveedor
   }, []);
 
-  if (urlChecked && session && !loading && profile) {
+  // BrandLoader (P7) a los 300 ms y mínimo 500 ms: no se redirige mientras se está viendo
+  const settled = urlChecked && session && !loading;
+  const loaderVisible = useLoaderVisibility(!settled);
+
+  if (settled && !loaderVisible && profile) {
     return <Navigate to={destinationAfterAuth(profile, from)} replace />;
   }
 
   // La sesión de Google es válida pero GET /me falló (servidor o base de datos): se dice y se deja reintentar
-  if (urlChecked && session && !loading) {
+  if (settled && !loaderVisible) {
     return (
       <main className="flex min-h-dvh items-center justify-center bg-bg px-4 md:bg-hero">
         <ErrorState
@@ -60,9 +65,10 @@ export default function AuthCallbackPage() {
     );
   }
 
+  // Sin aviso de "tardando": a los 10 s esta pantalla ya vuelve sola al login con el error
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-bg md:bg-hero">
-      <Spinner label="Entrando" />
+    <main>
+      {loaderVisible ? <FullScreenLoader immediate slowAfter={null} /> : <div className="min-h-dvh bg-bg" aria-busy="true" />}
     </main>
   );
 }

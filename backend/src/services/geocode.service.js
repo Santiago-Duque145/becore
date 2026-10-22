@@ -15,6 +15,20 @@ const TIMEOUT_MS = 5000;
 // Caja de Medellín y el Valle de Aburrá (oeste, norte, este, sur): solo orienta, no excluye
 const VIEWBOX = '-75.75,6.45,-75.45,6.10';
 
+// Un lugar escrito como "Sala 4 IMAX Centro Comercial Viva Envigado" no lo encuentra Nominatim, pero "Centro Comercial
+// Viva Envigado" sí. Se prueba el texto completo y luego versiones sin las primeras palabras (mínimo 2 palabras).
+export const MAX_LOCATE_ATTEMPTS = 4;
+
+export function candidateQueries(text, max = MAX_LOCATE_ATTEMPTS) {
+  const words = String(text ?? '').trim().replace(/\s+/g, ' ').split(' ').filter(Boolean);
+  if (!words.length) return [];
+  const candidates = [words.join(' ')];
+  for (let drop = 1; candidates.length < max && words.length - drop >= 2; drop += 1) {
+    candidates.push(words.slice(drop).join(' '));
+  }
+  return candidates;
+}
+
 const normalize = (q) => q.trim().replace(/\s+/g, ' ').toLowerCase();
 const defaultSleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -76,8 +90,25 @@ export function createGeocoder({ fetchImpl = (...args) => globalThis.fetch(...ar
     return results;
   }
 
-  return { search };
+  // Ubica el texto de un lugar: el primer resultado de la primera versión que Nominatim reconozca.
+  // Nunca lanza: si Nominatim falla o no encuentra nada devuelve null (guardar el evento no debe depender de esto).
+  async function locate(text) {
+    for (const query of candidateQueries(text)) {
+      if (query.length < 3) continue;
+      let results;
+      try {
+        results = await search(query);
+      } catch {
+        return null; // Nominatim no responde: no se insiste con las demás versiones
+      }
+      if (results.length) return { ...results[0], query };
+    }
+    return null;
+  }
+
+  return { search, locate };
 }
 
 const geocoder = createGeocoder();
 export const searchPlaces = (q) => geocoder.search(q);
+export const locatePlace = (text) => geocoder.locate(text);
